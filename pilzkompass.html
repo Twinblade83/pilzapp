@@ -129,6 +129,21 @@ const MIN_FOREST_ZOOM=11;
 const FOREST_LAYER='landcover_wood';
 const TREE_EVIDENCE_RADIUS_KM=5;
 const TREE_QUERY_LIMIT=300;
+const MICRO_ANALYSIS_LIMIT=90;
+const API_BATCH_CONCURRENCY=5;
+const API_CACHE_STORAGE_KEY='pilzkompass_api_cache_v2';
+const API_CACHE_TTL={weather:6*60*60*1000,elevation:14*24*60*60*1000,soil:30*24*60*60*1000,micro:14*24*60*60*1000,gbif:7*24*60*60*1000,osm:7*24*60*60*1000};
+const apiCacheStore={loaded:false,data:{}};
+function loadApiCache(){
+  if(apiCacheStore.loaded)return apiCacheStore.data;
+  apiCacheStore.loaded=true;
+  try{const raw=localStorage.getItem(API_CACHE_STORAGE_KEY);if(raw){const parsed=JSON.parse(raw);if(parsed&&typeof parsed==='object')apiCacheStore.data=parsed}}catch(_){apiCacheStore.data={}}
+  return apiCacheStore.data;
+}
+function getApiCache(key,ttl){const store=loadApiCache(),entry=store[key];if(!entry)return null;if(Date.now()-Number(entry.t||0)>ttl){delete store[key];return null}return entry.v}
+function setApiCache(key,value){const store=loadApiCache();store[key]={t:Date.now(),v:value};try{localStorage.setItem(API_CACHE_STORAGE_KEY,JSON.stringify(store))}catch(_){const entries=Object.entries(store).sort((a,b)=>(a[1]?.t||0)-(b[1]?.t||0));while(entries.length>1){delete store[entries.shift()[0]];try{localStorage.setItem(API_CACHE_STORAGE_KEY,JSON.stringify(store));break}catch(__){}}}}
+function pointCacheKey(prefix,p){return `${prefix}|${Number(p.centroid?.[0]).toFixed(4)}|${Number(p.centroid?.[1]).toFixed(4)}`}
+function boundsCacheKey(bounds){return [bounds.getSouth(),bounds.getWest(),bounds.getNorth(),bounds.getEast()].map(v=>Number(v).toFixed(3)).join(',')}
 
 const map=L.map('map',{zoomControl:true,minZoom:3}).setView([48.9483,9.1332],13);
 const fallbackTiles=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap-Mitwirkende'}).addTo(map);
@@ -148,6 +163,7 @@ const SPECIES=[
 ];
 const speciesConfig=Object.fromEntries(SPECIES.map(s=>[s.id,s]));
 let currentSpecies=SPECIES[0].id;
+let searchRunId=0;
 
 function escapeHtml(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&#38;','<':'&#60;','>':'&#62;',"'":'&#39;','"':'&#34;'}[c]))}
 const SCORE_BANDS=[{min:0,max:10,color:'#7b4f52',label:'0–10'},{min:11,max:20,color:'#955a4d',label:'11–20'},{min:21,max:30,color:'#ad6943',label:'21–30'},{min:31,max:40,color:'#bd7f3b',label:'31–40'},{min:41,max:50,color:'#c1953a',label:'41–50'},{min:51,max:60,color:'#a7a33a',label:'51–60'},{min:61,max:70,color:'#839f46',label:'61–70'},{min:71,max:80,color:'#609254',label:'71–80'},{min:81,max:90,color:'#417e65',label:'81–90'},{min:91,max:100,color:'#24685e',label:'91–100'}];
@@ -184,32 +200,19 @@ function mergeTouchingForests(fs){if(!window.turf||fs.length<2)return fs;const i
 const treeCache={taxonKey:{},occurrences:{}};
 function normalizeTreeName(name){return String(name||'').replace(/\s+/g,' ').trim()}
 function uniqueHostEntries(species){const out=[];const seen=new Set;for(const [common,latin] of species.hosts||[]){const n=normalizeTreeName(latin);if(!n||seen.has(n))continue;seen.add(n);out.push({common,latin:n})}return out}
-async function gbifSpeciesKey(scientificName){const name=normalizeTreeName(scientificName);if(treeCache.taxonKey[name])return treeCache.taxonKey[name];if(name.endsWith(' spp.')){return null}const r=await fetch(`${GBIF_API}/species/match?name=${encodeURIComponent(name)}`);if(!r.ok)throw new Error(`GBIF Artenabgleich ${r.status}`);const j=await r.json();const key=Number(j.usageKey||j.speciesKey||0)||null;treeCache.taxonKey[name]=key;return key}
+async function gbifSpeciesKey(scientificName){const name=normalizeTreeName(scientificName);if(treeCache.taxonKey[name])return treeCache.taxonKey[name];if(name.endsWith(' spp.'))return null;const cacheKey=`gbif-taxon|${name}`;const cached=getApiCache(cacheKey,API_CACHE_TTL.gbif);if(cached!==null){treeCache.taxonKey[name]=cached;return cached}const r=await fetchWithTimeout(`${GBIF_API}/species/match?name=${encodeURIComponent(name)}`,{},15000);if(!r.ok)throw new Error(`GBIF Artenabgleich ${r.status}`);const j=await r.json();const key=Number(j.usageKey||j.speciesKey||0)||null;treeCache.taxonKey[name]=key;setApiCache(cacheKey,key);return key}
 function bboxExpanded(bounds,radiusKm){const midLat=(bounds.getSouth()+bounds.getNorth())/2;const dLat=radiusKm/111.32;const dLon=radiusKm/(111.32*Math.cos(midLat*Math.PI/180)||1);return[bounds.getWest()-dLon,bounds.getSouth()-dLat,bounds.getEast()+dLon,bounds.getNorth()+dLat]}
 async function gbifTreeObservations(hostEntry,bbox){
   const cacheKey=`${hostEntry.latin}|${bbox.map(v=>Number(v).toFixed(3)).join(',')}`;
   if(treeCache.occurrences[cacheKey])return treeCache.occurrences[cacheKey];
+  const persistentKey=`gbif-tree|${cacheKey}`;const cached=getApiCache(persistentKey,API_CACHE_TTL.gbif);
+  if(Array.isArray(cached)){treeCache.occurrences[cacheKey]=cached;return cached}
   let url=`${GBIF_API}/occurrence/search?hasCoordinate=true&limit=${TREE_QUERY_LIMIT}&decimalLatitude=${bbox[1]},${bbox[3]}&decimalLongitude=${bbox[0]},${bbox[2]}&occurrenceStatus=present`;
-  let key=null;
-  try{key=await gbifSpeciesKey(hostEntry.latin)}catch(_){key=null}
-  if(key)url+=`&taxonKey=${key}`;
-  else url+=`&scientificName=${encodeURIComponent(hostEntry.latin.replace(/\s+spp\.$/,''))}`;
-  const r=await fetch(url);
-  if(!r.ok)throw new Error(`GBIF Baumdaten ${r.status}`);
-  const j=await r.json();
-  const out=(j.results||[])
-    .filter(o=>o.decimalLatitude!=null&&o.decimalLongitude!=null)
-    .map(o=>({
-      lat:Number(o.decimalLatitude),
-      lon:Number(o.decimalLongitude),
-      key:o.key,
-      year:Number(o.year)||null,
-      eventDate:o.eventDate||o.lastInterpreted||null,
-      basisOfRecord:o.basisOfRecord||'',
-      scientificName:o.scientificName||hostEntry.latin
-    }));
-  treeCache.occurrences[cacheKey]=out;
-  return out;
+  let key=null;try{key=await gbifSpeciesKey(hostEntry.latin)}catch(_){key=null}
+  if(key)url+=`&taxonKey=${key}`;else url+=`&scientificName=${encodeURIComponent(hostEntry.latin.replace(/\s+spp\.$/,''))}`;
+  const r=await fetchWithTimeout(url,{},20000);if(!r.ok)throw new Error(`GBIF Baumdaten ${r.status}`);const j=await r.json();
+  const out=(j.results||[]).filter(o=>o.decimalLatitude!=null&&o.decimalLongitude!=null).map(o=>({lat:Number(o.decimalLatitude),lon:Number(o.decimalLongitude),key:o.key,year:Number(o.year)||null,eventDate:o.eventDate||o.lastInterpreted||null,basisOfRecord:o.basisOfRecord||'',scientificName:o.scientificName||hostEntry.latin}));
+  treeCache.occurrences[cacheKey]=out;setApiCache(persistentKey,out);return out;
 }
 function dateYearValue(o){
   if(Number.isFinite(o.year))return o.year;
@@ -293,21 +296,13 @@ function nearestPointDistanceKm(lat,lon,items){
 }
 async function loadOsmContext(bounds){
   if(osmCache.loaded)return osmCache;
+  const persistentKey=`osm|${boundsCacheKey(bounds)}|${OSM_CONTEXT_RADIUS_KM}`,persistent=getApiCache(persistentKey,API_CACHE_TTL.osm);
+  if(persistent?.water&&persistent?.majorRoads){osmCache.water=persistent.water;osmCache.majorRoads=persistent.majorRoads;osmCache.loaded=true;return osmCache}
   const ext=bboxExpanded(bounds,OSM_CONTEXT_RADIUS_KM);const bbox=`${ext[1]},${ext[0]},${ext[3]},${ext[2]}`;
   const query=`[out:json][timeout:25];(nwr["natural"="water"](${bbox});nwr["waterway"~"^(river|stream|canal)$"](${bbox});nwr["highway"~"^(motorway|trunk|primary|secondary)$"](${bbox}););out center;`;
-  const r=await fetch(OSM_OVERPASS_ENDPOINT,{method:'POST',body:query,headers:{'Content-Type':'text/plain'}});
-  if(!r.ok)throw new Error(`OSM Overpass ${r.status}`);
-  const j=await r.json();
-  for(const e of j.elements||[]){
-    const lat=Number(e.lat??e.center?.lat),lon=Number(e.lon??e.center?.lon);
-    if(!Number.isFinite(lat)||!Number.isFinite(lon))continue;
-    const water=e.tags?.natural==='water'||/^(river|stream|canal)$/.test(String(e.tags?.waterway||''));
-    const road=/^(motorway|trunk|primary|secondary)$/.test(String(e.tags?.highway||''));
-    if(water)osmCache.water.push({lat,lon});
-    if(road)osmCache.majorRoads.push({lat,lon});
-  }
-  osmCache.loaded=true;
-  return osmCache;
+  const r=await fetchWithTimeout(OSM_OVERPASS_ENDPOINT,{method:'POST',body:query,headers:{'Content-Type':'text/plain'}},30000);if(!r.ok)throw new Error(`OSM Overpass ${r.status}`);const j=await r.json();
+  for(const e of j.elements||[]){const lat=Number(e.lat??e.center?.lat),lon=Number(e.lon??e.center?.lon);if(!Number.isFinite(lat)||!Number.isFinite(lon))continue;const water=e.tags?.natural==='water'||/^(river|stream|canal)$/.test(String(e.tags?.waterway||''));const road=/^(motorway|trunk|primary|secondary)$/.test(String(e.tags?.highway||''));if(water)osmCache.water.push({lat,lon});if(road)osmCache.majorRoads.push({lat,lon})}
+  setApiCache(persistentKey,{water:osmCache.water,majorRoads:osmCache.majorRoads});osmCache.loaded=true;return osmCache;
 }
 function forestStructureScore(f,osm){
   let area=areaHectares(f.area,f.centroid[0]);
@@ -327,11 +322,9 @@ function forestStructureScore(f,osm){
 
 /* ---------- Mushroom evidence ---------- */
 async function loadMushroomEvidence(species,bounds){
-  const b=bboxExpanded(bounds,MUSHROOM_EVIDENCE_RADIUS_KM);
-  const r=await fetch(`${GBIF_API}/occurrence/search?scientificName=${encodeURIComponent(species.gbifName)}&decimalLatitude=${b[1]},${b[3]}&decimalLongitude=${b[0]},${b[2]}&hasCoordinate=true&occurrenceStatus=present&limit=300`);
-  if(!r.ok)throw new Error(`GBIF Pilznachweise ${r.status}`);
-  const j=await r.json();
-  return(j.results||[]).filter(o=>o.decimalLatitude!=null&&o.decimalLongitude!=null).map(o=>({lat:Number(o.decimalLatitude),lon:Number(o.decimalLongitude),key:o.key,year:Number(o.year)||null,eventDate:o.eventDate||o.lastInterpreted||null,basisOfRecord:o.basisOfRecord||''}));
+  const b=bboxExpanded(bounds,MUSHROOM_EVIDENCE_RADIUS_KM),key=`gbif-mushroom|${species.gbifName}|${b.map(v=>Number(v).toFixed(3)).join(',')}`;const cached=getApiCache(key,API_CACHE_TTL.gbif);if(Array.isArray(cached))return cached;
+  const r=await fetchWithTimeout(`${GBIF_API}/occurrence/search?scientificName=${encodeURIComponent(species.gbifName)}&decimalLatitude=${b[1]},${b[3]}&decimalLongitude=${b[0]},${b[2]}&hasCoordinate=true&occurrenceStatus=present&limit=300`,{},20000);if(!r.ok)throw new Error(`GBIF Pilznachweise ${r.status}`);const j=await r.json();
+  const out=(j.results||[]).filter(o=>o.decimalLatitude!=null&&o.decimalLongitude!=null).map(o=>({lat:Number(o.decimalLatitude),lon:Number(o.decimalLongitude),key:o.key,year:Number(o.year)||null,eventDate:o.eventDate||o.lastInterpreted||null,basisOfRecord:o.basisOfRecord||''}));setApiCache(key,out);return out;
 }
 function evaluateMushroomEvidenceForForest(forest,occurrences){
   return weightedEvidenceAtForest(forest,occurrences,MUSHROOM_EVIDENCE_RADIUS_KM);
@@ -357,106 +350,26 @@ async function fetchWithTimeout(url,options={},timeoutMs=20000){
     clearTimeout(timer);
   }
 }
-async function runConcurrentBatches(points,batchSize,worker,concurrency=4,onProgress=null){
-  const batches=[];
-  for(let i=0;i<points.length;i+=batchSize)batches.push({start:i,items:points.slice(i,i+batchSize)});
-  const out=new Array(points.length);
-  let next=0,done=0;
-  async function runner(){
-    while(true){
-      const index=next++;
-      if(index>=batches.length)return;
-      const batch=batches[index];
-      const values=await worker(batch.items,batch.start,index);
-      values.forEach((v,j)=>{out[batch.start+j]=v;});
-      done++;
-      onProgress?.(done,batches.length);
-    }
-  }
-  await Promise.all(Array.from({length:Math.min(concurrency,batches.length)},runner));
-  return out;
+async function runConcurrentBatches(points,batchSize,worker,concurrency=API_BATCH_CONCURRENCY,onProgress=null,onBatch=null){
+  const batches=[];for(let i=0;i<points.length;i+=batchSize)batches.push({start:i,items:points.slice(i,i+batchSize)});const out=new Array(points.length);let next=0,done=0;
+  async function runner(){while(true){const index=next++;if(index>=batches.length)return;const batch=batches[index];const values=await worker(batch.items,batch.start,index);values.forEach((v,j)=>{out[batch.start+j]=v});done++;onBatch?.(values,batch.items,batch.start);onProgress?.(done,batches.length)}}
+  await Promise.all(Array.from({length:Math.min(concurrency,batches.length)},runner));return out;
 }
-async function fetchElevations(points,onProgress=null){
-  return runConcurrentBatches(points,50,async b=>{
-    const la=b.map(x=>x.centroid[0]).join(',');
-    const lo=b.map(x=>x.centroid[1]).join(',');
-    const r=await fetchWithTimeout(`https://api.open-meteo.com/v1/elevation?latitude=${la}&longitude=${lo}`,{},15000);
-    if(!r.ok)throw new Error('Open-Meteo Höhe '+r.status);
-    return (await r.json()).elevation||[];
-  },4,onProgress);
+async function fetchCachedBatched(points,{batchSize,prefix,ttl,worker,concurrency=API_BATCH_CONCURRENCY,onProgress=null,onBatch=null}){
+  const out=new Array(points.length),misses=[];for(let i=0;i<points.length;i++){const cached=getApiCache(pointCacheKey(prefix,points[i]),ttl);if(cached!==null)out[i]=cached;else misses.push({point:points[i],index:i})}
+  const cachedCount=points.length-misses.length;if(onProgress&&cachedCount)onProgress(cachedCount,points.length);if(!misses.length){return out}
+  const groups=[];for(let i=0;i<misses.length;i+=batchSize)groups.push(misses.slice(i,i+batchSize));let next=0,done=cachedCount;
+  async function runner(){while(true){const gi=next++;if(gi>=groups.length)return;const group=groups[gi];const values=await worker(group.map(x=>x.point),group[0].index,gi);values.forEach((v,j)=>{const item=group[j];out[item.index]=v;if(v!==undefined&&v!==null)setApiCache(pointCacheKey(prefix,item.point),v)});done+=group.length;onBatch?.(values,group.map(x=>x.point),group[0].index);onProgress?.(done,points.length)}}
+  await Promise.all(Array.from({length:Math.min(concurrency,groups.length)},runner));return out;
 }
-async function fetchWeather(points,onProgress=null){
-  return runConcurrentBatches(points,25,async b=>{
-    const la=b.map(x=>x.centroid[0]).join(',');
-    const lo=b.map(x=>x.centroid[1]).join(',');
-    const r=await fetchWithTimeout(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=precipitation_sum,temperature_2m_mean,temperature_2m_max,precipitation_hours,sunshine_duration&hourly=soil_moisture_0_to_7cm&past_days=16&forecast_days=1&timezone=auto`,{},20000);
-    if(!r.ok)throw new Error('Open-Meteo Wetter '+r.status);
-    const parsed=await r.json();
-    const json=Array.isArray(parsed)?parsed:[parsed];
-    return json.map(x=>{
-      const p=x.daily?.precipitation_sum||[],t=x.daily?.temperature_2m_mean||[],tm=x.daily?.temperature_2m_max||[],ph=x.daily?.precipitation_hours||[],sun=x.daily?.sunshine_duration||[];
-      const last14=p.slice(-15,-1).filter(v=>v!=null),last7=p.slice(-8,-1).filter(v=>v!=null),last3=p.slice(-4,-1).filter(v=>v!=null);
-      const temp10=t.slice(-11,-1).filter(v=>v!=null),temp3=t.slice(-4,-1).filter(v=>v!=null),max3=tm.slice(-4,-1).filter(v=>v!=null);
-      const rainHours14=ph.slice(-15,-1).filter(v=>v!=null).reduce((a,v)=>a+v,0);
-      const sunshine10=sun.slice(-11,-1).filter(v=>v!=null).reduce((a,v)=>a+v,0)/3600;
-      const sm=(x.hourly?.soil_moisture_0_to_7cm||[]).slice(-24).filter(v=>v!=null);
-      const soilMoisture=sm.length?sm.reduce((a,v)=>a+v,0)/sm.length:null;
-      return{
-        precip14:Number(last14.reduce((a,v)=>a+v,0).toFixed(1)),
-        precip7:Number(last7.reduce((a,v)=>a+v,0).toFixed(1)),
-        precip3:Number(last3.reduce((a,v)=>a+v,0).toFixed(1)),
-        tempAvg10:Number((temp10.reduce((a,v)=>a+v,0)/Math.max(temp10.length,1)).toFixed(1)),
-        tempAvg3:Number((temp3.reduce((a,v)=>a+v,0)/Math.max(temp3.length,1)).toFixed(1)),
-        maxTemp3:Number((max3.reduce((a,v)=>a+v,0)/Math.max(max3.length,1)).toFixed(1)),
-        rainHours14:Number(rainHours14.toFixed(1)),
-        sunshine10:Number(sunshine10.toFixed(1)),
-        soilMoisture:soilMoisture==null?null:Number(soilMoisture.toFixed(3))
-      };
-    });
-  },4,onProgress);
-}
-async function fetchSoilPh(points,onProgress=null){
-  return runConcurrentBatches(points,20,async b=>{
-    const part=await Promise.allSettled(b.map(p=>fetchWithTimeout(`https://rest.isric.org/soilgrids/v2.0/properties/query?lon=${p.centroid[1]}&lat=${p.centroid[0]}&property=phh2o&depth=0-5cm&value=mean`,{},20000).then(r=>r.ok?r.json():Promise.reject(r.status))));
-    return part.map(r=>{
-      if(r.status!=='fulfilled')return null;
-      try{
-        const l=r.value.properties.layers.find(x=>x.name==='phh2o'),d=l.depths.find(x=>x.label==='0-5cm');
-        return d.values.mean==null?null:Math.round((d.values.mean/10)*10)/10;
-      }catch(_){return null}
-    });
-  },4,onProgress);
-}
+async function fetchElevations(points,onProgress=null,onBatch=null){return fetchCachedBatched(points,{batchSize:50,prefix:'elevation',ttl:API_CACHE_TTL.elevation,concurrency:API_BATCH_CONCURRENCY,onProgress,onBatch,worker:async b=>{const la=b.map(x=>x.centroid[0]).join(','),lo=b.map(x=>x.centroid[1]).join(','),r=await fetchWithTimeout(`https://api.open-meteo.com/v1/elevation?latitude=${la}&longitude=${lo}`,{},15000);if(!r.ok)throw new Error('Open-Meteo Höhe '+r.status);return(await r.json()).elevation||[]}})}
+async function fetchWeather(points,onProgress=null,onBatch=null){return fetchCachedBatched(points,{batchSize:25,prefix:'weather',ttl:API_CACHE_TTL.weather,concurrency:API_BATCH_CONCURRENCY,onProgress,onBatch,worker:async b=>{const la=b.map(x=>x.centroid[0]).join(','),lo=b.map(x=>x.centroid[1]).join(','),r=await fetchWithTimeout(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=precipitation_sum,temperature_2m_mean,temperature_2m_max,precipitation_hours,sunshine_duration&hourly=soil_moisture_0_to_7cm&past_days=16&forecast_days=1&timezone=auto`,{},20000);if(!r.ok)throw new Error('Open-Meteo Wetter '+r.status);const parsed=await r.json(),json=Array.isArray(parsed)?parsed:[parsed];return json.map(x=>{const p=x.daily?.precipitation_sum||[],t=x.daily?.temperature_2m_mean||[],tm=x.daily?.temperature_2m_max||[],ph=x.daily?.precipitation_hours||[],sun=x.daily?.sunshine_duration||[],last14=p.slice(-15,-1).filter(v=>v!=null),last7=p.slice(-8,-1).filter(v=>v!=null),last3=p.slice(-4,-1).filter(v=>v!=null),temp10=t.slice(-11,-1).filter(v=>v!=null),temp3=t.slice(-4,-1).filter(v=>v!=null),max3=tm.slice(-4,-1).filter(v=>v!=null),rainHours14=ph.slice(-15,-1).filter(v=>v!=null).reduce((a,v)=>a+v,0),sunshine10=sun.slice(-11,-1).filter(v=>v!=null).reduce((a,v)=>a+v,0)/3600,sm=(x.hourly?.soil_moisture_0_to_7cm||[]).slice(-24).filter(v=>v!=null),soilMoisture=sm.length?sm.reduce((a,v)=>a+v,0)/sm.length:null;return{precip14:Number(last14.reduce((a,v)=>a+v,0).toFixed(1)),precip7:Number(last7.reduce((a,v)=>a+v,0).toFixed(1)),precip3:Number(last3.reduce((a,v)=>a+v,0).toFixed(1)),tempAvg10:Number((temp10.reduce((a,v)=>a+v,0)/Math.max(temp10.length,1)).toFixed(1)),tempAvg3:Number((temp3.reduce((a,v)=>a+v,0)/Math.max(temp3.length,1)).toFixed(1)),maxTemp3:Number((max3.reduce((a,v)=>a+v,0)/Math.max(max3.length,1)).toFixed(1)),rainHours14:Number(rainHours14.toFixed(1)),sunshine10:Number(sunshine10.toFixed(1)),soilMoisture:soilMoisture==null?null:Number(soilMoisture.toFixed(3))}})}})}
+async function fetchSoilPh(points,onProgress=null,onBatch=null){return fetchCachedBatched(points,{batchSize:20,prefix:'soil',ttl:API_CACHE_TTL.soil,concurrency:API_BATCH_CONCURRENCY,onProgress,onBatch,worker:async b=>{const part=await Promise.allSettled(b.map(p=>fetchWithTimeout(`https://rest.isric.org/soilgrids/v2.0/properties/query?lon=${p.centroid[1]}&lat=${p.centroid[0]}&property=phh2o&depth=0-5cm&value=mean`,{},20000).then(r=>r.ok?r.json():Promise.reject(r.status))));return part.map(r=>{if(r.status!=='fulfilled')return null;try{const l=r.value.properties.layers.find(x=>x.name==='phh2o'),d=l.depths.find(x=>x.label==='0-5cm');return d.values.mean==null?null:Math.round((d.values.mean/10)*10)/10}catch(_){return null}})}})}
 
 /* ---------- Mikroklima ---------- */
-async function fetchMicro(f){const lat=f.centroid[0],lon=f.centroid[1],d=.012,pts=[[lat,lon],[lat+d,lon],[lat-d,lon],[lat,lon+d],[lat,lon-d]],r=await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${pts.map(p=>p[0]).join(',')}&longitude=${pts.map(p=>p[1]).join(',')}`);if(!r.ok)throw new Error('Relief '+r.status);const e=(await r.json()).elevation||[];if(e.length<5)throw new Error('Relief unvollständig');const[c,n,s,o,w]=e,ns=2*d*111320,ew=2*d*111320*Math.cos(lat*Math.PI/180),gn=(n-s)/ns,ge=(o-w)/ew,slope=Math.atan(Math.sqrt(gn*gn+ge*ge))*180/Math.PI,aspect=(Math.atan2(-ge,-gn)*180/Math.PI+360)%360,dirs=['N','NO','O','SO','S','SW','W','NW'];return{elevation:c,slope,dir:dirs[Math.round(aspect/45)%8]}}
-async function fetchMicroBatch(points,onProgress=null){
-  return runConcurrentBatches(points,20,async batch=>{
-    const coords=[];
-    batch.forEach(f=>{
-      const lat=f.centroid[0],lon=f.centroid[1],d=.012;
-      coords.push([lat,lon],[lat+d,lon],[lat-d,lon],[lat,lon+d],[lat,lon-d]);
-    });
-    const latitudes=coords.map(p=>p[0]).join(',');
-    const longitudes=coords.map(p=>p[1]).join(',');
-    const r=await fetchWithTimeout(`https://api.open-meteo.com/v1/elevation?latitude=${latitudes}&longitude=${longitudes}`,{},15000);
-    if(!r.ok)throw new Error('Relief '+r.status);
-    const e=(await r.json()).elevation||[];
-    const out=[];
-    for(let j=0;j<batch.length;j++){
-      const off=j*5;
-      if(e.length<off+5||e.slice(off,off+5).some(v=>!Number.isFinite(v))){out.push(null);continue;}
-      const [c,n,s,o,w]=e.slice(off,off+5);
-      const lat=batch[j].centroid[0],d=.012,ns=2*d*111320,ew=2*d*111320*Math.cos(lat*Math.PI/180);
-      const gn=(n-s)/ns,ge=(o-w)/ew;
-      const slope=Math.atan(Math.sqrt(gn*gn+ge*ge))*180/Math.PI;
-      const aspect=(Math.atan2(-ge,-gn)*180/Math.PI+360)%360;
-      const dirs=['N','NO','O','SO','S','SW','W','NW'];
-      out.push({elevation:c,slope,dir:dirs[Math.round(aspect/45)%8]});
-    }
-    return out;
-  },4,onProgress);
-}
+async function fetchMicro(f){const lat=f.centroid[0],lon=f.centroid[1],d=.012,pts=[[lat,lon],[lat+d,lon],[lat-d,lon],[lat,lon+d],[lat,lon-d]],r=await fetchWithTimeout(`https://api.open-meteo.com/v1/elevation?latitude=${pts.map(p=>p[0]).join(',')}&longitude=${pts.map(p=>p[1]).join(',')}`,{},15000);if(!r.ok)throw new Error('Relief '+r.status);const e=(await r.json()).elevation||[];if(e.length<5)throw new Error('Relief unvollständig');const[c,n,s,o,w]=e,ns=2*d*111320,ew=2*d*111320*Math.cos(lat*Math.PI/180),gn=(n-s)/ns,ge=(o-w)/ew,slope=Math.atan(Math.sqrt(gn*gn+ge*ge))*180/Math.PI,aspect=(Math.atan2(-ge,-gn)*180/Math.PI+360)%360,dirs=['N','NO','O','SO','S','SW','W','NW'];return{elevation:c,slope,dir:dirs[Math.round(aspect/45)%8]}}
+async function fetchMicroBatch(points,onProgress=null,onBatch=null){return fetchCachedBatched(points,{batchSize:20,prefix:'micro',ttl:API_CACHE_TTL.micro,concurrency:API_BATCH_CONCURRENCY,onProgress,onBatch,worker:async batch=>{const coords=[];batch.forEach(f=>{const lat=f.centroid[0],lon=f.centroid[1],d=.012;coords.push([lat,lon],[lat+d,lon],[lat-d,lon],[lat,lon+d],[lat,lon-d])});const latitudes=coords.map(p=>p[0]).join(','),longitudes=coords.map(p=>p[1]).join(','),r=await fetchWithTimeout(`https://api.open-meteo.com/v1/elevation?latitude=${latitudes}&longitude=${longitudes}`,{},15000);if(!r.ok)throw new Error('Relief '+r.status);const e=(await r.json()).elevation||[],out=[];for(let j=0;j<batch.length;j++){const off=j*5;if(e.length<off+5||e.slice(off,off+5).some(v=>!Number.isFinite(v))){out.push(null);continue}const[c,n,s,o,w]=e.slice(off,off+5),lat=batch[j].centroid[0],d=.012,ns=2*d*111320,ew=2*d*111320*Math.cos(lat*Math.PI/180),gn=(n-s)/ns,ge=(o-w)/ew,slope=Math.atan(Math.sqrt(gn*gn+ge*ge))*180/Math.PI,aspect=(Math.atan2(-ge,-gn)*180/Math.PI+360)%360,dirs=['N','NO','O','SO','S','SW','W','NW'];out.push({elevation:c,slope,dir:dirs[Math.round(aspect/45)%8]})}return out}})}
+
 function microScore(species,m,weather){
   if(!m)return{points:0,label:'Keine Reliefdaten'};
   const c=speciesConfig[species];
@@ -557,7 +470,7 @@ async function inatTaxon(name){if(caches.taxon[name])return caches.taxon[name];c
 async function inatImages(name,limit=12){const k=name+':'+limit;if(caches.inatImg[k])return caches.inatImg[k];const id=await inatTaxon(name),r=await fetch(`https://api.inaturalist.org/v1/observations?taxon_id=${id}&photos=true&quality_grade=research&per_page=30&order_by=votes&order=desc`);if(!r.ok)throw new Error('iNaturalist '+r.status);const j=await r.json(),out=[],seen=new Set;for(const o of j.results||[])for(const p of o.photos||[]){const u=p.url||p.original_url;if(!u||seen.has(u))continue;seen.add(u);out.push({url:u.replace('/square.','/medium.'),original:p.original_url||u,credit:o.user?.name||o.user?.login||'iNaturalist',source:'iNaturalist'});if(out.length>=limit)break;if(out.length>=limit)break}return(caches.inatImg[k]=out)}
 async function gbifImages(name,limit=12){const k=name+':'+limit;if(caches.gbifImg[k])return caches.gbifImg[k];const r=await fetch(`${GBIF_API}/occurrence/search?scientificName=${encodeURIComponent(name)}&mediaType=StillImage&limit=50`);if(!r.ok)throw new Error('GBIF '+r.status);const j=await r.json(),out=[],seen=new Set;for(const o of j.results||[])for(const m of o.media||[]){if(m.type!=='StillImage'||!m.identifier||seen.has(m.identifier))continue;seen.add(m.identifier);out.push({url:m.identifier,original:m.identifier,credit:m.rightsHolder||m.creator||'GBIF',source:'GBIF'});if(out.length>=limit)break}return(caches.gbifImg[k]=out)}
 async function bestImages(name,limit=12){try{const a=await inatImages(name,limit);if(a.length)return a}catch(_){}return gbifImages(name,limit)}
-async function gbifOccurrences(name,b){const r=await fetch(`${GBIF_API}/occurrence/search?scientificName=${encodeURIComponent(name)}&decimalLatitude=${b.getSouth()},${b.getNorth()}&decimalLongitude=${b.getWest()},${b.getEast()}&hasCoordinate=true&limit=100`);if(!r.ok)throw new Error('GBIF '+r.status);return((await r.json()).results||[]).filter(x=>x.decimalLatitude!=null&&x.decimalLongitude!=null)}
+async function gbifOccurrences(name,b){const key=`gbif-finds|${name}|${boundsCacheKey(b)}`;const cached=getApiCache(key,API_CACHE_TTL.gbif);if(Array.isArray(cached))return cached;const r=await fetchWithTimeout(`${GBIF_API}/occurrence/search?scientificName=${encodeURIComponent(name)}&decimalLatitude=${b.getSouth()},${b.getNorth()}&decimalLongitude=${b.getWest()},${b.getEast()}&hasCoordinate=true&limit=100`,{},20000);if(!r.ok)throw new Error('GBIF '+r.status);const out=((await r.json()).results||[]).filter(x=>x.decimalLatitude!=null&&x.decimalLongitude!=null);setApiCache(key,out);return out}
 function parseIF(x){const d=new DOMParser().parseFromString(x,'text/xml'),t=d.querySelector('Table,table');if(!t)return null;const v={};[...t.children].forEach(e=>v[e.localName||e.nodeName]=e.textContent.trim());const pick=(...ns)=>{const k=Object.keys(v).find(k=>ns.some(n=>k.toLowerCase().includes(n.toLowerCase())));return k?v[k]:''};return{name:pick('Name'),author:pick('Author'),status:pick('Status'),current:pick('Current')}}
 async function fetchIF(name){if(caches.if[name])return caches.if[name];const r=await fetch(`https://www.indexfungorum.org/IXFWebService/Fungus.asmx/NameSearchDs?SearchText=${encodeURIComponent(name)}&AnywhereInText=false&MaxNumber=5`);if(!r.ok)throw new Error('Index Fungorum '+r.status);return(caches.if[name]=parseIF(await r.text()))}
 
@@ -573,8 +486,8 @@ function renderForestRanking(){
   if(!forestResults.length){el.innerHTML='<div class="source-note">Noch keine Suche durchgeführt.</div>';return}
   el.innerHTML=forestResults.slice(0,20).map((r,i)=>{
     const f=r.forest;
-    const treeName=r.treeEvidence?.best?.score>0?r.treeEvidence.best.common:r.score.treeLabel;
-    return`<div class="rank-item" data-i="${i}"><div class="rank-num">${i+1}</div><div class="rank-name"><b>${escapeHtml(f.tags.name||`Waldgebiet ${i+1}`)}</b><span>${leafTypeLabel(r.data.leafType)} · ${areaHectares(f.area,f.centroid[0])} ha</span><span>${escapeHtml(treeName)} · Pilznachweise ${r.mushroomEvidence?.count||0} · ${r.score.dataConfidence}% Datenvertrauen</span></div><div class="rank-score" style="color:${scoreColor(r.score.total)}">${r.score.total}</div></div>`
+    const treeName=r.treeEvidence?.best?.score>0?r.treeEvidence.best.common:r.score.treeLabel;const stage=r.analysisStage||'vorläufig';
+    return`<div class="rank-item" data-i="${i}"><div class="rank-num">${i+1}</div><div class="rank-name"><b>${escapeHtml(f.tags.name||`Waldgebiet ${i+1}`)}</b><span>${leafTypeLabel(r.data.leafType)} · ${areaHectares(f.area,f.centroid[0])} ha</span><span>${escapeHtml(treeName)} · Pilznachweise ${r.mushroomEvidence?.count||0} · ${r.score.dataConfidence}% Datenvertrauen · ${escapeHtml(stage)}</span></div><div class="rank-score" style="color:${scoreColor(r.score.total)}">${r.score.total}</div></div>`
   }).join('');
   el.querySelectorAll('[data-i]').forEach(x=>x.onclick=()=>openForestDetail(forestResults[Number(x.dataset.i)]));
 }
@@ -601,6 +514,7 @@ async function openForestDetail(r){
   document.getElementById('detailActions').innerHTML='<button id="addTourBtn">🥾 Zur Tour hinzufügen</button><button id="backRankBtn">← Bestenliste</button>';
   document.getElementById('addTourBtn').onclick=()=>addTourForest(f,d,r.score.total);document.getElementById('backRankBtn').onclick=showForestRanking;
   const dwd=document.getElementById('detailDwd');dwd.innerHTML='<span class="dwd-confirm">DWD wird geladen…</span>';dwd.style.display='block';fetchDwdForOpen(r);
+  if(!r.micro){const microBox=document.getElementById('detailMicroclimate');microBox.innerHTML='<div class="micro-card"><b>Relief wird nachgeladen…</b>Feinere Mikroklima-Analyse für diese Fläche.</div>';fetchMicro(r.forest).then(m=>{r.micro=m;r.score=computeScore(currentSpecies,r.data,m,r.treeEvidence,r.mushroomEvidence);if(activeForest===r){document.getElementById('detailScoreNum').textContent=r.score.total;document.getElementById('detailScoreNum').style.color=scoreColor(r.score.total);document.getElementById('detailScoreBar').style.width=r.score.total+'%';document.getElementById('detailScoreBar').style.background=scoreColor(r.score.total);document.getElementById('detailPtsMicro').textContent=`${r.score.microPts} / 10`;document.getElementById('detailDataConfidence').innerHTML=`${r.score.dataConfidence}% <span class="data-quality-${r.score.dataConfidence>=88?'good':r.score.dataConfidence>=78?'medium':'low'}">${r.score.dataConfidence>=88?'hoch':r.score.dataConfidence>=78?'mittel':'niedrig'}</span>`;microBox.innerHTML=renderMicro(r.micro,r.data);renderForestRanking()}}).catch(()=>{microBox.innerHTML=renderMicro(null,r.data)})}
 }
 async function fetchDwdForOpen(r){const box=document.getElementById('detailDwd'),f=r.forest,d=r.data,x=await dwdPoint(f);if(!x){box.innerHTML='';box.style.display='none';return}const pd=Math.abs(d.precip14-x.precip14),td=Math.abs(d.tempAvg10-x.tempAvg10),rel=Math.abs(x.precip14)<1?pd:pd/Math.max(x.precip14,1),txt=rel<=.3&&td<=2?'✓ DWD bestätigt die Größenordnung der Wetterdaten.':'⚠ DWD weicht von Open-Meteo ab.';box.innerHTML=`<span class="dwd-confirm">${txt}</span><br>DWD: ${x.precip14} mm / ${x.tempAvg10} °C · ${escapeHtml(x.station.name)} · ${x.station.distanceKm.toFixed(1)} km entfernt`}
 function renderMicro(m,w){
@@ -622,156 +536,61 @@ document.getElementById('speciesSelect').addEventListener('change',e=>{currentSp
 document.getElementById('speciesInfoBtn').onclick=()=>renderSpeciesModal(currentSpecies);document.getElementById('closeSpeciesModal').onclick=()=>document.getElementById('speciesModal').classList.remove('open');document.getElementById('speciesModal').onclick=e=>{if(e.target.id==='speciesModal')e.currentTarget.classList.remove('open')};document.querySelectorAll('.species-tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.species-tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.species-tab-panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelector(`.species-tab-panel[data-panel="${b.dataset.tab}"]`).classList.add('active')});
 
 /* ---------- Suchfortschritt ---------- */
-const searchProgress=document.getElementById('searchProgress');
-const progressTitle=document.getElementById('progressTitle');
-const progressPercent=document.getElementById('progressPercent');
-const progressFill=document.getElementById('progressFill');
-const progressSteps=document.getElementById('progressSteps');
-const progressState={};
-let progressValue=0;
-function initProgress(steps){
-  progressValue=0;
-  searchProgress.style.display='block';
-  progressSteps.innerHTML=steps.map((x,i)=>`<div class="progress-step" id="progress-step-${i}"><span>${escapeHtml(x)}</span><span class="step-state">wartet</span></div>`).join('');
-  steps.forEach((_,i)=>progressState[i]={done:false,error:false});
-  setProgress(0,steps[0]||'Analyse wird vorbereitet…');
-}
-function setProgress(percent,title){
-  const requested=Math.max(0,Math.min(100,Math.round(percent)));
-  progressValue=Math.max(progressValue,requested);
-  progressTitle.textContent=title;
-  progressPercent.textContent=progressValue+'%';
-  progressFill.style.width=progressValue+'%';
-}
-function markProgress(index,state='done',detail='fertig'){
-  const el=document.getElementById(`progress-step-${index}`);
-  if(!el)return;
-  el.classList.toggle('done',state==='done');
-  el.classList.toggle('error',state==='error');
-  el.querySelector('.step-state').textContent=detail;
-  progressState[index]={done:state==='done',error:state==='error'};
-}
-function finishProgress(){setProgress(100,'Analyse abgeschlossen');}
+const searchProgress=document.getElementById('searchProgress'),progressTitle=document.getElementById('progressTitle'),progressPercent=document.getElementById('progressPercent'),progressFill=document.getElementById('progressFill'),progressSteps=document.getElementById('progressSteps'),progressState={};
+const progressWeights=[5,18,12,12,15,10,10,18];let progressValue=0;
+function initProgress(steps){progressValue=0;searchProgress.style.display='block';progressSteps.innerHTML=steps.map((x,i)=>`<div class="progress-step" id="progress-step-${i}"><span>${escapeHtml(x)}</span><span class="step-state">wartet</span></div>`).join('');steps.forEach((_,i)=>progressState[i]={state:'waiting',fraction:0});setProgress(1,steps[0]||'Analyse wird vorbereitet…')}
+function setProgress(percent,title){progressValue=Math.max(0,Math.min(100,Math.round(percent)));progressTitle.textContent=title;progressPercent.textContent=progressValue+'%';progressFill.style.width=progressValue+'%'}
+function updateOverallProgress(){const total=progressWeights.reduce((a,b)=>a+b,0),value=progressWeights.reduce((sum,w,i)=>sum+w*(progressState[i]?.fraction||0),0)/total*100;setProgress(Math.max(progressValue,value),progressTitle.textContent)}
+function setProgressStep(index,state='running',detail='läuft…',fraction=null){const el=document.getElementById(`progress-step-${index}`);if(!el)return;const next={state,fraction:fraction==null?(state==='done'||state==='error'?1:(progressState[index]?.fraction||0)):Math.max(0,Math.min(1,fraction))};progressState[index]=next;el.classList.toggle('done',state==='done');el.classList.toggle('error',state==='error');el.classList.toggle('running',state==='running');el.querySelector('.step-state').textContent=detail;updateOverallProgress()}
+function updateBatchProgress(stepIndex,label,totalDone,total){const f=total?totalDone/total:1;setProgressStep(stepIndex,'running',`${totalDone}/${total}`,f);setProgress(progressValue,`${label} (${totalDone}/${total})`)}
+function finishProgress(){for(let i=0;i<8;i++)if(progressState[i]?.state!=='error')progressState[i]={state:'done',fraction:1};setProgress(100,'Analyse abgeschlossen')}
+function renderAnalysisLayer(){resultLayer.clearLayers();forestResults.sort((a,b)=>b.score.total-a.score.total);forestResults.forEach(r=>L.polygon(r.forest.coords,{pane:'forestPane',color:'#3a2c1a',weight:1.5,opacity:.9,fillColor:scoreColor(r.score.total),fillOpacity:.62}).on('click',()=>openForestDetail(r)).on('mouseover',e=>e.target.setStyle({weight:3})).on('mouseout',e=>e.target.setStyle({weight:1.5})).addTo(resultLayer));renderForestRanking()}
+function buildForestResult(f,i,elev,weather,soil,treeSources,mushroomOccurrences,osm,treeLoaded,mushroomLoaded,structureLoaded,micro){const fTree=evaluateTreeEvidenceForForest(f,treeSources||[]),fMush=evaluateMushroomEvidenceForForest(f,mushroomOccurrences||[]),structure=forestStructureScore(f,osm),leafType=fTree.leafType;const data={elevation:elev[i]??null,precip14:weather[i]?.precip14??null,precip7:weather[i]?.precip7??null,precip3:weather[i]?.precip3??null,tempAvg10:weather[i]?.tempAvg10??null,tempAvg3:weather[i]?.tempAvg3??null,maxTemp3:weather[i]?.maxTemp3??null,rainHours14:weather[i]?.rainHours14??0,sunshine10:weather[i]?.sunshine10??null,soilMoisture:weather[i]?.soilMoisture??null,ph:soil[i],leafType,treeType:leafType,treePoints:fTree.treePoints,treeLabel:fTree.best?.score>0?fTree.best.common:'Baumart unbekannt',structure,treeEvidenceLoaded:treeLoaded,mushroomEvidenceLoaded:mushroomLoaded,structureLoaded};const score=computeScore(currentSpecies,data,micro||null,fTree,fMush);return{forest:f,data,score,micro:micro||null,treeSources:treeSources||[],treeEvidence:fTree,mushroomOccurrences:mushroomOccurrences||[],mushroomEvidence:fMush,structure,analysisStage:micro?'vollständig':'vorläufig'}}
+function rebuildResults(forests,shared){forestResults=forests.map((f,i)=>buildForestResult(f,i,shared.elev,shared.weather,shared.soil,shared.treeSources,shared.mushroomOccurrences,shared.osm,shared.treeLoaded,shared.mushroomLoaded,shared.structureLoaded,shared.microByIndex.get(i)));renderAnalysisLayer()}
 
 /* ---------- Hauptsuche ---------- */
 document.getElementById('searchBtn').onclick=async()=>{
-  resultLayer.clearLayers();
-  gbifLayer.clearLayers();
-  selectedLayer.clearLayers();
-  forestResults=[];
-  activeForest=null;
-  rankView.style.display='block';
-  detailView.style.display='none';
-  document.getElementById('forestRankList').innerHTML='<div class="source-note">Suche Waldflächen…</div>';
-  const btn=document.getElementById('searchBtn');
-  btn.disabled=true;
-  const steps=['Waldflächen erkennen','Wetterdaten','Bodendaten','Höhen-/Reliefdaten','Baumarten','Pilznachweise','Habitatstruktur','Scores berechnen'];
-  initProgress(steps);
+  const runId=++searchRunId;
+  resultLayer.clearLayers();gbifLayer.clearLayers();selectedLayer.clearLayers();forestResults=[];activeForest=null;rankView.style.display='block';detailView.style.display='none';document.getElementById('forestRankList').innerHTML='<div class="source-note">Waldflächen werden erkannt…</div>';
+  const btn=document.getElementById('searchBtn');btn.disabled=true;const steps=['Waldflächen erkennen','Wetterdaten','Bodendaten','Höhen-/Reliefdaten','Baumarten','Pilznachweise','Habitatstruktur','Scores berechnen'];initProgress(steps);
   try{
-    if(map.getZoom()<MIN_FOREST_ZOOM){document.getElementById('status').textContent=`Bitte mindestens auf Zoom ${MIN_FOREST_ZOOM} hineinzoomen.`;searchProgress.style.display='none';return;}
-    document.getElementById('status').textContent='Lese Waldflächen aus den geladenen Vektorkacheln…';
-    setProgress(3,'Waldflächen werden erkannt…');
-    await new Promise(r=>setTimeout(r,250));
-    let forests=getVisibleForests();
-    if(!forests.length){await new Promise(r=>setTimeout(r,400));forests=getVisibleForests();}
-    if(!forests.length){document.getElementById('status').textContent='Keine Waldflächen in den aktuell geladenen Vektorkacheln erkannt. Etwas hineinzoomen oder Kartenausschnitt verschieben.';searchProgress.style.display='none';return;}
-    forests=mergeTouchingForests(forests).sort((a,b)=>b.area-a.area).slice(0,MAX_FORESTS);
-    markProgress(0,'done',`${forests.length} gefunden`);
-    document.getElementById('status').textContent=`${forests.length} Waldflächen gefunden. Datenquellen werden parallel geladen…`;
+    if(map.getZoom()<MIN_FOREST_ZOOM){document.getElementById('status').textContent=`Bitte mindestens auf Zoom ${MIN_FOREST_ZOOM} hineinzoomen.`;searchProgress.style.display='none';return}
+    document.getElementById('status').textContent='Lese Waldflächen aus den geladenen Vektorkacheln…';setProgressStep(0,'running','wird erkannt…',.25);await new Promise(r=>setTimeout(r,100));let forests=getVisibleForests();if(!forests.length){await new Promise(r=>setTimeout(r,250));forests=getVisibleForests()}
+    if(!forests.length){document.getElementById('status').textContent='Keine Waldflächen in den aktuell geladenen Vektorkacheln erkannt. Etwas hineinzoomen oder Kartenausschnitt verschieben.';searchProgress.style.display='none';return}
+    forests=mergeTouchingForests(forests).sort((a,b)=>b.area-a.area).slice(0,MAX_FORESTS);setProgressStep(0,'done',`${forests.length} gefunden`,1);setProgress(5,`${forests.length} Waldflächen gefunden`);document.getElementById('status').textContent=`${forests.length} Waldflächen gefunden. Starte gestufte Analyse…`;
+    const species=speciesConfig[currentSpecies],shared={forests,elev:new Array(forests.length),weather:new Array(forests.length),soil:new Array(forests.length),treeSources:[],mushroomOccurrences:[],osm:null,treeLoaded:false,mushroomLoaded:false,structureLoaded:false,microByIndex:new Map()};
+    const safeTask=async(index,label,factory,fallback)=>{setProgressStep(index,'running','läuft…',0);try{const value=await factory();setProgressStep(index,'done','fertig',1);return{ok:true,data:value}}catch(e){console.warn(label+' konnten nicht geladen werden:',e);setProgressStep(index,'error','nicht verfügbar',1);return{ok:false,data:fallback,error:e}}};
+    let microStageDone=false,optionalStageDone=false,optionalStageFailed=false;
+    const finalizeSearch=()=>{if(runId!==searchRunId||!microStageDone||!optionalStageDone)return;finishProgress();renderAnalysisLayer();const treeCount=forestResults.filter(r=>(r.treeEvidence?.best?.score||0)>0).length,mushroomCount=forestResults.filter(r=>(r.mushroomEvidence?.score||0)>0).length;document.getElementById('status').textContent=optionalStageFailed?`Analyse fertig. ${forestResults.length} Waldflächen angezeigt; einige optionale Zusatzdaten waren nicht verfügbar.`:`Fertig. ${forestResults.length} Waldflächen angezeigt und nach Score geordnet.${treeCount?` Baumarten-Nachweise für ${treeCount} Fläche(n) berücksichtigt.`:''}${mushroomCount?` Pilznachweise für ${mushroomCount} Fläche(n) berücksichtigt.`:''}`};
+    const weatherP=safeTask(1,'Wetterdaten',()=>fetchWeather(forests,(d,t)=>updateBatchProgress(1,'Wetterdaten',d,t)),new Array(forests.length));
+    const soilP=safeTask(2,'Bodendaten',()=>fetchSoilPh(forests,(d,t)=>updateBatchProgress(2,'Bodendaten',d,t)),new Array(forests.length));
+    const elevP=safeTask(3,'Höhen-/Reliefdaten',()=>fetchElevations(forests,(d,t)=>updateBatchProgress(3,'Höhen-/Reliefdaten',d,t)),new Array(forests.length));
+    const treeP=safeTask(4,'Baumarten',()=>loadTreeEvidence(species,map.getBounds()),[]);
+    const mushroomP=safeTask(5,'Pilznachweise',()=>loadMushroomEvidence(species,map.getBounds()),[]);
+    const osmP=safeTask(6,'Habitatstruktur',()=>loadOsmContext(map.getBounds()),null);
 
-    const updateBatchProgress=(stepIndex,label,base,span,totalDone,total)=>{
-      const fraction=total?totalDone/total:1;
-      setProgress(base+(span*fraction),`${label} (${totalDone}/${total})`);
-    };
+    const core=await Promise.all([weatherP,soilP,elevP]);shared.weather=core[0].data||shared.weather;shared.soil=core[1].data||shared.soil;shared.elev=core[2].data||shared.elev;
+    setProgressStep(7,'running','erste Scores werden angezeigt…',.35);rebuildResults(forests,shared);document.getElementById('status').textContent=`${forests.length} Waldflächen analysiert. Vorläufige Rangliste bereits sichtbar – weitere Daten werden ergänzt…`;
 
-    const species=speciesConfig[currentSpecies];
-    markProgress(1,'done','starte parallel');
-    markProgress(2,'done','starte parallel');
-    markProgress(3,'done','starte parallel');
-    markProgress(4,'done','starte parallel');
-    markProgress(5,'done','starte parallel');
-    markProgress(6,'done','starte parallel');
+    const treeResult=await treeP;shared.treeSources=treeResult.data||[];shared.treeLoaded=treeResult.ok;rebuildResults(forests,shared);setProgressStep(4,treeResult.ok?'done':'error',treeResult.ok?'fertig':'nicht verfügbar',1);
+    document.getElementById('status').textContent=`${forests.length} Waldflächen bewertet. Baumarten ergänzt; weitere Habitat-/Pilzdaten folgen…`;
 
-    const weatherPromise=fetchWeather(forests,(d,t)=>updateBatchProgress(1,'Wetterdaten',12,10,d,t));
-    const soilPromise=fetchSoilPh(forests,(d,t)=>updateBatchProgress(2,'Bodendaten',22,8,d,t));
-    const elevationPromise=fetchElevations(forests,(d,t)=>updateBatchProgress(3,'Höhen-/Reliefdaten',30,8,d,t));
-    const treePromise=(async()=>{try{return{data:await loadTreeEvidence(species,map.getBounds()),ok:true};}catch(e){console.warn('GBIF Baumdaten konnten nicht geladen werden:',e);return{data:[],ok:false,error:e};}})();
-    const mushroomPromise=(async()=>{try{return{data:await loadMushroomEvidence(species,map.getBounds()),ok:true};}catch(e){console.warn('GBIF Pilznachweise konnten nicht geladen werden:',e);return{data:[],ok:false,error:e};}})();
-    const osmPromise=(async()=>{try{return{data:await loadOsmContext(map.getBounds()),ok:true};}catch(e){console.warn('OSM-Habitatdaten konnten nicht geladen werden:',e);return{data:null,ok:false,error:e};}})();
+    const preliminary=forestResults.slice().sort((a,b)=>b.score.total-a.score.total);const selected=new Set(preliminary.slice(0,Math.min(MICRO_ANALYSIS_LIMIT,forests.length)).map(r=>r.forest.osmId||`${r.forest.centroid[0]}-${r.forest.centroid[1]}`));const microTargets=[],microIndexes=[];forests.forEach((f,i)=>{const k=f.osmId||`${f.centroid[0]}-${f.centroid[1]}`;if(selected.has(k)){microTargets.push(f);microIndexes.push(i)}});
+    setProgressStep(3,'running',`Top ${microTargets.length} werden verfeinert…`,.45);const microValues=await fetchMicroBatch(microTargets,(d,t)=>{const f=t?d/t:1;setProgressStep(3,'running',`Top-Flächen ${d}/${t}`,Math.max(.45,.45+.45*f))});microValues.forEach((m,j)=>{shared.microByIndex.set(microIndexes[j],m)});rebuildResults(forests,shared);
 
-    const [elev,weather,soil,treeResult,mushroomResult,osmResult]=await Promise.all([weatherPromise,soilPromise,elevationPromise,treePromise,mushroomPromise,osmPromise]);
-    markProgress(1,'done',`${forests.length} ausgewertet`);
-    markProgress(2,'done',`${soil.filter(v=>v!=null).length}/${forests.length} verfügbar`);
-    markProgress(3,'done',`${elev.filter(v=>v!=null).length}/${forests.length} verfügbar`);
-    markProgress(4,treeResult.ok?'done':'error',treeResult.ok?'geladen':'nicht verfügbar');
-    markProgress(5,mushroomResult.ok?'done':'error',mushroomResult.ok?'geladen':'nicht verfügbar');
-    markProgress(6,osmResult.ok?'done':'error',osmResult.ok?'geladen':'nicht verfügbar');
+    forestResults.forEach(r=>r.analysisStage='Microklima geprüft');
+    setProgressStep(7,'done','Scorebasis fertig',1);renderAnalysisLayer();microStageDone=true;finalizeSearch();
+    document.getElementById('status').textContent=`${forests.length} Waldflächen angezeigt. Zusatzdaten für Pilznachweise und Habitatstruktur werden im Hintergrund ergänzt…`;
 
-    const treeSources=treeResult.data;
-    const mushroomOccurrences=mushroomResult.data;
-    const osm=osmResult.data;
-    const treeDataLoaded=treeResult.ok;
-    const mushroomDataLoaded=mushroomResult.ok;
-    const osmDataLoaded=osmResult.ok;
-
-    let occ=[];
-    try{occ=await gbifOccurrences(species.gbifName,map.getBounds())}catch(_){occ=[];}
-    occ.forEach(o=>L.circleMarker([o.decimalLatitude,o.decimalLongitude],{pane:'gbifPane',radius:6,color:'#2b2b2b',weight:1.5,fillColor:'#f4f1e6',fillOpacity:.95}).bindPopup(`<b>GBIF-Fundmeldung</b><br>${escapeHtml(species.label)}<br><a href="https://www.gbif.org/occurrence/${o.key}" target="_blank" rel="noopener">Zum Datensatz</a>`).addTo(gbifLayer));
-
-    setProgress(79,'Berechne Standort-Scores…');
-    forestResults=forests.map((f,i)=>{
-      const treeEval=evaluateTreeEvidenceForForest(f,treeSources);
-      const mushroomEval=evaluateMushroomEvidenceForForest(f,mushroomOccurrences);
-      const structure=forestStructureScore(f,osm);
-      const leafType=treeEval.leafType;
-      const data={
-        elevation:elev[i]??null,
-        precip14:weather[i]?.precip14??null,
-        precip7:weather[i]?.precip7??null,
-        precip3:weather[i]?.precip3??null,
-        tempAvg10:weather[i]?.tempAvg10??null,
-        tempAvg3:weather[i]?.tempAvg3??null,
-        maxTemp3:weather[i]?.maxTemp3??null,
-        rainHours14:weather[i]?.rainHours14??0,
-        sunshine10:weather[i]?.sunshine10??null,
-        soilMoisture:weather[i]?.soilMoisture??null,
-        ph:soil[i],
-        leafType,
-        treeType:leafType,
-        treePoints:treeEval.treePoints,
-        treeLabel:treeEval.best?.score>0?treeEval.best.common:'Baumart unbekannt',
-        structure,
-        treeEvidenceLoaded:treeDataLoaded,
-        mushroomEvidenceLoaded:mushroomDataLoaded,
-        structureLoaded:osmDataLoaded
-      };
-      const score=computeScore(currentSpecies,data,null,treeEval,mushroomEval);
-      return{forest:f,data,score,micro:null,treeSources,treeEvidence:treeEval,mushroomOccurrences,mushroomEvidence:mushroomEval,structure};
-    });
-
-    const microValues=await fetchMicroBatch(forests,(d,t)=>updateBatchProgress(3,'Reliefdaten',42,18,d,t));
-    forestResults.forEach((r,i)=>{
-      r.micro=microValues[i]||null;
-      r.score=computeScore(currentSpecies,r.data,r.micro,r.treeEvidence,r.mushroomEvidence);
-    });
-
-    setProgress(93,'Ordne Waldgebiete nach Score…');
-    forestResults.sort((a,b)=>b.score.total-a.score.total);
-    forestResults.forEach(r=>L.polygon(r.forest.coords,{pane:'forestPane',color:'#3a2c1a',weight:1.5,opacity:.9,fillColor:scoreColor(r.score.total),fillOpacity:.62}).on('click',()=>openForestDetail(r)).on('mouseover',e=>e.target.setStyle({weight:3})).on('mouseout',e=>e.target.setStyle({weight:1.5})).addTo(resultLayer));
-    renderForestRanking();
-    markProgress(7,'done','fertig');
-    finishProgress();
-    const treeCount=forestResults.filter(r=>(r.treeEvidence?.best?.score||0)>0).length;
-    const mushroomCount=forestResults.filter(r=>(r.mushroomEvidence?.score||0)>0).length;
-    document.getElementById('status').textContent=`Fertig. ${forestResults.length} Waldflächen angezeigt und nach Score geordnet.${treeCount?` Baumarten-Nachweise für ${treeCount} Fläche(n) berücksichtigt.`:''}${mushroomCount?` Pilznachweise für ${mushroomCount} Fläche(n) berücksichtigt.`:''}${occ.length?` ${occ.length} GBIF-Fundmeldung(en).`:''}`;
-    showForestRanking();
-  }catch(e){
-    console.error(e);
-    setProgress(100,'Analyse mit Fehler beendet');
-    document.getElementById('status').textContent='Fehler bei der Waldflächensuche: '+(e.message||e);
-  }finally{
-    btn.disabled=false;
-  }
+    Promise.all([mushroomP,osmP]).then(([mushroomResult,osmResult])=>{
+      if(runId!==searchRunId)return;
+      shared.mushroomOccurrences=mushroomResult.data||[];shared.mushroomLoaded=mushroomResult.ok;shared.osm=osmResult.data||null;shared.structureLoaded=osmResult.ok;
+      setProgressStep(5,mushroomResult.ok?'done':'error',mushroomResult.ok?'fertig':'nicht verfügbar',1);setProgressStep(6,osmResult.ok?'done':'error',osmResult.ok?'fertig':'nicht verfügbar',1);
+      rebuildResults(forests,shared);forestResults.forEach(r=>r.analysisStage='vollständig');optionalStageDone=true;
+      gbifOccurrences(species.gbifName,map.getBounds()).then(occ=>{if(runId!==searchRunId)return;occ.forEach(o=>L.circleMarker([o.decimalLatitude,o.decimalLongitude],{pane:'gbifPane',radius:6,color:'#2b2b2b',weight:1.5,fillColor:'#f4f1e6',fillOpacity:.95}).bindPopup(`<b>GBIF-Fundmeldung</b><br>${escapeHtml(species.label)}<br><a href="https://www.gbif.org/occurrence/${o.key}" target="_blank" rel="noopener">Zum Datensatz</a>`).addTo(gbifLayer))}).catch(()=>{});
+      finalizeSearch();
+    }).catch(e=>{if(runId!==searchRunId)return;console.warn('Optionale Zusatzdaten konnten nicht vollständig ergänzt werden:',e);optionalStageFailed=true;optionalStageDone=true;setProgressStep(5,'error','nicht verfügbar',1);setProgressStep(6,'error','nicht verfügbar',1);finalizeSearch()});
+  }catch(e){console.error(e);setProgress(100,'Analyse mit Fehler beendet');document.getElementById('status').textContent='Fehler bei der Waldflächensuche: '+(e.message||e)}finally{btn.disabled=false}
 };
 
 /* ---------- Foto-KI ---------- */
@@ -782,3 +601,4 @@ renderScoreLegend();document.getElementById('detailDwd').style.display='none';do
 </script>
 </body>
 </html>
+
