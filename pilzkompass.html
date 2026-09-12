@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pilzkompass — Prototyp</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --canopy: #1e2b1a;
+    --bark: #4a3826;
+    --moss: #5b7052;
+    --parchment: #efe9d8;
+    --parchment-dim: #e2dabf;
+    --chanterelle: #d98a1f;
+    --chanterelle-deep: #b5691a;
+    --ink: #24291f;
+    --grey-low: #9a9686;
+    --font-display: 'Fraunces', serif;
+    --font-body: 'Work Sans', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;font-family:var(--font-body);color:var(--ink);}
+  #map{position:absolute;inset:0;z-index:0;}
+
+  header{
+    position:absolute; top:0; left:0; right:0; z-index:1000;
+    background:var(--canopy);
+    color:var(--parchment);
+    padding:14px 22px;
+    display:flex; align-items:baseline; gap:12px;
+    border-bottom:3px solid var(--chanterelle);
+  }
+  header h1{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:22px;
+    margin:0;
+    letter-spacing:0.2px;
+  }
+  header span{
+    font-size:13px;
+    color:var(--parchment-dim);
+    opacity:0.85;
+  }
+
+  .panel{
+    position:absolute;
+    top:70px; left:16px;
+    z-index:1000;
+    width:290px;
+    background:var(--parchment);
+    border-left:5px solid var(--moss);
+    box-shadow:0 6px 18px rgba(0,0,0,0.25);
+    padding:16px 18px 18px;
+  }
+  .panel h2{
+    font-family:var(--font-display);
+    font-size:15px;
+    font-weight:600;
+    margin:0 0 10px;
+    color:var(--bark);
+  }
+  .species-row{
+    display:flex; gap:8px; margin-bottom:14px;
+  }
+  .species-btn{
+    flex:1;
+    padding:9px 6px;
+    border:2px solid var(--moss);
+    background:transparent;
+    color:var(--ink);
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:13px;
+    cursor:pointer;
+    transition:background 0.15s, color 0.15s;
+  }
+  .species-btn.active{
+    background:var(--moss);
+    color:var(--parchment);
+  }
+  .search-btn{
+    width:100%;
+    padding:11px;
+    background:var(--chanterelle);
+    color:#231603;
+    border:none;
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+    margin-bottom:10px;
+  }
+  .search-btn:disabled{
+    background:var(--grey-low);
+    cursor:default;
+  }
+  .search-btn:hover:not(:disabled){background:var(--chanterelle-deep);}
+  .status{
+    font-size:12.5px;
+    line-height:1.45;
+    color:var(--bark);
+    min-height:18px;
+  }
+  .legend{
+    margin-top:14px;
+    padding-top:12px;
+    border-top:1px solid var(--parchment-dim);
+  }
+  .legend h3{
+    font-size:12px;
+    margin:0 0 6px;
+    font-weight:600;
+    color:var(--bark);
+  }
+  .legend-bar{
+    height:10px;
+    background:linear-gradient(to right,#9a9686,#d98a1f);
+    margin-bottom:4px;
+  }
+  .legend-labels{
+    display:flex; justify-content:space-between;
+    font-size:11px; color:var(--bark); opacity:0.8;
+  }
+  .note{
+    font-size:11px;
+    color:var(--bark);
+    opacity:0.75;
+    margin-top:12px;
+    line-height:1.4;
+  }
+  .leaflet-popup-content{
+    font-family:var(--font-body);
+    font-size:12.5px;
+    line-height:1.5;
+  }
+  .leaflet-popup-content b{font-family:var(--font-display);}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Pilzkompass</h1>
+  <span>Prototyp — regelbasierte Fundort-Einschätzung</span>
+</header>
+
+<div id="map"></div>
+
+<div class="panel">
+  <h2>Pilzart</h2>
+  <div class="species-row">
+    <button class="species-btn active" data-species="steinpilz">Steinpilz</button>
+    <button class="species-btn" data-species="pfifferling">Pfifferling</button>
+  </div>
+  <button class="search-btn" id="searchBtn">Diesen Bereich durchsuchen</button>
+  <div class="status" id="status">Karte auf ein Waldgebiet ausrichten und suchen.</div>
+
+  <div class="legend">
+    <h3>Trefferwahrscheinlichkeit</h3>
+    <div class="legend-bar"></div>
+    <div class="legend-labels"><span>niedrig</span><span>hoch</span></div>
+  </div>
+
+  <div class="note">
+    Regelwerk basiert auf Waldtyp (OSM), Niederschlag &amp; Temperatur der letzten Tage (Open-Meteo) sowie Höhenlage. Keine Garantie für tatsächliche Funde — bitte Sammelregeln und Naturschutzgebiete beachten.
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const map = L.map('map', { zoomControl: true }).setView([48.9483, 9.1332], 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors',
+  maxZoom: 18
+}).addTo(map);
+
+let currentSpecies = 'steinpilz';
+let resultLayer = L.layerGroup().addTo(map);
+
+document.querySelectorAll('.species-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.species-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentSpecies = btn.dataset.species;
+  });
+});
+
+const speciesConfig = {
+  steinpilz: {
+    label: 'Steinpilz',
+    precip: { lo: 5, idealLo: 20, idealHi: 60, hi: 120, pts: 35 },
+    temp:   { lo: 8, idealLo: 15, idealHi: 20, hi: 28, pts: 35 },
+    months: [6,7,8,9,10],
+    monthPts: 20,
+    monthPtsOff: 5,
+    elevMax: 1500,
+    waldtypPts: 10
+  },
+  pfifferling: {
+    label: 'Pfifferling',
+    precip: { lo: 10, idealLo: 30, idealHi: 80, hi: 150, pts: 35 },
+    temp:   { lo: 10, idealLo: 14, idealHi: 19, hi: 26, pts: 35 },
+    months: [5,6,7,8,9,10,11],
+    monthPts: 20,
+    monthPtsOff: 5,
+    elevMax: 1800,
+    waldtypPts: 10
+  }
+};
+
+function triScore(value, cfg) {
+  const { lo, idealLo, idealHi, hi, pts } = cfg;
+  if (value <= lo || value >= hi) return 0;
+  if (value >= idealLo && value <= idealHi) return pts;
+  if (value < idealLo) return pts * (value - lo) / (idealLo - lo);
+  return pts * (hi - value) / (hi - idealHi);
+}
+
+function computeScore(species, data) {
+  const cfg = speciesConfig[species];
+  if (data.elevation > cfg.elevMax) return 0;
+  let score = 0;
+  score += triScore(data.precip14, cfg.precip);
+  score += triScore(data.tempAvg10, cfg.temp);
+  const month = new Date().getMonth() + 1;
+  score += cfg.months.includes(month) ? cfg.monthPts : cfg.monthPtsOff;
+  score += cfg.waldtypPts; // generalist bonus - most forest types viable
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function scoreColor(score) {
+  const low = [154,150,134];   // grey-green, muted
+  const high = [217,138,31];   // chanterelle orange
+  const t = Math.max(0, Math.min(1, score / 100));
+  const c = low.map((v,i) => Math.round(v + (high[i]-v)*t));
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+
+function shoelaceArea(coords) {
+  let area = 0;
+  for (let i = 0; i < coords.length - 1; i++) {
+    area += coords[i][1]*coords[i+1][0] - coords[i+1][1]*coords[i][0];
+  }
+  return Math.abs(area / 2);
+}
+
+function centroid(coords) {
+  let lat = 0, lon = 0;
+  coords.forEach(c => { lat += c[0]; lon += c[1]; });
+  return [lat / coords.length, lon / coords.length];
+}
+
+async function overpassForests(south, west, north, east) {
+  const query = `[out:json][timeout:25];
+(
+  way["landuse"="forest"](${south},${west},${north},${east});
+  way["natural"="wood"](${south},${west},${north},${east});
+);
+out geom;`;
+  const resp = await fetch('https://overpass-api.de/api/interpreter', {
+    method: 'POST',
+    body: 'data=' + encodeURIComponent(query)
+  });
+  if (!resp.ok) throw new Error('Overpass-Anfrage fehlgeschlagen (' + resp.status + ')');
+  const json = await resp.json();
+  return json.elements
+    .filter(el => el.geometry && el.geometry.length >= 3)
+    .map(el => {
+      const coords = el.geometry.map(g => [g.lat, g.lon]);
+      return {
+        coords,
+        area: shoelaceArea(coords),
+        centroid: centroid(coords),
+        leafType: (el.tags && el.tags.leaf_type) || 'gemischt'
+      };
+    })
+    .sort((a,b) => b.area - a.area)
+    .slice(0, 20);
+}
+
+async function fetchElevations(points) {
+  const lats = points.map(p => p.centroid[0]).join(',');
+  const lons = points.map(p => p.centroid[1]).join(',');
+  const resp = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lats}&longitude=${lons}`);
+  const json = await resp.json();
+  return json.elevation;
+}
+
+async function fetchWeather(points) {
+  const lats = points.map(p => p.centroid[0]).join(',');
+  const lons = points.map(p => p.centroid[1]).join(',');
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&daily=precipitation_sum,temperature_2m_mean&past_days=16&forecast_days=1&timezone=auto`;
+  const resp = await fetch(url);
+  const json = await resp.json();
+  const arr = Array.isArray(json) ? json : [json];
+  return arr.map(entry => {
+    const precipArr = entry.daily.precipitation_sum || [];
+    const tempArr = entry.daily.temperature_2m_mean || [];
+    const precip14 = precipArr.slice(-15, -1).reduce((a,b) => a + (b||0), 0);
+    const last10Temp = tempArr.slice(-11, -1).filter(v => v !== null);
+    const tempAvg10 = last10Temp.length ? last10Temp.reduce((a,b)=>a+b,0) / last10Temp.length : 12;
+    return { precip14: Math.round(precip14*10)/10, tempAvg10: Math.round(tempAvg10*10)/10 };
+  });
+}
+
+function leafTypeLabel(lt) {
+  if (lt === 'broadleaved') return 'Laubwald';
+  if (lt === 'coniferous') return 'Nadelwald';
+  if (lt === 'mixed') return 'Mischwald';
+  return 'Unbekannt / gemischt';
+}
+
+const statusEl = document.getElementById('status');
+const searchBtn = document.getElementById('searchBtn');
+
+searchBtn.addEventListener('click', async () => {
+  resultLayer.clearLayers();
+  searchBtn.disabled = true;
+  statusEl.textContent = 'Suche Waldflächen im sichtbaren Bereich…';
+
+  try {
+    const b = map.getBounds();
+    const forests = await overpassForests(b.getSouth(), b.getWest(), b.getNorth(), b.getEast());
+
+    if (forests.length === 0) {
+      statusEl.textContent = 'Keine Waldflächen in diesem Kartenausschnitt gefunden. Etwas herauszoomen oder woanders hin schwenken.';
+      searchBtn.disabled = false;
+      return;
+    }
+
+    statusEl.textContent = `${forests.length} Waldflächen gefunden. Lade Wetter- und Höhendaten…`;
+    const [elevations, weather] = await Promise.all([
+      fetchElevations(forests),
+      fetchWeather(forests)
+    ]);
+
+    let maxScore = 0;
+    forests.forEach((f, i) => {
+      const data = {
+        elevation: elevations[i],
+        precip14: weather[i].precip14,
+        tempAvg10: weather[i].tempAvg10
+      };
+      const score = computeScore(currentSpecies, data);
+      maxScore = Math.max(maxScore, score);
+      const color = scoreColor(score);
+
+      const polygon = L.polygon(f.coords, {
+        color: color,
+        weight: 1,
+        fillColor: color,
+        fillOpacity: 0.55
+      }).addTo(resultLayer);
+
+      polygon.bindPopup(`
+        <b>${speciesConfig[currentSpecies].label} — Score ${score}/100</b><br>
+        Waldtyp: ${leafTypeLabel(f.leafType)}<br>
+        Höhe: ${Math.round(data.elevation)} m<br>
+        Niederschlag (14 Tage): ${data.precip14} mm<br>
+        Ø Temperatur (10 Tage): ${data.tempAvg10} °C
+      `);
+    });
+
+    statusEl.textContent = `Fertig. ${forests.length} Flächen bewertet, höchster Score: ${maxScore}/100. Fläche antippen für Details.`;
+  } catch (err) {
+    statusEl.textContent = 'Fehler: ' + err.message + ' (Overpass ist manchmal überlastet — kurz warten und erneut versuchen.)';
+  } finally {
+    searchBtn.disabled = false;
+  }
+});
+</script>
+
+</body>
+</html>
