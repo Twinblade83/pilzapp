@@ -105,25 +105,27 @@ header{position:absolute;top:0;left:0;right:0;z-index:1000;background:var(--cano
 <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/dist/leaflet-maplibre-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf@7.3.0/turf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/geotiff@2.1.3/dist-browser/geotiff.js"></script>
 <script>
 /* ============================================================
    BAUMARTEN-QUELLEN
 
-   Copernicus wurde vollständig entfernt.
+   Primär für Deutschland:
+   - DLR Tree Species Germany 2022 (10 m)
+   - liefert eine flächendeckende dominante Baumartenklasse
+   - wird per WMS GetFeatureInfo am Waldstandort abgefragt
 
-   Primär für die App:
-   - JRC European Atlas / EU-Trees4F als wissenschaftliche Referenz
-   - GBIF als live abfragbare Quelle für öffentliche Baumarten-Vorkommen
-
-   EU-Trees4F ist selbst ein modellierter Datensatz und liegt laut JRC
-   als GeoTIFF vor. Eine einzelne statische HTML-Datei kann diese Roh-
-   rasterdaten nicht zuverlässig als Punktabfrage verwenden. Deshalb
-   wird GBIF für den dynamischen Standort-Indikator verwendet.
+   Sekundär:
+   - GBIF als zusätzliche unabhängige Beobachtungsevidenz
+   - fehlende GBIF-Nachweise werden NICHT als fehlende Bäume gewertet
    ============================================================ */
-const JRC_ATLAS_URL='https://forest.jrc.ec.europa.eu/en/european-atlas/atlas-data-and-metadata/';
-const JRC_TREES4F_URL='https://forest.jrc.ec.europa.eu/en/activities/forests-and-climate-change/';
 const GBIF_API='https://api.gbif.org/v1';
+const DLR_WMS='https://geoservice.dlr.de/eoc/land/wms';
+const DLR_TREE_LAYER='TREE_SPECIES_DE_2022';
+const DLR_TREE_TIMEOUT=18000;
+const DLR_SAMPLE_OFFSETS=[[0,0],[0.0015,0],[0,0.0015],[0.0015,0.0015]];
+const COPERNICUS_WMS='https://geoserver.vlcc.geoville.com/geoserver/wms';
+const COPERNICUS_DLT_LAYER='HRL_TCF:DLT_S2023';
+const COPERNICUS_FTY_LAYER='HRL_TCF:FTY_S2021';
 const MAX_FORESTS=250;
 const MIN_FOREST_ZOOM=11;
 const FOREST_LAYER='landcover_wood';
@@ -135,7 +137,7 @@ const TREE_QUERY_LIMIT=300;
 const MICRO_ANALYSIS_LIMIT=90;
 const API_BATCH_CONCURRENCY=5;
 const API_CACHE_STORAGE_KEY='pilzkompass_api_cache_v2';
-const API_CACHE_TTL={weather:6*60*60*1000,elevation:14*24*60*60*1000,soil:30*24*60*60*1000,micro:14*24*60*60*1000,gbif:7*24*60*60*1000,osm:7*24*60*60*1000};
+const API_CACHE_TTL={weather:6*60*60*1000,elevation:14*24*60*60*1000,soil:30*24*60*60*1000,micro:14*24*60*60*1000,gbif:7*24*60*60*1000,osm:7*24*60*60*1000,dlr:30*24*60*60*1000};
 const apiCacheStore={loaded:false,data:{}};
 function loadApiCache(){
   if(apiCacheStore.loaded)return apiCacheStore.data;
@@ -174,7 +176,7 @@ function scoreBand(score){const n=Math.max(0,Math.min(100,Math.round(Number(scor
 function scoreColor(score){return scoreBand(score).color}
 function renderScoreLegend(){const el=document.getElementById('scoreLegend');if(!el)return;el.innerHTML=SCORE_BANDS.map(b=>`<div class="score-legend-cell" style="background:${b.color}" title="Score ${b.label}">${b.label}</div>`).join('')}
 function leafTypeLabel(t){return t==='coniferous'?'Nadelwald':t==='broadleaved'?'Laubwald':t==='mixed'?'Mischwald':'Waldfläche'}
-function treeDisplayLabel(leafType,best,species){if(best?.score>0&&best.common)return`${best.common} · ${Math.round(best.score*100)}% Evidenz`;const hosts=(speciesConfig[species]?.hosts||[]).map(x=>x[0]);if(leafType==='coniferous'){const h=hosts.filter((_,i)=>isConiferLatin(speciesConfig[species].hosts[i][1]));return`${(h.length?h:hosts).join(' / ')} · passendes Wirtsspektrum`}if(leafType==='broadleaved'){const h=hosts.filter((_,i)=>!isConiferLatin(speciesConfig[species].hosts[i][1]));return`${(h.length?h:hosts).join(' / ')} · passendes Wirtsspektrum`}if(leafType==='mixed')return`${hosts.join(' / ')} · passendes Wirtsspektrum`;return`${hosts.join(' / ')} · Wirtsspektrum`; }
+function treeDisplayLabel(leafType,best,species){if(best?.score>0&&best.common)return`${best.common} · ${Math.round(best.score*100)}% Evidenz`;const hosts=(speciesConfig[species]?.hosts||[]).map(x=>x[0]);if(leafType==='coniferous'){const h=hosts.filter((_,i)=>isConiferLatin(speciesConfig[species].hosts[i][1]));return`${(h.length?h:hosts).join(' / ')} · passendes Wirtsspektrum`}if(leafType==='broadleaved'){const h=hosts.filter((_,i)=>!isConiferLatin(speciesConfig[species].hosts[i][1]));return`${(h.length?h:hosts).join(' / ')} · passendes Wirtsspektrum`}if(leafType==='mixed')return`${hosts.join(' / ')} · passendes Wirtsspektrum`;return`${hosts.join(' / ')} · mögliches Wirtsspektrum`; }
 function statusTagHtml(status){const labels={ideal:'ideal',ok:'okay',poor:'ungünstig'};return `<span class="status-tag status-${status}">${labels[status]}</span>`}
 function rangeStatus(v,cfg){if(v<=cfg.lo||v>=cfg.hi)return'poor';if(v>=cfg.idealLo&&v<=cfg.idealHi)return'ideal';return'ok'}
 function phStatusLabel(ph){if(ph<4.5)return'stark sauer';if(ph<5.5)return'sauer';if(ph<6.5)return'leicht sauer';if(ph<7.2)return'neutral';return'alkalisch'}
@@ -228,6 +230,91 @@ function inferForestTypeFromTags(tags){
   const con=/(conifer|needleleaved|nadel|fichte|picea|kiefer|pinus|tanne|abies|lärche|larix|douglasie|pseudotsuga|juniper|wacholder|taxus)/i.test(t);
   const broad=/(broadleaf|broadleaved|deciduous|laub|buche|fagus|eiche|quercus|birke|betula|espe|populus|ahorn|acer|ulme|ulmus|linde|tilia|kastanie|castanea)/i.test(t);
   if(con&&broad)return'mixed'; if(con)return'coniferous'; if(broad)return'broadleaved'; return'unknown';
+}
+
+const DLR_SPECIES_PATTERNS=[
+  {id:'pine',label:'Kiefer',latin:'Pinus sylvestris',type:'coniferous',hostKeys:['pinus','kiefer']},
+  {id:'spruce',label:'Fichte',latin:'Picea abies',type:'coniferous',hostKeys:['picea','spruce','fichte']},
+  {id:'beech',label:'Buche',latin:'Fagus sylvatica',type:'broadleaved',hostKeys:['fagus','beech','buche']},
+  {id:'oak',label:'Eiche',latin:'Quercus spp.',type:'broadleaved',hostKeys:['quercus','oak','eiche']},
+  {id:'birch',label:'Birke',latin:'Betula spp.',type:'broadleaved',hostKeys:['betula','birch','birke']},
+  {id:'alder',label:'Erle',latin:'Alnus spp.',type:'broadleaved',hostKeys:['alnus','alder','erle']},
+  {id:'larch',label:'Lärche',latin:'Larix spp.',type:'coniferous',hostKeys:['larix','larch','lärche']},
+  {id:'douglas',label:'Douglasie',latin:'Pseudotsuga menziesii',type:'coniferous',hostKeys:['pseudotsuga','douglas']},
+  {id:'fir',label:'Tanne',latin:'Abies spp.',type:'coniferous',hostKeys:['abies','fir','tanne']},
+  {id:'other-deciduous',label:'Sonstige Laubbäume',latin:'sonstige Laubbäume',type:'broadleaved',hostKeys:['deciduous','broadleaved','other deciduous','laub']}
+];
+function classifyDlrSpeciesText(text){
+  const t=String(text||'').toLowerCase();
+  return DLR_SPECIES_PATTERNS.find(x=>x.hostKeys.some(k=>t.includes(k)))||null;
+}
+function parseDlrFeatureInfo(text){
+  const raw=String(text||'').replace(/\r/g,'').trim();
+  if(!raw)return null;
+  let props=[];
+  try{const j=JSON.parse(raw);const f=j?.features?.[0];props=f?.properties?Object.values(f.properties).join(' '):'';return{raw,match:classifyDlrSpeciesText(props||raw),properties:f?.properties||{}}}catch(_){props=raw}
+  return{raw,match:classifyDlrSpeciesText(props),properties:{}};
+}
+function dlrInfoUrl(lat,lon){
+  const d=.00045,bbox=[lon-d,lat-d,lon+d,lat+d].join(',');
+  return `${DLR_WMS}?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=${encodeURIComponent(DLR_TREE_LAYER)}&QUERY_LAYERS=${encodeURIComponent(DLR_TREE_LAYER)}&STYLES=&INFO_FORMAT=application/json&SRS=EPSG:4326&BBOX=${bbox}&WIDTH=5&HEIGHT=5&X=2&Y=2&FEATURE_COUNT=1`;
+}
+async function queryDlrTreePoint(lat,lon){
+  const key=`dlr-tree-point|${lat.toFixed(4)}|${lon.toFixed(4)}`;
+  const cached=getApiCache(key,API_CACHE_TTL.dlr||30*24*60*60*1000);if(cached!==null)return cached;
+  let parsed=null,lastErr=null;
+  for(const fmt of ['application/json','text/plain']){
+    try{
+      const url=dlrInfoUrl(lat,lon).replace(/INFO_FORMAT=[^&]+/,`INFO_FORMAT=${encodeURIComponent(fmt)}`);
+      const r=await fetchWithTimeout(url,{},DLR_TREE_TIMEOUT);if(!r.ok)throw new Error(`DLR Tree Species ${r.status}`);
+      parsed=parseDlrFeatureInfo(await r.text());if(parsed?.match||parsed?.properties&&Object.keys(parsed.properties).length)break;
+    }catch(e){lastErr=e}
+  }
+  if(!parsed){if(lastErr)throw lastErr;throw new Error('DLR Baumart nicht lesbar')}
+  setApiCache(key,parsed);return parsed;
+}
+function copernicusInfoUrl(layer,lat,lon){
+  const d=.00045,bbox=[lon-d,lat-d,lon+d,lat+d].join(',');
+  return `${COPERNICUS_WMS}?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=${encodeURIComponent(layer)}&QUERY_LAYERS=${encodeURIComponent(layer)}&STYLES=&SRS=EPSG:4326&BBOX=${bbox}&WIDTH=5&HEIGHT=5&X=2&Y=2&INFO_FORMAT=text/plain&FEATURE_COUNT=1`;
+}
+async function queryCopernicusForestPoint(lat,lon){
+  const key=`copernicus-forest|${lat.toFixed(4)}|${lon.toFixed(4)}`;
+  const cached=getApiCache(key,API_CACHE_TTL.dlr||30*24*60*60*1000);if(cached!==null)return cached;
+  let dlt=null,fty=null;
+  try{const r=await fetchWithTimeout(copernicusInfoUrl(COPERNICUS_DLT_LAYER,lat,lon),{},12000);if(r.ok)dlt=await r.text()}catch(_){}
+  try{const r=await fetchWithTimeout(copernicusInfoUrl(COPERNICUS_FTY_LAYER,lat,lon),{},12000);if(r.ok)fty=await r.text()}catch(_){}
+  const dl=String(dlt||'').toLowerCase(),ft=String(fty||'').toLowerCase();
+  let leaf=dl.includes('conifer')||dl.includes('needle')||dl.includes('nadel')?'coniferous':dl.includes('broad')||dl.includes('deciduous')||dl.includes('laub')?'broadleaved':null;
+  if(!leaf)leaf=ft.includes('conifer')||ft.includes('needle')||ft.includes('nadel')?'coniferous':ft.includes('broad')||ft.includes('deciduous')||ft.includes('laub')?'broadleaved':null;
+  const out={available:!!(dlt||fty),leafType:leaf,rawDlt:dlt||null,rawFty:fty||null};
+  setApiCache(key,out);return out;
+}
+async function loadCopernicusForestTypes(forests,onProgress=null){
+  const out=new Array(forests.length);let next=0,done=0;
+  async function worker(){while(true){const i=next++;if(i>=forests.length)return;out[i]=await queryCopernicusForestPoint(forests[i].centroid[0],forests[i].centroid[1]);done++;onProgress?.(done,forests.length)}}
+  await Promise.all(Array.from({length:Math.min(6,forests.length)},worker));return out;
+}
+async function queryDlrTreeSamples(forest){
+  const lat=forest.centroid[0],lon=forest.centroid[1],scale=1/Math.max(Math.cos(lat*Math.PI/180),.25);
+  const offsets=DLR_SAMPLE_OFFSETS;
+  const results=[];
+  for(const [dy,dx] of offsets){
+    try{results.push(await queryDlrTreePoint(lat+dy,lon+dx*scale))}catch(_){results.push(null)}
+  }
+  const matches=results.map(x=>x?.match).filter(Boolean);
+  const cop=await queryCopernicusForestPoint(lat,lon).catch(()=>null);
+  if(!matches.length){return{available:!!cop?.available,samples:results,type:cop?.leafType||'unknown',dominant:null,speciesCounts:{},confidence:0,copernicus:cop||null};}
+  const counts={};for(const m of matches)counts[m.id]=(counts[m.id]||0)+1;
+  const ranked=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  const dominant=DLR_SPECIES_PATTERNS.find(x=>x.id===ranked[0][0])||null;
+  const con=matches.filter(x=>x.type==='coniferous').length,broad=matches.filter(x=>x.type==='broadleaved').length;
+  const type=con&&broad?'mixed':con?'coniferous':broad?'broadleaved':(cop?.leafType||'unknown');
+  return{available:true,samples:results,type,dominant,speciesCounts:counts,confidence:matches.length/results.length,copernicus:cop||null};
+}
+async function loadDlrTreeData(forests,onProgress=null){
+  const out=new Array(forests.length);let next=0,done=0;
+  async function worker(){while(true){const i=next++;if(i>=forests.length)return;out[i]=await queryDlrTreeSamples(forests[i]);done++;onProgress?.(done,forests.length)}}
+  await Promise.all(Array.from({length:Math.min(API_BATCH_CONCURRENCY,forests.length)},worker));return out;
 }
 function forestFromFeature(f){const g=f.geometry,p=f.properties||{};if(!g||!['Polygon','MultiPolygon'].includes(g.type))return[];const polys=g.type==='Polygon'?[g.coordinates]:g.coordinates;return polys.map(poly=>poly?.[0]).filter(r=>r&&r.length>=4).map(r=>{const coords=r.map(x=>[x[1],x[0]]);return{coords,area:areaDeg2(coords),centroid:centroid(coords),leafType:inferForestTypeFromTags(p),tags:{...p,'sourceLayer':f.sourceLayer||''},osmId:f.id||`${coords[0][0]}-${coords[0][1]}-${coords.length}`}})}
 function dedupeForests(fs){const seen=new Set;return fs.filter(f=>{const k=`${f.osmId}|${f.coords[0][0].toFixed(5)}|${f.coords[0][1].toFixed(5)}|${f.coords.length}`;if(seen.has(k))return false;seen.add(k);return true})}
@@ -326,21 +413,33 @@ async function loadTreeEvidence(species,bounds){
     return{...h,occurrences,loadError:r.status==='rejected'?String(r.reason?.message||r.reason||'Fehler'):null};
   });
 }
-function evaluateTreeEvidenceForForest(forest,treeSources,species=currentSpecies){
-  const entries=treeSources.map(src=>{
+function evaluateTreeEvidenceForForest(forest,treeSources,species=currentSpecies,dlrData=null){
+  const entries=(treeSources||[]).map(src=>{
     const ev=weightedEvidenceAtForest(forest,src.occurrences||[],TREE_EVIDENCE_RADIUS_KM);
     return{common:src.common,latin:src.latin,score:ev.score,count:ev.count,nearestKm:ev.nearestKm,recentCount:ev.recentCount,examples:ev.examples,loadError:src.loadError||null};
   }).sort((a,b)=>b.score-a.score||a.latin.localeCompare(b.latin));
-  const evidenceType=classifyLeafTypeFromTreeEvidence(entries);
   const positive=entries.filter(x=>x.score>0);
-  const best=positive[0]||null;
-  const strongest=best?.score||0;
-  const corroboration=positive.length>=2?Math.min(1,strongest+(positive.slice(1,3).reduce((a,x)=>a+x.score,0)*.18)):strongest;
-  const prior=treeCompatibilityPrior(species,evidenceType);
-  const evidencePoints=10*corroboration;
-  const treePoints=Math.min(18,prior+evidencePoints);
-  const leafType=evidenceType!=='unknown'?evidenceType:(forest.leafType&&forest.leafType!=='unknown'?forest.leafType:inferForestTypeFromTags(forest.tags));
-  return{entries,best,leafType,treePoints:Number(treePoints.toFixed(1)),confidence:strongest,corroboratedPartners:positive.length,priorPoints:Number(prior.toFixed(1)),evidencePoints:Number(evidencePoints.toFixed(1)),hostSpectrum:hostSpectrumForType(species,leafType)};
+  const best=entries[0]||null;
+  const evidenceType=classifyLeafTypeFromTreeEvidence(entries);
+  const dlrType=dlrData?.type||'unknown';
+  const leafType=dlrType!=='unknown'?dlrType:(evidenceType!=='unknown'?evidenceType:'unknown');
+  const prior=dlrData?.dominant?treeCompatibilityPriorForDlr(species,dlrData.dominant):treeCompatibilityPrior(species,leafType);
+  const evidencePoints=positive.length?Math.min(6,6*Math.min(1,(positive[0]?.score||0)*1.15)):0;
+  const corroboration=positive.length>=2?Math.min(1,(positive[0]?.score||0)+positive.slice(1,3).reduce((a,x)=>a+x.score,0)*.18):(positive[0]?.score||0);
+  const gbifPoints=6*corroboration;
+  const treePoints=Math.min(18,prior+gbifPoints);
+  const typeLabel=dlrData?.dominant?.label||best?.common||(leafType==='coniferous'?'Nadelbäume':leafType==='broadleaved'?'Laubbäume':leafType==='mixed'?'Mischbestand':'Waldbaumarten');
+  return{entries,best,leafType,treePoints:Number(treePoints.toFixed(1)),priorPoints:Number(prior.toFixed(1)),evidencePoints:Number(evidencePoints.toFixed(1)),confidence:Math.max(dlrData?.confidence||0,corroboration),corroboratedPartners:positive.length,dlr:dlrData||null,label:typeLabel};
+}
+function treeCompatibilityPriorForDlr(species,dlrSpecies){
+  const s=speciesConfig[species];if(!s||!dlrSpecies)return 0;
+  const wanted=(s.hosts||[]).map(x=>String(x[1]).toLowerCase());
+  const id=String(dlrSpecies.id||'').toLowerCase();
+  const latin=String(dlrSpecies.latin||'').toLowerCase();
+  const label=String(dlrSpecies.label||'').toLowerCase();
+  const matches=wanted.some(x=>x.includes(id)||x.includes(latin.split(' ')[0])||x.includes(label));
+  if(!matches)return 1.5;
+  return 10;
 }
 function renderTreeStatus(text,kind='info'){const el=document.getElementById('treeStatus');if(!el)return;el.textContent=text;el.style.borderLeftColor=kind==='success'?'#5b7052':kind==='error'?'#b5691a':'#5b7052';el.style.background=kind==='success'?'rgba(91,112,82,.12)':kind==='error'?'rgba(217,138,31,.12)':'rgba(91,112,82,.08)'}
 
@@ -622,7 +721,7 @@ function addTourForest(f,data,score){const k=f.osmId||`${f.centroid[0]}-${f.cent
 map.on('click',e=>{if(TOUR.selecting){TOUR.start=e.latlng;TOUR.selecting=false;renderTour()}});document.getElementById('tourToggleBtn').onclick=()=>{document.getElementById('tourPanel').classList.toggle('open');renderTour()};document.getElementById('tourStartBtn').onclick=()=>{TOUR.selecting=true;document.getElementById('tourStartText').textContent='Startpunkt wählen: auf die Karte klicken…'};document.getElementById('tourClearBtn').onclick=()=>{TOUR.items=[];TOUR.routeLayer.clearLayers();renderTour();document.getElementById('tourSummary').textContent=''};document.getElementById('tourRouteBtn').onclick=async()=>{if(!TOUR.items.length){document.getElementById('tourSummary').textContent='Bitte zuerst Waldflächen hinzufügen.';return}TOUR.routeLayer.clearLayers();const coords=[`${TOUR.start.lng},${TOUR.start.lat}`,...TOUR.items.map(x=>`${x.f.centroid[1]},${x.f.centroid[0]}`),`${TOUR.start.lng},${TOUR.start.lat}`];try{const r=await fetch(`https://router.project-osrm.org/route/v1/foot/${coords.join(';')}?overview=full&geometries=geojson`),j=await r.json();if(j.code!=='Ok')throw new Error('Keine Route');L.geoJSON(j.routes[0].geometry,{style:{color:'#d98a1f',weight:5,opacity:.85}}).addTo(TOUR.routeLayer);document.getElementById('tourSummary').innerHTML=`<b>Gesamt:</b> ${Math.round(j.routes[0].distance/100)/10} km · ca. ${Math.round(j.routes[0].duration/60)} min zu Fuß`}catch(e){document.getElementById('tourSummary').textContent='Route konnte nicht berechnet werden: '+e.message}}
 
 /* ---------- Pilzmodal ---------- */
-function renderSpeciesModal(id){const s=speciesConfig[id];document.getElementById('modalName').textContent=s.label;document.getElementById('modalLatin').textContent=s.latin;document.getElementById('modalSpeisewert').textContent=s.info.speisewert;document.getElementById('modalBeschreibung').textContent=s.info.beschreibung;document.getElementById('modalHut').textContent=s.info.hut;document.getElementById('modalStiel').textContent=s.info.stiel;document.getElementById('modalFleisch').textContent=s.info.fleisch;document.getElementById('modalGeruch').textContent=s.info.geruch;document.getElementById('modalHabitat').textContent=s.info.habitat;document.getElementById('modalBoden').textContent=s.info.boden;document.getElementById('modalKlima').textContent=s.info.klima;document.getElementById('modalBesonderheit').textContent=s.info.besonderheit;document.getElementById('modalVerwechslung').textContent='⚠ '+s.info.verwechslung;document.getElementById('modalMonthBar').innerHTML=['J','F','M','A','M','J','J','A','S','O','N','D'].map((x,i)=>`<div class="month-cell${s.months.includes(i+1)?' active':''}">${x}</div>`).join('');document.getElementById('modalHabitatTrees').textContent=s.info.habitat;document.getElementById('modalHabitatSoil').textContent=s.info.boden;document.getElementById('modalHabitatClimate').textContent=s.info.klima;document.getElementById('modalSeasonBar').innerHTML=document.getElementById('modalMonthBar').innerHTML;document.getElementById('modalSeasonText').textContent=s.months.includes(new Date().getMonth()+1)?`Jetzt ist Saison für ${s.label}.`:`Außerhalb der Kern-Saison von ${s.label}.`;document.getElementById('modalSeasonWeather').innerHTML=['Regen','Temperatur','Boden','Saison','Wald','Relief'].map((x,i)=>`<div class="${i<3?'good':'best'}">${x}</div>`).join('');document.getElementById('modalLookalikes').innerHTML=`<div class="observation-card">${escapeHtml(s.info.verwechslung)}</div>`;document.getElementById('modalImages').innerHTML='<span class="source-note">Lade Bilder…</span>';document.getElementById('recognitionList').innerHTML='<span class="source-note">Lade Vergleichsbilder…</span>';document.getElementById('modalObservations').innerHTML='<span class="source-note">Lade Beobachtungen…</span>';document.getElementById('indexFungorumContent').textContent='Index Fungorum wird geladen…';document.getElementById('taxonomyHistory').innerHTML='';document.getElementById('speciesSources').innerHTML=`<span class="source-pill">iNaturalist</span><span class="source-pill">GBIF</span><span class="source-pill">Index Fungorum</span><span class="source-pill">JRC European Atlas</span><span class="source-pill">EU-Trees4F</span><p><a href="${JRC_ATLAS_URL}" target="_blank" rel="noopener">JRC European Atlas öffnen</a></p><p><a href="${JRC_TREES4F_URL}" target="_blank" rel="noopener">EU-Trees4F öffnen</a></p>`;document.getElementById('modalMicroclimate').innerHTML=activeForest?renderMicro(activeForest.micro):'<div class="micro-card">Wird beim Öffnen eines Waldgebietes berechnet.</div>';document.querySelectorAll('.species-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab==='general'));document.querySelectorAll('.species-tab-panel').forEach(p=>p.classList.toggle('active',p.dataset.panel==='general'));document.getElementById('speciesModal').classList.add('open');bestImages(s.iNatName,12).then(imgs=>document.getElementById('modalImages').innerHTML=imgs.map(x=>`<figure><a href="${x.original}" target="_blank" rel="noopener"><img src="${x.url}" loading="lazy" alt="Pilzfoto"></a><figcaption>Foto: ${escapeHtml(x.credit)} · ${x.source}</figcaption></figure>`).join('')||'<span class="source-note">Keine Bilder gefunden.</span>').catch(()=>{});fetchINatObservations(s.iNatName);fetchIF(s.latin).then(d=>{document.getElementById('indexFungorumContent').innerHTML=`<span class="source-pill">Index Fungorum</span><div class="detail-row"><span class="label">Name</span><span class="value">${escapeHtml(d?.name||s.latin)}</span></div><div class="detail-row"><span class="label">Autor</span><span class="value">${escapeHtml(d?.author||'–')}</span></div><div class="detail-row"><span class="label">Status</span><span class="value">${escapeHtml(d?.status||'–')}</span></div><div class="detail-row"><span class="label">Aktueller Name</span><span class="value">${escapeHtml(d?.current||'–')}</span></div>`;document.getElementById('taxonomyHistory').innerHTML=`<div class="taxonomy-item">${escapeHtml(d?.name||s.latin)}</div>`}).catch(()=>{})}
+function renderSpeciesModal(id){const s=speciesConfig[id];document.getElementById('modalName').textContent=s.label;document.getElementById('modalLatin').textContent=s.latin;document.getElementById('modalSpeisewert').textContent=s.info.speisewert;document.getElementById('modalBeschreibung').textContent=s.info.beschreibung;document.getElementById('modalHut').textContent=s.info.hut;document.getElementById('modalStiel').textContent=s.info.stiel;document.getElementById('modalFleisch').textContent=s.info.fleisch;document.getElementById('modalGeruch').textContent=s.info.geruch;document.getElementById('modalHabitat').textContent=s.info.habitat;document.getElementById('modalBoden').textContent=s.info.boden;document.getElementById('modalKlima').textContent=s.info.klima;document.getElementById('modalBesonderheit').textContent=s.info.besonderheit;document.getElementById('modalVerwechslung').textContent='⚠ '+s.info.verwechslung;document.getElementById('modalMonthBar').innerHTML=['J','F','M','A','M','J','J','A','S','O','N','D'].map((x,i)=>`<div class="month-cell${s.months.includes(i+1)?' active':''}">${x}</div>`).join('');document.getElementById('modalHabitatTrees').textContent=s.info.habitat;document.getElementById('modalHabitatSoil').textContent=s.info.boden;document.getElementById('modalHabitatClimate').textContent=s.info.klima;document.getElementById('modalSeasonBar').innerHTML=document.getElementById('modalMonthBar').innerHTML;document.getElementById('modalSeasonText').textContent=s.months.includes(new Date().getMonth()+1)?`Jetzt ist Saison für ${s.label}.`:`Außerhalb der Kern-Saison von ${s.label}.`;document.getElementById('modalSeasonWeather').innerHTML=['Regen','Temperatur','Boden','Saison','Wald','Relief'].map((x,i)=>`<div class="${i<3?'good':'best'}">${x}</div>`).join('');document.getElementById('modalLookalikes').innerHTML=`<div class="observation-card">${escapeHtml(s.info.verwechslung)}</div>`;document.getElementById('modalImages').innerHTML='<span class="source-note">Lade Bilder…</span>';document.getElementById('recognitionList').innerHTML='<span class="source-note">Lade Vergleichsbilder…</span>';document.getElementById('modalObservations').innerHTML='<span class="source-note">Lade Beobachtungen…</span>';document.getElementById('indexFungorumContent').textContent='Index Fungorum wird geladen…';document.getElementById('taxonomyHistory').innerHTML='';document.getElementById('speciesSources').innerHTML=`<span class="source-pill">iNaturalist</span><span class="source-pill">GBIF</span><span class="source-pill">Index Fungorum</span>`;document.getElementById('modalMicroclimate').innerHTML=activeForest?renderMicro(activeForest.micro):'<div class="micro-card">Wird beim Öffnen eines Waldgebietes berechnet.</div>';document.querySelectorAll('.species-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab==='general'));document.querySelectorAll('.species-tab-panel').forEach(p=>p.classList.toggle('active',p.dataset.panel==='general'));document.getElementById('speciesModal').classList.add('open');bestImages(s.iNatName,12).then(imgs=>document.getElementById('modalImages').innerHTML=imgs.map(x=>`<figure><a href="${x.original}" target="_blank" rel="noopener"><img src="${x.url}" loading="lazy" alt="Pilzfoto"></a><figcaption>Foto: ${escapeHtml(x.credit)} · ${x.source}</figcaption></figure>`).join('')||'<span class="source-note">Keine Bilder gefunden.</span>').catch(()=>{});fetchINatObservations(s.iNatName);fetchIF(s.latin).then(d=>{document.getElementById('indexFungorumContent').innerHTML=`<span class="source-pill">Index Fungorum</span><div class="detail-row"><span class="label">Name</span><span class="value">${escapeHtml(d?.name||s.latin)}</span></div><div class="detail-row"><span class="label">Autor</span><span class="value">${escapeHtml(d?.author||'–')}</span></div><div class="detail-row"><span class="label">Status</span><span class="value">${escapeHtml(d?.status||'–')}</span></div><div class="detail-row"><span class="label">Aktueller Name</span><span class="value">${escapeHtml(d?.current||'–')}</span></div>`;document.getElementById('taxonomyHistory').innerHTML=`<div class="taxonomy-item">${escapeHtml(d?.name||s.latin)}</div>`}).catch(()=>{})}
 async function fetchINatObservations(name){try{const id=await inatTaxon(name),r=await fetch(`https://api.inaturalist.org/v1/observations?taxon_id=${id}&photos=true&per_page=6&order_by=observed_on&order=desc`),j=await r.json();document.getElementById('modalObservations').innerHTML=(j.results||[]).map(o=>`<div class="observation-card"><b>${escapeHtml(o.observed_on||o.created_at||'Datum unbekannt')}</b><div>${escapeHtml(o.place_guess||'Ort nicht angegeben')}</div><a href="https://www.inaturalist.org/observations/${o.id}" target="_blank" rel="noopener">Beobachtung öffnen</a></div>`).join('')||'<span class="source-note">Keine Beobachtungen gefunden.</span>'}catch(_){document.getElementById('modalObservations').innerHTML='<span class="source-note">Aktuelle Beobachtungen momentan nicht verfügbar.</span>'}}
 
 document.getElementById('speciesSelect').addEventListener('change',e=>{currentSpecies=e.target.value;if(forestResults.length){forestResults=forestResults.map(r=>{const treeEval=evaluateTreeEvidenceForForest(r.forest,r.treeSources||[],currentSpecies);const mushEval=evaluateMushroomEvidenceForForest(r.forest,r.mushroomOccurrences||[]);const data={...r.data,leafType:treeEval.leafType,treeType:treeEval.leafType,treePoints:treeEval.treePoints,treeLabel:treeDisplayLabel(treeEval.leafType,treeEval.best,currentSpecies)};const score=computeScore(currentSpecies,data,r.micro,treeEval,mushEval);return{...r,data,score,treeEvidence:treeEval,mushroomEvidence:mushEval}}).sort((a,b)=>b.score.total-a.score.total);renderForestRanking();if(activeForest){const same=forestResults.find(r=>r.forest.osmId===activeForest.forest.osmId);if(same)openForestDetail(same)}}});
@@ -638,18 +737,18 @@ function setProgressStep(index,state='running',detail='läuft…',fraction=null)
 function updateBatchProgress(stepIndex,label,totalDone,total){const f=total?totalDone/total:1;setProgressStep(stepIndex,'running',`${totalDone}/${total}`,f);setProgress(progressValue,`${label} (${totalDone}/${total})`)}
 function finishProgress(){for(let i=0;i<8;i++)if(progressState[i]?.state!=='error')progressState[i]={state:'done',fraction:1};setProgress(100,'Analyse abgeschlossen')}
 function renderAnalysisLayer(){resultLayer.clearLayers();forestResults.sort((a,b)=>b.score.total-a.score.total);forestResults.forEach(r=>L.polygon(r.forest.coords,{pane:'forestPane',color:'#3a2c1a',weight:1.5,opacity:.9,fillColor:scoreColor(r.score.total),fillOpacity:.62}).on('click',()=>openForestDetail(r)).on('mouseover',e=>e.target.setStyle({weight:3})).on('mouseout',e=>e.target.setStyle({weight:1.5})).addTo(resultLayer));renderForestRanking()}
-function buildForestResult(f,i,elev,weather,soil,treeSources,mushroomOccurrences,osm,treeLoaded,mushroomLoaded,structureLoaded,micro){const fTree=evaluateTreeEvidenceForForest(f,treeSources||[],currentSpecies),fMush=evaluateMushroomEvidenceForForest(f,mushroomOccurrences||[]),structure=forestStructureScore(f,osm),leafType=fTree.leafType!=='unknown'?fTree.leafType:(f.leafType||inferForestTypeFromTags(f.tags)||'unknown');const treeLabel=treeDisplayLabel(leafType,fTree.best,currentSpecies);const data={elevation:elev[i]??null,precip14:weather[i]?.precip14??null,precip7:weather[i]?.precip7??null,precip3:weather[i]?.precip3??null,tempAvg10:weather[i]?.tempAvg10??null,tempAvg3:weather[i]?.tempAvg3??null,maxTemp3:weather[i]?.maxTemp3??null,rainHours14:weather[i]?.rainHours14??0,sunshine10:weather[i]?.sunshine10??null,soilMoisture:weather[i]?.soilMoisture??null,ph:soil[i]??null,leafType,treeType:leafType,treePoints:fTree.treePoints,treeLabel,treePriorPoints:fTree.priorPoints,treeEvidencePoints:fTree.evidencePoints,structure,treeEvidenceLoaded:treeLoaded,mushroomEvidenceLoaded:mushroomLoaded,structureLoaded};const score=computeScore(currentSpecies,data,micro||null,fTree,null);return{forest:f,data,score,micro:micro||null,treeSources:treeSources||[],treeEvidence:fTree,mushroomOccurrences:mushroomOccurrences||[],mushroomEvidence:fMush,structure,analysisStage:micro?'vollständig':'vorläufig'}}
+function buildForestResult(f,i,elev,weather,soil,treeSources,mushroomOccurrences,osm,treeLoaded,mushroomLoaded,structureLoaded,micro,dlrData){const fTree=evaluateTreeEvidenceForForest(f,treeSources||[],currentSpecies,dlrData||null),fMush=evaluateMushroomEvidenceForForest(f,mushroomOccurrences||[]),structure=forestStructureScore(f,osm),leafType=fTree.leafType!=='unknown'?fTree.leafType:(f.leafType||inferForestTypeFromTags(f.tags)||'unknown');const treeLabel=fTree.dlr?.dominant?.label||treeDisplayLabel(leafType,fTree.best,currentSpecies);const data={elevation:elev[i]??null,precip14:weather[i]?.precip14??null,precip7:weather[i]?.precip7??null,precip3:weather[i]?.precip3??null,tempAvg10:weather[i]?.tempAvg10??null,tempAvg3:weather[i]?.tempAvg3??null,maxTemp3:weather[i]?.maxTemp3??null,rainHours14:weather[i]?.rainHours14??0,sunshine10:weather[i]?.sunshine10??null,soilMoisture:weather[i]?.soilMoisture??null,ph:soil[i]??null,leafType,treeType:leafType,treePoints:fTree.treePoints,treeLabel,treePriorPoints:fTree.priorPoints,treeEvidencePoints:fTree.evidencePoints,structure,treeEvidenceLoaded:treeLoaded||!!dlrData?.available,mushroomEvidenceLoaded:mushroomLoaded,structureLoaded};const score=computeScore(currentSpecies,data,micro||null,fTree,null);return{forest:f,data,score,micro:micro||null,treeSources:treeSources||[],treeEvidence:fTree,mushroomOccurrences:mushroomOccurrences||[],mushroomEvidence:fMush,structure,dlrTree:dlrData||null,analysisStage:micro?'vollständig':'vorläufig'}}
 function rebuildResults(forests,shared){
   const next=[];
   for(let i=0;i<forests.length;i++){
     const f=forests[i];
     try{
-      next.push(buildForestResult(f,i,shared.elev||[],shared.weather||[],shared.soil||[],shared.treeSources||[],shared.mushroomOccurrences||[],shared.osm,!!shared.treeLoaded,!!shared.mushroomLoaded,!!shared.structureLoaded,shared.microByIndex?.get(i)||null));
+      next.push(buildForestResult(f,i,shared.elev||[],shared.weather||[],shared.soil||[],shared.treeSources||[],shared.mushroomOccurrences||[],shared.osm,!!shared.treeLoaded,!!shared.mushroomLoaded,!!shared.structureLoaded,shared.microByIndex?.get(i)||null,shared.dlrByIndex?.[i]||null));
     }catch(e){
       console.warn('Waldfläche konnte nicht vollständig bewertet werden:',i,e);
       const fallbackData={elevation:shared.elev?.[i]??null,precip14:shared.weather?.[i]?.precip14??null,precip7:shared.weather?.[i]?.precip7??null,precip3:shared.weather?.[i]?.precip3??null,tempAvg10:shared.weather?.[i]?.tempAvg10??null,tempAvg3:shared.weather?.[i]?.tempAvg3??null,maxTemp3:shared.weather?.[i]?.maxTemp3??null,rainHours14:shared.weather?.[i]?.rainHours14??0,sunshine10:shared.weather?.[i]?.sunshine10??null,soilMoisture:shared.weather?.[i]?.soilMoisture??null,ph:shared.soil?.[i]??null,leafType:(f.leafType&&f.leafType!=='unknown'?f.leafType:inferForestTypeFromTags(f.tags)),treeType:(f.leafType&&f.leafType!=='unknown'?f.leafType:inferForestTypeFromTags(f.tags)),treePoints:treeCompatibilityPrior(currentSpecies,(f.leafType&&f.leafType!=='unknown'?f.leafType:inferForestTypeFromTags(f.tags))),treeLabel:treeDisplayLabel((f.leafType&&f.leafType!=='unknown'?f.leafType:inferForestTypeFromTags(f.tags)),null,currentSpecies),structure:forestStructureScore(f,shared.osm),treeEvidenceLoaded:!!shared.treeLoaded,mushroomEvidenceLoaded:!!shared.mushroomLoaded,structureLoaded:!!shared.structureLoaded};
       let fallbackScore;
-      try{fallbackScore=computeScore(currentSpecies,fallbackData,shared.microByIndex?.get(i)||null,{entries:[],best:null,treePoints:0},{score:0,count:0,examples:[]})}catch(_){fallbackScore={total:0,precipPts:0,tempPts:0,weatherPatternPts:0,phPts:0,monthPts:0,forestPts:0,treePts:0,microPts:0,structurePts:0,synergyPts:0,treeLabel:'Keine lokale Baumarten-Evidenz',microLabel:'nicht verfügbar',dataConfidence:72,criticalCap:1,rawScore:0}}
+      try{fallbackScore=computeScore(currentSpecies,fallbackData,shared.microByIndex?.get(i)||null,{entries:[],best:null,treePoints:0},{score:0,count:0,examples:[]})}catch(_){fallbackScore={total:0,precipPts:0,tempPts:0,weatherPatternPts:0,phPts:0,monthPts:0,forestPts:0,treePts:0,microPts:0,structurePts:0,synergyPts:0,treeLabel:'Wirtsbaum-Spektrum wird ausgewertet',microLabel:'nicht verfügbar',dataConfidence:72,criticalCap:1,rawScore:0}}
       next.push({forest:f,data:fallbackData,score:fallbackScore,micro:shared.microByIndex?.get(i)||null,treeSources:shared.treeSources||[],treeEvidence:{entries:[],best:null,leafType:'unknown',treePoints:0,confidence:0,corroboratedPartners:0},mushroomOccurrences:shared.mushroomOccurrences||[],mushroomEvidence:{score:0,count:0,nearestKm:null,recentCount:0,examples:[]},structure:fallbackData.structure,analysisStage:'teilweise'});
     }
   }
@@ -666,7 +765,7 @@ document.getElementById('searchBtn').onclick=async()=>{
     document.getElementById('status').textContent='Lese Waldflächen aus den geladenen Vektorkacheln…';setProgressStep(0,'running','wird erkannt…',.25);await new Promise(r=>setTimeout(r,100));let forests=getVisibleForests();if(!forests.length){await new Promise(r=>setTimeout(r,250));forests=getVisibleForests()}
     if(!forests.length){document.getElementById('status').textContent='Keine Waldflächen in den aktuell geladenen Vektorkacheln erkannt. Etwas hineinzoomen oder Kartenausschnitt verschieben.';searchProgress.style.display='none';return}
     forests=mergeTouchingForests(forests).sort((a,b)=>b.area-a.area).slice(0,MAX_FORESTS);setProgressStep(0,'done',`${forests.length} gefunden`,1);setProgress(5,`${forests.length} Waldflächen gefunden`);document.getElementById('status').textContent=`${forests.length} Waldflächen gefunden. Starte gestufte Analyse…`;
-    const species=speciesConfig[currentSpecies],shared={forests,elev:new Array(forests.length),weather:new Array(forests.length),soil:new Array(forests.length),treeSources:[],mushroomOccurrences:[],osm:null,treeLoaded:false,mushroomLoaded:false,structureLoaded:false,microByIndex:new Map()};
+    const species=speciesConfig[currentSpecies],shared={forests,elev:new Array(forests.length),weather:new Array(forests.length),soil:new Array(forests.length),treeSources:[],mushroomOccurrences:[],osm:null,treeLoaded:false,mushroomLoaded:false,structureLoaded:false,microByIndex:new Map(),dlrByIndex:new Array(forests.length)};
     const safeTask=async(index,label,factory,fallback)=>{setProgressStep(index,'running','läuft…',0);try{const value=await factory();setProgressStep(index,'done','fertig',1);return{ok:true,data:value}}catch(e){console.warn(label+' konnten nicht geladen werden:',e);setProgressStep(index,'error','nicht verfügbar',1);return{ok:false,data:fallback,error:e}}};
     let microStageDone=false,optionalStageDone=false,optionalStageFailed=false;
     const finalizeSearch=()=>{if(runId!==searchRunId||!microStageDone||!optionalStageDone)return;finishProgress();renderAnalysisLayer();const treeCount=forestResults.filter(r=>(r.treeEvidence?.best?.score||0)>0).length,mushroomCount=forestResults.filter(r=>(r.mushroomEvidence?.score||0)>0).length;document.getElementById('status').textContent=optionalStageFailed?`Analyse fertig. ${forestResults.length} Waldflächen angezeigt; einige optionale Zusatzdaten waren nicht verfügbar.`:`Fertig. ${forestResults.length} Waldflächen angezeigt und nach Score geordnet.${treeCount?` Baumarten-Nachweise für ${treeCount} Fläche(n) berücksichtigt.`:''}${mushroomCount?` Pilznachweise für ${mushroomCount} Fläche(n) berücksichtigt.`:''}`};
@@ -674,13 +773,14 @@ document.getElementById('searchBtn').onclick=async()=>{
     const soilP=safeTask(2,'Bodendaten',()=>fetchSoilPh(forests,(d,t)=>updateBatchProgress(2,'Bodendaten',d,t)),new Array(forests.length));
     const elevP=safeTask(3,'Höhen-/Reliefdaten',()=>fetchElevations(forests,(d,t)=>updateBatchProgress(3,'Höhen-/Reliefdaten',d,t)),new Array(forests.length));
     const treeP=safeTask(4,'Baumarten',()=>loadTreeEvidence(species,map.getBounds()),[]);
+    const dlrP=safeTask(4,'DLR-Baumartenkarte',()=>loadDlrTreeData(forests,(d,t)=>updateBatchProgress(4,'Baumartenkarte',d,t)),new Array(forests.length));
     const mushroomP=safeTask(5,'Pilznachweise',()=>loadMushroomEvidence(species,map.getBounds()),[]);
     const osmP=safeTask(6,'Habitatstruktur',()=>loadOsmContext(map.getBounds()),null);
 
     const core=await Promise.all([weatherP,soilP,elevP]);shared.weather=core[0].data||shared.weather;shared.soil=core[1].data||shared.soil;shared.elev=core[2].data||shared.elev;
     setProgressStep(7,'running','erste Scores werden angezeigt…',.35);rebuildResults(forests,shared);document.getElementById('status').textContent=`${forests.length} Waldflächen analysiert. Vorläufige Rangliste bereits sichtbar – weitere Daten werden ergänzt…`;
 
-    const treeResult=await treeP;shared.treeSources=treeResult.data||[];shared.treeLoaded=treeResult.ok;rebuildResults(forests,shared);setProgressStep(4,treeResult.ok?'done':'error',treeResult.ok?'geladen':'nicht verfügbar',1);
+    const treeResult=await treeP;shared.treeSources=treeResult.data||[];shared.treeLoaded=treeResult.ok;const dlrResult=await dlrP;shared.dlrByIndex=dlrResult.data||new Array(forests.length);rebuildResults(forests,shared);setProgressStep(4,dlrResult.ok?'done':'error',dlrResult.ok?'DLR-Karte geladen':'nicht verfügbar',1);
     document.getElementById('status').textContent=`${forests.length} Waldflächen bewertet. Baumarten ergänzt; weitere Habitat-/Pilzdaten folgen…`;
 
     const preliminary=forestResults.slice().sort((a,b)=>b.score.total-a.score.total);const selected=new Set(preliminary.slice(0,Math.min(MICRO_ANALYSIS_LIMIT,forests.length)).map(r=>r.forest.osmId||`${r.forest.centroid[0]}-${r.forest.centroid[1]}`));const microTargets=[],microIndexes=[];forests.forEach((f,i)=>{const k=f.osmId||`${f.centroid[0]}-${f.centroid[1]}`;if(selected.has(k)){microTargets.push(f);microIndexes.push(i)}});
