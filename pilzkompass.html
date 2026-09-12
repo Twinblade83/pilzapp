@@ -177,6 +177,34 @@ function statusTagHtml(status){const labels={ideal:'ideal',ok:'okay',poor:'ungü
 function rangeStatus(v,cfg){if(v<=cfg.lo||v>=cfg.hi)return'poor';if(v>=cfg.idealLo&&v<=cfg.idealHi)return'ideal';return'ok'}
 function phStatusLabel(ph){if(ph<4.5)return'stark sauer';if(ph<5.5)return'sauer';if(ph<6.5)return'leicht sauer';if(ph<7.2)return'neutral';return'alkalisch'}
 function triScore(v,cfg){if(v<=cfg.lo||v>=cfg.hi)return 0;if(v>=cfg.idealLo&&v<=cfg.idealHi)return cfg.pts;if(v<cfg.idealLo)return cfg.pts*(v-cfg.lo)/(cfg.idealLo-cfg.lo);return cfg.pts*(cfg.hi-v)/(cfg.hi-cfg.idealHi)}
+function weatherScore(data,s){
+  const precipCfg=s.precip,tempCfg=s.temp;
+  const p14=data?.precip14!=null?triScore(Number(data.precip14),precipCfg):0;
+  const p7=data?.precip7!=null?triScore(Number(data.precip7),precipCfg):0;
+  const p3=data?.precip3!=null?triScore(Number(data.precip3),precipCfg):0;
+  const t10=data?.tempAvg10!=null?triScore(Number(data.tempAvg10),tempCfg):0;
+  const t3=data?.tempAvg3!=null?triScore(Number(data.tempAvg3),tempCfg):0;
+  const precipBase=((p14*.50)+(p7*.30)+(p3*.20));
+  const tempBase=((t10*.65)+(t3*.35));
+  const precipPts=Math.max(0,Math.min(12,precipBase*(12/Math.max(1,Number(precipCfg.pts)||20))));
+  const tempPts=Math.max(0,Math.min(8,tempBase*(8/Math.max(1,Number(tempCfg.pts)||20))));
+  const rainHours=Number(data?.rainHours14);
+  const rainHeat=
+    data?.precip7!=null && data?.tempAvg3!=null &&
+    data.precip7>0 && data.tempAvg3>=tempCfg.idealLo && data.tempAvg3<=tempCfg.idealHi;
+  let patternPts=0;
+  if(rainHeat)patternPts+=1.5;
+  if(Number.isFinite(rainHours)){
+    if(rainHours>=8&&rainHours<=45)patternPts+=.5;
+    else if(rainHours>45&&rainHours<=70)patternPts+=.2;
+  }
+  if(data?.soilMoisture!=null){
+    const moist=Number(data.soilMoisture);
+    const target=s.micro?.moist?.18:.14;
+    if(Number.isFinite(moist))patternPts+=Math.max(-.5,Math.min(.5,(1-Math.abs(moist-target)/.12)*.5));
+  }
+  return{points:precipPts+tempPts,precipPts,tempPts,patternPts:Math.max(0,Math.min(2.5,patternPts))};
+}
 function areaDeg2(coords){let a=0;for(let i=0;i<coords.length-1;i++)a+=coords[i][1]*coords[i+1][0]-coords[i+1][1]*coords[i][0];return Math.abs(a/2)}
 function centroid(coords){let lat=0,lon=0;for(const p of coords){lat+=p[0];lon+=p[1]}return[lat/coords.length,lon/coords.length]}
 function areaHectares(a,lat){return Math.round(a*111.32*111.32*Math.cos(lat*Math.PI/180)*1000)/10}
