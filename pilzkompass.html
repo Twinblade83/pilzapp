@@ -165,7 +165,7 @@
   </div>
 
   <div class="note">
-    Regelwerk basiert auf Waldtyp (OSM), Niederschlag &amp; Temperatur der letzten Tage (Open-Meteo) sowie Höhenlage. Keine Garantie für tatsächliche Funde — bitte Sammelregeln und Naturschutzgebiete beachten.
+    Regelwerk basiert auf Waldtyp (OSM, inkl. Baumart), Boden-pH (SoilGrids), Niederschlag &amp; Temperatur der letzten Tage (Open-Meteo) sowie Höhenlage. Keine Garantie für tatsächliche Funde — bitte Sammelregeln und Naturschutzgebiete beachten.
   </div>
 </div>
 
@@ -191,25 +191,50 @@ document.querySelectorAll('.species-btn').forEach(btn => {
 const speciesConfig = {
   steinpilz: {
     label: 'Steinpilz',
-    precip: { lo: 5, idealLo: 20, idealHi: 60, hi: 120, pts: 35 },
-    temp:   { lo: 8, idealLo: 15, idealHi: 20, hi: 28, pts: 35 },
+    precip: { lo: 5, idealLo: 20, idealHi: 60, hi: 120, pts: 30 },
+    temp:   { lo: 8, idealLo: 15, idealHi: 20, hi: 28, pts: 30 },
+    ph:     { lo: 3.5, idealLo: 4.5, idealHi: 6.0, hi: 7.5, pts: 15 },
     months: [6,7,8,9,10],
-    monthPts: 20,
-    monthPtsOff: 5,
+    monthPts: 15,
+    monthPtsOff: 4,
     elevMax: 1500,
-    waldtypPts: 10
+    // Steinpilz bildet Mykorrhiza v.a. mit Fichte, Kiefer, Buche
+    waldtyp: { coniferous: 10, mixed: 10, broadleaved: 8, unbekannt: 5 }
   },
   pfifferling: {
     label: 'Pfifferling',
-    precip: { lo: 10, idealLo: 30, idealHi: 80, hi: 150, pts: 35 },
-    temp:   { lo: 10, idealLo: 14, idealHi: 19, hi: 26, pts: 35 },
+    precip: { lo: 10, idealLo: 30, idealHi: 80, hi: 150, pts: 30 },
+    temp:   { lo: 10, idealLo: 14, idealHi: 19, hi: 26, pts: 30 },
+    ph:     { lo: 3.0, idealLo: 4.0, idealHi: 5.5, hi: 6.5, pts: 15 },
     months: [5,6,7,8,9,10,11],
-    monthPts: 20,
-    monthPtsOff: 5,
+    monthPts: 15,
+    monthPtsOff: 4,
     elevMax: 1800,
-    waldtypPts: 10
+    // Pfifferling: Fichte/Kiefer bevorzugt, aber auch unter Eiche/Buche häufig
+    waldtyp: { coniferous: 10, mixed: 10, broadleaved: 8, unbekannt: 5 }
   }
 };
+
+function waldtypScore(leafType, cfg) {
+  return cfg.waldtyp[leafType] !== undefined ? cfg.waldtyp[leafType] : cfg.waldtyp.unbekannt;
+}
+
+// Leitet den Waldtyp aus OSM-Tags ab: erst explizite leaf_type/wood-Tags,
+// sonst Baumart (species/genus), sonst unbekannt.
+function inferLeafType(tags) {
+  if (!tags) return 'unbekannt';
+  if (['broadleaved','coniferous','mixed'].includes(tags.leaf_type)) return tags.leaf_type;
+  if (tags.wood === 'coniferous') return 'coniferous';
+  if (tags.wood === 'deciduous') return 'broadleaved';
+  if (tags.wood === 'mixed') return 'mixed';
+
+  const speciesTag = (tags.species || tags['species:de'] || tags.genus || tags['genus:de'] || '').toLowerCase();
+  const conifers = ['picea','pinus','abies','larix','pseudotsuga','fichte','kiefer','tanne','lärche','laerche','douglasie'];
+  const broadleaf = ['fagus','quercus','betula','carpinus','tilia','acer','fraxinus','buche','eiche','birke','hainbuche','ahorn','esche'];
+  if (conifers.some(k => speciesTag.includes(k))) return 'coniferous';
+  if (broadleaf.some(k => speciesTag.includes(k))) return 'broadleaved';
+  return 'unbekannt';
+}
 
 function triScore(value, cfg) {
   const { lo, idealLo, idealHi, hi, pts } = cfg;
@@ -225,9 +250,11 @@ function computeScore(species, data) {
   let score = 0;
   score += triScore(data.precip14, cfg.precip);
   score += triScore(data.tempAvg10, cfg.temp);
+  // Fehlender pH-Wert (z.B. API nicht erreichbar) -> neutraler Mittelwert statt 0
+  score += data.ph != null ? triScore(data.ph, cfg.ph) : cfg.ph.pts * 0.5;
   const month = new Date().getMonth() + 1;
   score += cfg.months.includes(month) ? cfg.monthPts : cfg.monthPtsOff;
-  score += cfg.waldtypPts; // generalist bonus - most forest types viable
+  score += waldtypScore(data.leafType, cfg);
   return Math.max(0, Math.min(100, Math.round(score)));
 }
 
@@ -274,7 +301,7 @@ out geom;`;
         coords,
         area: shoelaceArea(coords),
         centroid: centroid(coords),
-        leafType: (el.tags && el.tags.leaf_type) || 'gemischt'
+        leafType: inferLeafType(el.tags)
       };
     })
     .sort((a,b) => b.area - a.area)
@@ -313,6 +340,30 @@ function leafTypeLabel(lt) {
   return 'Unbekannt / gemischt';
 }
 
+// SoilGrids (ISRIC) liefert weltweit Boden-pH auf 250m-Raster, kostenlos.
+// Die API erlaubt nur Einzelpunkt-Abfragen, daher ein Request pro Fläche;
+// einzelne Fehler brechen die Gesamtsuche nicht ab (Promise.allSettled).
+async function fetchSoilPh(points) {
+  const results = await Promise.allSettled(points.map(p => {
+    const url = `https://rest.isric.org/soilgrids/v2.0/properties/query?lon=${p.centroid[1]}&lat=${p.centroid[0]}&property=phh2o&depth=0-5cm&value=mean`;
+    return fetch(url).then(r => {
+      if (!r.ok) throw new Error('SoilGrids ' + r.status);
+      return r.json();
+    });
+  }));
+  return results.map(r => {
+    if (r.status !== 'fulfilled') return null;
+    try {
+      const layer = r.value.properties.layers.find(l => l.name === 'phh2o');
+      const depth = layer.depths.find(d => d.label === '0-5cm');
+      const raw = depth.values.mean; // SoilGrids liefert pH * 10 als Ganzzahl
+      return raw != null ? Math.round((raw / 10) * 10) / 10 : null;
+    } catch {
+      return null;
+    }
+  });
+}
+
 const statusEl = document.getElementById('status');
 const searchBtn = document.getElementById('searchBtn');
 
@@ -331,10 +382,11 @@ searchBtn.addEventListener('click', async () => {
       return;
     }
 
-    statusEl.textContent = `${forests.length} Waldflächen gefunden. Lade Wetter- und Höhendaten…`;
-    const [elevations, weather] = await Promise.all([
+    statusEl.textContent = `${forests.length} Waldflächen gefunden. Lade Wetter-, Boden- und Höhendaten…`;
+    const [elevations, weather, soilPh] = await Promise.all([
       fetchElevations(forests),
-      fetchWeather(forests)
+      fetchWeather(forests),
+      fetchSoilPh(forests)
     ]);
 
     let maxScore = 0;
@@ -342,7 +394,9 @@ searchBtn.addEventListener('click', async () => {
       const data = {
         elevation: elevations[i],
         precip14: weather[i].precip14,
-        tempAvg10: weather[i].tempAvg10
+        tempAvg10: weather[i].tempAvg10,
+        ph: soilPh[i],
+        leafType: f.leafType
       };
       const score = computeScore(currentSpecies, data);
       maxScore = Math.max(maxScore, score);
@@ -355,12 +409,15 @@ searchBtn.addEventListener('click', async () => {
         fillOpacity: 0.55
       }).addTo(resultLayer);
 
+      const phLine = data.ph != null ? `${data.ph} (gemessen)` : 'nicht verfügbar';
+
       polygon.bindPopup(`
         <b>${speciesConfig[currentSpecies].label} — Score ${score}/100</b><br>
         Waldtyp: ${leafTypeLabel(f.leafType)}<br>
         Höhe: ${Math.round(data.elevation)} m<br>
         Niederschlag (14 Tage): ${data.precip14} mm<br>
-        Ø Temperatur (10 Tage): ${data.tempAvg10} °C
+        Ø Temperatur (10 Tage): ${data.tempAvg10} °C<br>
+        Boden-pH (0–5cm): ${phLine}
       `);
     });
 
