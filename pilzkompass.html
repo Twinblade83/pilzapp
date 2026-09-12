@@ -600,63 +600,69 @@ async function fetchElevations(points,onProgress=null,onBatch=null){
 }
 async function parseWeatherResponse(raw){
   const list=Array.isArray(raw)?raw:[raw];
+  const todayKey=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Berlin',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
   return list.map(x=>{
-    const p=Array.isArray(x?.daily?.precipitation_sum)?x.daily.precipitation_sum:[];
-    const t=Array.isArray(x?.daily?.temperature_2m_mean)?x.daily.temperature_2m_mean:[];
-    const tm=Array.isArray(x?.daily?.temperature_2m_max)?x.daily.temperature_2m_max:[];
-    const ph=Array.isArray(x?.daily?.precipitation_hours)?x.daily.precipitation_hours:[];
-    const sun=Array.isArray(x?.daily?.sunshine_duration)?x.daily.sunshine_duration:[];
-    const clean=a=>a.filter(v=>Number.isFinite(Number(v))).map(Number);
-    const last14=clean(p.slice(-22,-8)),last7=clean(p.slice(-15,-8)),last3=clean(p.slice(-11,-8));
-    const temp10=clean(t.slice(-18,-8)),temp3=clean(t.slice(-11,-8)),max3=clean(tm.slice(-11,-8));
-    const rain14=clean(ph.slice(-22,-8)).reduce((a,v)=>a+v,0);
-    const sun10=clean(sun.slice(-19,-8)).reduce((a,v)=>a+v,0)/3600;
-    const forecastPrecip=clean(p.slice(-7)),forecastTemp=clean(t.slice(-7));
-    const soilMoisture=null;
-    const temp3Mean=temp3.length?temp3.reduce((a,v)=>a+v,0)/temp3.length:null;
-    const next7Mean=forecastTemp.length?forecastTemp.reduce((a,v)=>a+v,0)/forecastTemp.length:null;
-    const next7Precip=forecastPrecip.reduce((a,v)=>a+v,0);
-    const growthToday=calcGrowthIndex({precip3:last3.reduce((a,v)=>a+v,0),tempAvg3:temp3Mean,soilMoisture,forecastPrecip:next7Precip,forecastTemp:next7Mean});
-    const growth7=calcGrowthIndex({precip3:next7Precip/2,tempAvg3:next7Mean,soilMoisture,forecastPrecip:next7Precip,forecastTemp:next7Mean});
-    return {precip14:Number(last14.reduce((a,v)=>a+v,0).toFixed(1)),precip7:Number(last7.reduce((a,v)=>a+v,0).toFixed(1)),precip3:Number(last3.reduce((a,v)=>a+v,0).toFixed(1)),tempAvg10:temp10.length?Number((temp10.reduce((a,v)=>a+v,0)/temp10.length).toFixed(1)):null,tempAvg3:temp3Mean==null?null:Number(temp3Mean.toFixed(1)),maxTemp3:max3.length?Number((max3.reduce((a,v)=>a+v,0)/max3.length).toFixed(1)):null,rainHours14:Number(rain14.toFixed(1)),sunshine10:Number(sun10.toFixed(1)),soilMoisture:null,forecastPrecip7:Number(next7Precip.toFixed(1)),forecastTemp7:next7Mean==null?null:Number(next7Mean.toFixed(1)),growthIndex:growthToday.index,growthTrend:Math.round((growth7.index-growthToday.index)*10)/10};
+    const d=x?.daily||{};
+    const dates=Array.isArray(d.time)?d.time:[];
+    const nums=name=>Array.isArray(d[name])?d[name].map(v=>Number.isFinite(Number(v))?Number(v):null):[];
+    const p=nums('precipitation_sum'),t=nums('temperature_2m_mean'),tm=nums('temperature_2m_max'),ph=nums('precipitation_hours'),sun=nums('sunshine_duration');
+    let todayIndex=dates.indexOf(todayKey);
+    if(todayIndex<0) todayIndex=dates.length?Math.max(0,dates.length-8):0;
+    const hist=(arr,n)=>{const a=[];for(let i=Math.max(0,todayIndex-n);i<todayIndex;i++){if(arr[i]!=null)a.push(arr[i])}return a};
+    const forecast=(arr,n)=>{const a=[];for(let i=todayIndex+1;i<=Math.min(arr.length-1,todayIndex+n);i++){if(arr[i]!=null)a.push(arr[i])}return a};
+    const mean=a=>a.length?Number((a.reduce((q,v)=>q+v,0)/a.length).toFixed(1)):null;
+    const last14=hist(p,14),last7=hist(p,7),last3=hist(p,3),temp10=hist(t,10),temp3=hist(t,3),max3=hist(tm,3),rain14=hist(ph,14),sun10=hist(sun,10),forecastPrecip=forecast(p,7),forecastTemp=forecast(t,7);
+    const sunHours=sun10.length?sun10.reduce((a,v)=>a+v,0)/3600:null;
+    const temp3Mean=mean(temp3),next7Mean=mean(forecastTemp),next7Precip=forecastPrecip.reduce((a,v)=>a+v,0);
+    const growthToday=calcGrowthIndex({precip3:last3.reduce((a,v)=>a+v,0),tempAvg3:temp3Mean,soilMoisture:null,forecastPrecip:next7Precip,forecastTemp:next7Mean});
+    const growth7=calcGrowthIndex({precip3:next7Precip/2,tempAvg3:next7Mean,soilMoisture:null,forecastPrecip:next7Precip,forecastTemp:next7Mean});
+    return {precip14:Number(last14.reduce((a,v)=>a+v,0).toFixed(1)),precip7:Number(last7.reduce((a,v)=>a+v,0).toFixed(1)),precip3:Number(last3.reduce((a,v)=>a+v,0).toFixed(1)),tempAvg10:mean(temp10),tempAvg3:temp3Mean,maxTemp3:mean(max3),rainHours14:Number(rain14.reduce((a,v)=>a+v,0).toFixed(1)),sunshine10:sunHours==null?null:Number(sunHours.toFixed(1)),soilMoisture:null,forecastPrecip7:Number(next7Precip.toFixed(1)),forecastTemp7:next7Mean,growthIndex:growthToday.index,growthTrend:Math.round((growth7.index-growthToday.index)*10)/10};
   });
 }
 async function fetchWeather(points,onProgress=null,onBatch=null){
   const out=new Array(points.length).fill(null);
-  const valid=points.map((p,i)=>({p,i})).filter(x=>Number.isFinite(x.p.centroid?.[0])&&Number.isFinite(x.p.centroid?.[1]));
-  if(!valid.length){onProgress?.(points.length,points.length);return out}
-  // Wettermodelle haben ohnehin deutlich gröbere Raster als 100 m. Daher teilen sich nahe Zellen
-  // einen Wetterpunkt. Das reduziert API-Aufrufe massiv, ohne künstliche 100-m-Wetterpräzision vorzutäuschen.
   const groups=new Map();
-  valid.forEach(x=>{
-    const lat=Math.round(x.p.centroid[0]*100)/100,lon=Math.round(x.p.centroid[1]*100)/100,key=`${lat.toFixed(2)}|${lon.toFixed(2)}`;
-    if(!groups.has(key))groups.set(key,{lat,lon,items:[]});groups.get(key).items.push(x);
+  points.forEach((p,i)=>{
+    if(!Number.isFinite(p?.centroid?.[0])||!Number.isFinite(p?.centroid?.[1]))return;
+    const parent=p.parentForestIndex??i;
+    if(!groups.has(parent))groups.set(parent,{lat:Number(p.centroid[0]),lon:Number(p.centroid[1]),items:[]});
+    groups.get(parent).items.push(i);
   });
   const weatherGroups=[...groups.values()];
+  if(!weatherGroups.length){onProgress?.(points.length,points.length);return out}
+  const makeUrl=(lat,lon,includeSun=true)=>`https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&daily=precipitation_sum,temperature_2m_mean,temperature_2m_max,precipitation_hours${includeSun?',sunshine_duration':''}&past_days=14&forecast_days=7&timezone=Europe%2FBerlin&cell_selection=land`;
   let done=0;
-  for(let start=0;start<weatherGroups.length;start+=12){
-    const batch=weatherGroups.slice(start,start+12);
-    const la=batch.map(g=>g.lat.toFixed(2)).join(','),lo=batch.map(g=>g.lon.toFixed(2)).join(',');
+  for(let start=0;start<weatherGroups.length;start+=20){
+    const batch=weatherGroups.slice(start,start+20);
     let parsed=null;
-    const makeUrl=(lat,lon,includeSun=true)=>`https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&daily=precipitation_sum,temperature_2m_mean,temperature_2m_max,precipitation_hours${includeSun?',sunshine_duration':''}&past_days=16&forecast_days=7&timezone=Europe%2FBerlin&cell_selection=land`;
-    for(let attempt=1;attempt<=3&&!parsed;attempt++){
-      try{const r=await fetchWithTimeout(makeUrl(la,lo,true),{},30000);if(!r.ok)throw new Error('Open-Meteo Wetter '+r.status);const raw=await r.json();if(raw?.error)throw new Error(raw.reason||'Open-Meteo meldet einen Fehler');parsed=await parseWeatherResponse(raw)}catch(e){console.warn(`Wetter-Batch ${start/12+1} Versuch ${attempt} fehlgeschlagen:`,e);if(attempt<3)await new Promise(r=>setTimeout(r,500*attempt))}
+    for(const includeSun of [true,false]){
+      if(parsed)break;
+      try{
+        const la=batch.map(g=>g.lat.toFixed(5)).join(','),lo=batch.map(g=>g.lon.toFixed(5)).join(',');
+        const r=await fetchWithTimeout(makeUrl(la,lo,includeSun),{},30000);
+        if(!r.ok)throw new Error(`Open-Meteo ${r.status}`);
+        const raw=await r.json();
+        if(raw?.error)throw new Error(raw.reason||'Open-Meteo meldet einen Fehler');
+        const candidate=await parseWeatherResponse(raw);
+        if(Array.isArray(candidate)&&candidate.length===batch.length)parsed=candidate;
+      }catch(e){console.warn('Wetter-Mehrpunktabfrage fehlgeschlagen:',e)}
     }
-    if(!Array.isArray(parsed)||parsed.length!==batch.length){
-      // Harte Fallback-Variante: einzelne Koordinaten; zusätzlich ohne sunshine_duration, falls ein Modellfeld fehlt.
+    if(!parsed){
       parsed=new Array(batch.length).fill(null);
       for(let j=0;j<batch.length;j++){
         const g=batch[j];
         try{
-          let r=await fetchWithTimeout(makeUrl(g.lat,g.lon,true),{},30000);
-          if(!r.ok)r=await fetchWithTimeout(makeUrl(g.lat,g.lon,false),{},30000);
+          let r=await fetchWithTimeout(makeUrl(g.lat,g.lon,true),{},25000);
+          if(!r.ok)r=await fetchWithTimeout(makeUrl(g.lat,g.lon,false),{},25000);
           if(r.ok){const raw=await r.json();const one=await parseWeatherResponse(raw);parsed[j]=one[0]||null}
         }catch(e){console.warn('Einzel-Wetterpunkt nicht verfügbar:',e)}
       }
     }
-    batch.forEach((g,j)=>{const v=parsed[j]||null;g.items.forEach(x=>{out[x.i]=v})});
-    done+=batch.length;onProgress?.(Math.min(valid.length,done),valid.length);onBatch?.(parsed,batch.map(g=>g.items[0]?.p),start);
+    batch.forEach((g,j)=>g.items.forEach(i=>{out[i]=parsed[j]||null}));
+    done+=batch.length;onProgress?.(done,weatherGroups.length);onBatch?.(parsed,batch.map(g=>({centroid:[g.lat,g.lon]})),start);
   }
+  const usable=out.filter(Boolean).length;
+  if(!usable)throw new Error('Open-Meteo lieferte keine verwertbaren Wetterwerte');
   onProgress?.(points.length,points.length);return out;
 }
 function calcGrowthIndex(x){
@@ -879,11 +885,11 @@ async function openForestDetail(r){
   document.getElementById('detailWaldtyp').textContent=d.leafType==='unknown'?'Waldfläche':leafTypeLabel(d.leafType);
   document.getElementById('detailTreeType').textContent=r.score.treeLabel;
   document.getElementById('detailArea').textContent=areaHectares(f.area,f.centroid[0])+' ha · '+(f.tags?.cellSizeM||250)+' m Raster';
-  document.getElementById('detailElevation').textContent=Math.round(d.elevation)+' m';document.getElementById('detailCoords').textContent=`${f.centroid[0].toFixed(4)}, ${f.centroid[1].toFixed(4)}`;
-  document.getElementById('detailPrecip').innerHTML=`${d.precip14} mm · 7 Tage ${d.precip7} mm · 3 Tage ${d.precip3} mm ${statusTagHtml(rangeStatus(d.precip14,s.precip))}`;
+  document.getElementById('detailElevation').textContent=d.elevation!=null&&Number.isFinite(Number(d.elevation))?Math.round(d.elevation)+' m':'nicht verfügbar';document.getElementById('detailCoords').textContent=`${f.centroid[0].toFixed(4)}, ${f.centroid[1].toFixed(4)}`;
+  document.getElementById('detailPrecip').innerHTML=`${d.precip14!=null?d.precip14+' mm':'nicht verfügbar'} · 7 Tage ${d.precip7!=null?d.precip7+' mm':'–'} · 3 Tage ${d.precip3!=null?d.precip3+' mm':'–'} ${d.precip14!=null?statusTagHtml(rangeStatus(d.precip14,s.precip)):''}`;
   if(!document.getElementById('detailGrowthIndex')){const sec=document.createElement('div');sec.className='section-title';sec.textContent='Wachstumsindex';const row=document.createElement('div');row.className='detail-row';row.innerHTML='<span class=\"label\">Heute / Trend 7 Tage</span><span class=\"value\" id=\"detailGrowthIndex\">–</span>';document.getElementById('detailPrecip').parentNode.insertBefore(sec,document.getElementById('detailPrecip').nextSibling);document.getElementById('detailPrecip').parentNode.insertBefore(row,sec.nextSibling)}
   const gInfo=cellGrowthLabel(d);document.getElementById('detailGrowthIndex').innerHTML=`<b>${d.growthIndex??'–'}/100</b> <span class="growth-trend ${gInfo.cls}">${gInfo.arrow} ${d.growthTrend>3?'steigend':d.growthTrend<-3?'fallend':'stabil'}</span>`;
-  document.getElementById('detailTemp').innerHTML=`Ø 10 Tage ${d.tempAvg10} °C · 3 Tage ${d.tempAvg3} °C · Bodenfeuchte ${d.soilMoisture!=null?Math.round(d.soilMoisture*100)+' %':'–'} · Sonne 10 T. ${d.sunshine10!=null?d.sunshine10.toFixed(0)+' h':'–'} ${statusTagHtml(rangeStatus(d.tempAvg10,s.temp))}`;
+  document.getElementById('detailTemp').innerHTML=`Ø 10 Tage ${d.tempAvg10!=null?d.tempAvg10+' °C':'–'} · 3 Tage ${d.tempAvg3!=null?d.tempAvg3+' °C':'–'} · Bodenfeuchte ${d.soilMoisture!=null?Math.round(d.soilMoisture*100)+' %':'–'} · Sonne 10 T. ${d.sunshine10!=null?d.sunshine10.toFixed(0)+' h':'–'} ${d.tempAvg10!=null?statusTagHtml(rangeStatus(d.tempAvg10,s.temp)):''}`;
   document.getElementById('detailPh').innerHTML=d.ph!=null?`${d.ph} · ${phStatusLabel(d.ph)} ${statusTagHtml(rangeStatus(d.ph,s.ph))}`:'nicht verfügbar';
   document.getElementById('detailPtsPrecip').textContent=`${r.score.precipPts} / 12`;document.getElementById('detailPtsTemp').textContent=`${r.score.tempPts} / 8`;document.getElementById('detailPtsPh').textContent=`${r.score.phPts} / 12`;document.getElementById('detailPtsWeatherPattern').textContent=`${r.score.weatherPatternPts} Einfluss`;document.getElementById('detailPtsMonth').textContent=`${r.score.monthPts} / 8`;document.getElementById('detailPtsForest').textContent=`${r.score.forestPts} / 12`;document.getElementById('detailPtsTrees').textContent=`${r.score.treePts} / 18`;document.getElementById('detailPtsMicro').textContent=`${r.score.microPts} / 10`;document.getElementById('detailPtsStructure').textContent=`${r.score.structurePts} / 12`;document.getElementById('detailPtsSynergy').textContent=`+${r.score.synergyPts} / 10`;document.getElementById('detailDataConfidence').innerHTML=`${r.score.dataConfidence}% <span class="data-quality-${r.score.dataConfidence>=88?'good':r.score.dataConfidence>=78?'medium':'low'}">${r.score.dataConfidence>=88?'hoch':r.score.dataConfidence>=78?'mittel':'niedrig'}</span>`;
   document.getElementById('detailMicroclimate').innerHTML=renderMicro(r.micro,r.data);
