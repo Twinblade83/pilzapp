@@ -146,7 +146,7 @@
   }
   .legend-bar{
     height:10px;
-    background:linear-gradient(to right,#9a9686,#d98a1f);
+    background:linear-gradient(to right,#60748c,#d98a1f);
     margin-bottom:4px;
   }
   .legend-labels{
@@ -391,6 +391,11 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 let resultLayer = L.layerGroup().addTo(map);
 let gbifLayer = L.layerGroup().addTo(map);
+
+// Eigene Pane mit höherem z-index, damit GBIF-Punkte nie von den
+// Waldflächen-Polygonen überdeckt werden und immer anklickbar bleiben.
+map.createPane('gbifPane');
+map.getPane('gbifPane').style.zIndex = 450;
 
 /* ============================================================
    PILZART-DATENBANK
@@ -768,8 +773,8 @@ function computeScoreBreakdown(species, data) {
 }
 
 function scoreColor(score) {
-  const low = [154,150,134];
-  const high = [217,138,31];
+  const low = [96,116,140];    // kühles Blaugrau — deutlich sichtbar auf grünem Waldgrund
+  const high = [217,138,31];   // Pfifferling-Orange
   const t = Math.max(0, Math.min(1, score / 100));
   const c = low.map((v,i) => Math.round(v + (high[i]-v)*t));
   return `rgb(${c[0]},${c[1]},${c[2]})`;
@@ -967,7 +972,8 @@ searchBtn.addEventListener('click', async () => {
 
     gbifOccurrences.forEach(occ => {
       const marker = L.circleMarker([occ.decimalLatitude, occ.decimalLongitude], {
-        radius: 5, color: '#2b2b2b', weight: 1.5, fillColor: '#f4f1e6', fillOpacity: 0.9
+        pane: 'gbifPane',
+        radius: 6, color: '#2b2b2b', weight: 1.5, fillColor: '#f4f1e6', fillOpacity: 0.95
       }).addTo(gbifLayer);
       const date = occ.eventDate ? occ.eventDate.split('T')[0] : (occ.year || 'Datum unbekannt');
       marker.bindPopup(`
@@ -993,15 +999,16 @@ searchBtn.addEventListener('click', async () => {
       const color = scoreColor(breakdown.total);
 
       const polygon = L.polygon(f.coords, {
-        color: color,
-        weight: 1,
+        color: '#3a2c1a',
+        weight: 1.5,
+        opacity: 0.9,
         fillColor: color,
-        fillOpacity: 0.55
+        fillOpacity: 0.6
       }).addTo(resultLayer);
 
       polygon.on('click', () => openDetailPanel(f, data, breakdown, currentSpecies));
       polygon.on('mouseover', () => polygon.setStyle({ weight: 3 }));
-      polygon.on('mouseout', () => polygon.setStyle({ weight: 1 }));
+      polygon.on('mouseout', () => polygon.setStyle({ weight: 1.5 }));
     });
 
     const gbifNote = gbifOccurrences.length
@@ -1018,4 +1025,3 @@ searchBtn.addEventListener('click', async () => {
 
 </body>
 </html>
-
