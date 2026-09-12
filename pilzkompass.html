@@ -132,7 +132,7 @@ const MIN_FOREST_ZOOM=11;
 const FOREST_LAYER='landcover_wood';
 const TREE_EVIDENCE_RADIUS_KM=5;
 const ANALYSIS_CELL_SIZE_M=100;
-const MAX_ANALYSIS_CELLS=7000;
+const MAX_ANALYSIS_CELLS=2200;
 const CELL_MICRO_ANALYSIS_LIMIT=140;
 const CELL_DLR_ANALYSIS_LIMIT=100;
 const MUSHROOM_EVIDENCE_RADIUS_KM=5;
@@ -517,7 +517,7 @@ function renderMushroomEvidence(ev){
   return`<div class="tree-evidence-item"><b>${ev.count} relevante GBIF-Nachweise</b><span>Nächster Nachweis: ${ev.nearestKm!=null?ev.nearestKm+' km':'–'} · davon ${ev.recentCount||0} aus den letzten 5 Jahren.</span></div>`;
 }
 function renderHabitatInfo(h){
-  if(!h)return'<div class="source-note">Keine zusätzlichen OSM-Habitatdaten verfügbar.</div>';
+  if(!h)return'<div class="source-note">Habitatstruktur nicht verfügbar.</div>';
   const water=h.waterKm==null?'nicht verfügbar':h.waterKm<.3?'sehr nah':h.waterKm.toFixed(2)+' km';
   const road=h.roadKm==null?'nicht verfügbar':h.roadKm<.3?'sehr nah':h.roadKm.toFixed(2)+' km';
   return`<div class="tree-evidence-item"><b>${h.areaHa} ha Waldfläche</b><span>Formkompaktheit: ${Math.round(h.compactness*100)}% · Gewässer: ${water} · größere Straße: ${road}</span></div>`;
@@ -545,9 +545,9 @@ async function fetchCachedBatched(points,{batchSize,prefix,ttl,worker,concurrenc
   async function runner(){while(true){const gi=next++;if(gi>=groups.length)return;const group=groups[gi];const values=await worker(group.map(x=>x.point),group[0].index,gi);values.forEach((v,j)=>{const item=group[j];out[item.index]=v;if(v!==undefined&&v!==null)setApiCache(pointCacheKey(prefix,item.point),v)});done+=group.length;onBatch?.(values,group.map(x=>x.point),group[0].index);onProgress?.(done,points.length)}}
   await Promise.all(Array.from({length:Math.min(concurrency,groups.length)},runner));return out;
 }
-async function fetchElevations(points,onProgress=null,onBatch=null){return fetchCachedBatched(points,{batchSize:50,prefix:'elevation',ttl:API_CACHE_TTL.elevation,concurrency:API_BATCH_CONCURRENCY,onProgress,onBatch,worker:async b=>{const la=b.map(x=>x.centroid[0]).join(','),lo=b.map(x=>x.centroid[1]).join(','),r=await fetchWithTimeout(`https://api.open-meteo.com/v1/elevation?latitude=${la}&longitude=${lo}`,{},15000);if(!r.ok)throw new Error('Open-Meteo Höhe '+r.status);return(await r.json()).elevation||[]}})}
+async function fetchElevations(points,onProgress=null,onBatch=null){return fetchCachedBatched(points,{batchSize:50,prefix:'elevation-v2',ttl:API_CACHE_TTL.elevation,concurrency:Math.min(3,API_BATCH_CONCURRENCY),onProgress,onBatch,worker:async b=>{const la=b.map(x=>x.centroid[0]).join(','),lo=b.map(x=>x.centroid[1]).join(','),r=await fetchWithTimeout(`https://api.open-meteo.com/v1/elevation?latitude=${la}&longitude=${lo}`,{},20000);if(!r.ok)throw new Error('Open-Meteo Höhe '+r.status);const raw=await r.json();const json=Array.isArray(raw)?raw:[raw];if(Array.isArray(raw))return json.map(x=>Number.isFinite(Number(x?.elevation))?Number(x.elevation):null);return Array.isArray(raw?.elevation)?raw.elevation.map(v=>Number.isFinite(Number(v))?Number(v):null):[Number.isFinite(Number(raw?.elevation))?Number(raw.elevation):null]}})}
 async function fetchWeather(points,onProgress=null,onBatch=null){
-  return fetchCachedBatched(points,{batchSize:20,prefix:'weather',ttl:API_CACHE_TTL.weather,concurrency:API_BATCH_CONCURRENCY,onProgress,onBatch,worker:async b=>{
+  return fetchCachedBatched(points,{batchSize:20,prefix:'weather-v2',ttl:API_CACHE_TTL.weather,concurrency:Math.min(3,API_BATCH_CONCURRENCY),onProgress,onBatch,worker:async b=>{
     const la=b.map(x=>x.centroid[0]).join(','),lo=b.map(x=>x.centroid[1]).join(',');
     const r=await fetchWithTimeout(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=precipitation_sum,temperature_2m_mean,temperature_2m_max,precipitation_hours,sunshine_duration&hourly=soil_moisture_0_to_7cm&past_days=16&forecast_days=7&timezone=auto`,{},25000);
     if(!r.ok)throw new Error('Open-Meteo Wetter '+r.status);
@@ -620,7 +620,7 @@ async function fetchSoilPh(points,onProgress=null,onBatch=null){
 }
 /* ---------- Mikroklima ---------- */
 async function fetchMicro(f){const lat=f.centroid[0],lon=f.centroid[1],d=.012,pts=[[lat,lon],[lat+d,lon],[lat-d,lon],[lat,lon+d],[lat,lon-d]],r=await fetchWithTimeout(`https://api.open-meteo.com/v1/elevation?latitude=${pts.map(p=>p[0]).join(',')}&longitude=${pts.map(p=>p[1]).join(',')}`,{},15000);if(!r.ok)throw new Error('Relief '+r.status);const e=(await r.json()).elevation||[];if(e.length<5)throw new Error('Relief unvollständig');const[c,n,s,o,w]=e,ns=2*d*111320,ew=2*d*111320*Math.cos(lat*Math.PI/180),gn=(n-s)/ns,ge=(o-w)/ew,slope=Math.atan(Math.sqrt(gn*gn+ge*ge))*180/Math.PI,aspect=(Math.atan2(-ge,-gn)*180/Math.PI+360)%360,dirs=['N','NO','O','SO','S','SW','W','NW'];return{elevation:c,slope,dir:dirs[Math.round(aspect/45)%8]}}
-async function fetchMicroBatch(points,onProgress=null,onBatch=null){return fetchCachedBatched(points,{batchSize:20,prefix:'micro',ttl:API_CACHE_TTL.micro,concurrency:API_BATCH_CONCURRENCY,onProgress,onBatch,worker:async batch=>{const coords=[];batch.forEach(f=>{const lat=f.centroid[0],lon=f.centroid[1],d=.012;coords.push([lat,lon],[lat+d,lon],[lat-d,lon],[lat,lon+d],[lat,lon-d])});const latitudes=coords.map(p=>p[0]).join(','),longitudes=coords.map(p=>p[1]).join(','),r=await fetchWithTimeout(`https://api.open-meteo.com/v1/elevation?latitude=${latitudes}&longitude=${longitudes}`,{},15000);if(!r.ok)throw new Error('Relief '+r.status);const e=(await r.json()).elevation||[],out=[];for(let j=0;j<batch.length;j++){const off=j*5;if(e.length<off+5||e.slice(off,off+5).some(v=>!Number.isFinite(v))){out.push(null);continue}const[c,n,s,o,w]=e.slice(off,off+5),lat=batch[j].centroid[0],d=.012,ns=2*d*111320,ew=2*d*111320*Math.cos(lat*Math.PI/180),gn=(n-s)/ns,ge=(o-w)/ew,slope=Math.atan(Math.sqrt(gn*gn+ge*ge))*180/Math.PI,aspect=(Math.atan2(-ge,-gn)*180/Math.PI+360)%360,dirs=['N','NO','O','SO','S','SW','W','NW'];out.push({elevation:c,slope,dir:dirs[Math.round(aspect/45)%8]})}return out}})}
+async function fetchMicroBatch(points,onProgress=null,onBatch=null){return fetchCachedBatched(points,{batchSize:20,prefix:'micro-v2',ttl:API_CACHE_TTL.micro,concurrency:Math.min(3,API_BATCH_CONCURRENCY),onProgress,onBatch,worker:async batch=>{const coords=[];batch.forEach(f=>{const lat=f.centroid[0],lon=f.centroid[1],d=.012;coords.push([lat,lon],[lat+d,lon],[lat-d,lon],[lat,lon+d],[lat,lon-d])});const latitudes=coords.map(p=>p[0]).join(','),longitudes=coords.map(p=>p[1]).join(','),r=await fetchWithTimeout(`https://api.open-meteo.com/v1/elevation?latitude=${latitudes}&longitude=${longitudes}`,{},15000);if(!r.ok)throw new Error('Relief '+r.status);const e=(await r.json()).elevation||[],out=[];for(let j=0;j<batch.length;j++){const off=j*5;if(e.length<off+5||e.slice(off,off+5).some(v=>!Number.isFinite(v))){out.push(null);continue}const[c,n,s,o,w]=e.slice(off,off+5),lat=batch[j].centroid[0],d=.012,ns=2*d*111320,ew=2*d*111320*Math.cos(lat*Math.PI/180),gn=(n-s)/ns,ge=(o-w)/ew,slope=Math.atan(Math.sqrt(gn*gn+ge*ge))*180/Math.PI,aspect=(Math.atan2(-ge,-gn)*180/Math.PI+360)%360,dirs=['N','NO','O','SO','S','SW','W','NW'];out.push({elevation:c,slope,dir:dirs[Math.round(aspect/45)%8]})}return out}})}
 
 function microScore(species,m,weather){
   if(!m)return{points:0,label:'Keine Reliefdaten'};
@@ -866,18 +866,30 @@ document.getElementById('searchBtn').onclick=async()=>{
     const weatherP=safeTask(2,'Wetterdaten',()=>fetchWeather(cells,(d,t)=>updateBatchProgress(2,'Wetterdaten',d,t)),new Array(cells.length));
     const soilP=safeTask(3,'Bodendaten',()=>fetchSoilPh(cells,(d,t)=>updateBatchProgress(3,'Bodendaten',d,t)),new Array(cells.length));
     const elevP=safeTask(4,'Höhen-/Reliefdaten',()=>fetchElevations(cells,(d,t)=>updateBatchProgress(4,'Höhen-/Reliefdaten',d,t)),new Array(cells.length));
-    const osmP=safeTask(6,'Habitatstruktur',()=>loadOsmContext(map.getBounds()),null);
+    const osmP=safeTask(6,'Habitatstruktur',()=>loadOsmContext(map.getBounds()),{water:[],majorRoads:[],loaded:false,partial:true});
     const dlrP=safeTask(5,'Baumarten',()=>loadDlrTreeData(forests,(d,t)=>setProgressStep(5,'running',`Wälder ${d}/${t}`,d/Math.max(1,t))),new Array(forests.length));
     const treeEvidenceP=loadTreeEvidence(species,map.getBounds()).catch(()=>[]);
     const mushroomP=loadMushroomEvidence(species,map.getBounds()).catch(()=>[]);
     const core=await Promise.all([weatherP,soilP,elevP]);shared.weather=core[0].data||shared.weather;shared.soil=core[1].data||shared.soil;shared.elev=core[2].data||shared.elev;
     const parentDlr=await dlrP;const parentDlrData=parentDlr.data||new Array(forests.length);cells.forEach((c,i)=>{shared.dlrByIndex[i]=parentDlrData[c.parentForestIndex]||null});
-    const osmResult=await osmP;shared.osm=osmResult.data||null;shared.structureLoaded=osmResult.ok;
+    const osmResult=await osmP;shared.osm=osmResult.data||null;shared.structureLoaded=true;
     rebuildResults(cells,shared);setProgressStep(7,'running','erste Rasterwerte werden angezeigt…',.35);document.getElementById('status').textContent=`${cells.length} Bereiche sichtbar. Verfeinere die besten Zellen…`;
     treeEvidenceP.then(treeResult=>{if(runId!==searchRunId)return;shared.treeSources=treeResult||[];shared.treeLoaded=true;rebuildResults(cells,shared);renderAnalysisLayer()}).catch(()=>{});
     const selected=forestResults.slice().sort((a,b)=>b.score.total-a.score.total).slice(0,Math.min(CELL_MICRO_ANALYSIS_LIMIT,cells.length));const microTargets=[],microIndexes=[];selected.forEach(r=>{const i=cells.indexOf(r.forest);microTargets.push(r.forest);microIndexes.push(i)});
-    const microValues=await fetchMicroBatch(microTargets,(d,t)=>setProgressStep(4,'running',`Top-Zellen Relief ${d}/${t}`,Math.max(.45,.45+.45*(d/Math.max(1,t)))));microValues.forEach((m,j)=>{shared.microByIndex.set(microIndexes[j],m)});rebuildResults(cells,shared);forestResults.forEach(r=>r.analysisStage='vollständig');setProgressStep(7,'done','Raster fertig',1);renderAnalysisLayer();microStageDone=true;
-    Promise.resolve(mushroomP).then(()=>{if(runId!==searchRunId)return;shared.mushroomLoaded=true;optionalStageDone=true;setProgressStep(6,'done','Habitat geladen',1);finalizeSearch()}).catch(()=>{optionalStageDone=true;setProgressStep(6,'error','nicht verfügbar',1);finalizeSearch()});
+    try{
+      const microValues=await fetchMicroBatch(microTargets,(d,t)=>setProgressStep(4,'running',`Top-Zellen Relief ${d}/${t}`,Math.max(.45,.45+.45*(d/Math.max(1,t)))));
+      microValues.forEach((m,j)=>{if(m)shared.microByIndex.set(microIndexes[j],m)});
+      rebuildResults(cells,shared);
+      forestResults.forEach(r=>r.analysisStage='vollständig');
+      microStageDone=true;
+    }catch(e){
+      console.warn('Mikroklima konnte für einzelne Top-Zellen nicht vollständig geladen werden:',e);
+      rebuildResults(cells,shared);
+      forestResults.forEach(r=>r.analysisStage='teilweise');
+      microStageDone=true;
+    }
+    setProgressStep(7,'done','Raster fertig',1);renderAnalysisLayer();
+    Promise.resolve(mushroomP).then(()=>{if(runId!==searchRunId)return;shared.mushroomLoaded=true;optionalStageDone=true;setProgressStep(6,'done','Habitat geladen',1);finalizeSearch()}).catch(e=>{console.warn('Pilznachweise optional nicht verfügbar:',e);if(runId!==searchRunId)return;shared.mushroomLoaded=false;optionalStageDone=true;setProgressStep(6,'done','optional',1);finalizeSearch()});
   }catch(e){console.error(e);setProgress(100,'Analyse mit Fehler beendet');document.getElementById('status').textContent='Fehler bei der Waldflächensuche: '+(e.message||e)}finally{btn.disabled=false}
 };
 
@@ -889,5 +901,4 @@ renderScoreLegend();document.getElementById('detailDwd').style.display='none';do
 </script>
 </body>
 </html>
-
 
