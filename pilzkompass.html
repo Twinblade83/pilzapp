@@ -546,7 +546,22 @@ function updateBatchProgress(stepIndex,label,totalDone,total){const f=total?tota
 function finishProgress(){for(let i=0;i<8;i++)if(progressState[i]?.state!=='error')progressState[i]={state:'done',fraction:1};setProgress(100,'Analyse abgeschlossen')}
 function renderAnalysisLayer(){resultLayer.clearLayers();forestResults.sort((a,b)=>b.score.total-a.score.total);forestResults.forEach(r=>L.polygon(r.forest.coords,{pane:'forestPane',color:'#3a2c1a',weight:1.5,opacity:.9,fillColor:scoreColor(r.score.total),fillOpacity:.62}).on('click',()=>openForestDetail(r)).on('mouseover',e=>e.target.setStyle({weight:3})).on('mouseout',e=>e.target.setStyle({weight:1.5})).addTo(resultLayer));renderForestRanking()}
 function buildForestResult(f,i,elev,weather,soil,treeSources,mushroomOccurrences,osm,treeLoaded,mushroomLoaded,structureLoaded,micro){const fTree=evaluateTreeEvidenceForForest(f,treeSources||[]),fMush=evaluateMushroomEvidenceForForest(f,mushroomOccurrences||[]),structure=forestStructureScore(f,osm),leafType=fTree.leafType;const data={elevation:elev[i]??null,precip14:weather[i]?.precip14??null,precip7:weather[i]?.precip7??null,precip3:weather[i]?.precip3??null,tempAvg10:weather[i]?.tempAvg10??null,tempAvg3:weather[i]?.tempAvg3??null,maxTemp3:weather[i]?.maxTemp3??null,rainHours14:weather[i]?.rainHours14??0,sunshine10:weather[i]?.sunshine10??null,soilMoisture:weather[i]?.soilMoisture??null,ph:soil[i],leafType,treeType:leafType,treePoints:fTree.treePoints,treeLabel:fTree.best?.score>0?fTree.best.common:'Baumart unbekannt',structure,treeEvidenceLoaded:treeLoaded,mushroomEvidenceLoaded:mushroomLoaded,structureLoaded};const score=computeScore(currentSpecies,data,micro||null,fTree,fMush);return{forest:f,data,score,micro:micro||null,treeSources:treeSources||[],treeEvidence:fTree,mushroomOccurrences:mushroomOccurrences||[],mushroomEvidence:fMush,structure,analysisStage:micro?'vollständig':'vorläufig'}}
-function rebuildResults(forests,shared){forestResults=forests.map((f,i)=>buildForestResult(f,i,shared.elev,shared.weather,shared.soil,shared.treeSources,shared.mushroomOccurrences,shared.osm,shared.treeLoaded,shared.mushroomLoaded,shared.structureLoaded,shared.microByIndex.get(i)));renderAnalysisLayer()}
+function rebuildResults(forests,shared){
+  const next=[];
+  for(let i=0;i<forests.length;i++){
+    const f=forests[i];
+    try{
+      next.push(buildForestResult(f,i,shared.elev||[],shared.weather||[],shared.soil||[],shared.treeSources||[],shared.mushroomOccurrences||[],shared.osm,!!shared.treeLoaded,!!shared.mushroomLoaded,!!shared.structureLoaded,shared.microByIndex?.get(i)||null));
+    }catch(e){
+      console.warn('Waldfläche konnte nicht vollständig bewertet werden:',i,e);
+      const fallbackData={elevation:shared.elev?.[i]??null,precip14:shared.weather?.[i]?.precip14??null,precip7:shared.weather?.[i]?.precip7??null,precip3:shared.weather?.[i]?.precip3??null,tempAvg10:shared.weather?.[i]?.tempAvg10??null,tempAvg3:shared.weather?.[i]?.tempAvg3??null,maxTemp3:shared.weather?.[i]?.maxTemp3??null,rainHours14:shared.weather?.[i]?.rainHours14??0,sunshine10:shared.weather?.[i]?.sunshine10??null,soilMoisture:shared.weather?.[i]?.soilMoisture??null,ph:shared.soil?.[i]??null,leafType:'unknown',treeType:'unknown',treePoints:0,treeLabel:'Baumart unbekannt',structure:forestStructureScore(f,shared.osm),treeEvidenceLoaded:!!shared.treeLoaded,mushroomEvidenceLoaded:!!shared.mushroomLoaded,structureLoaded:!!shared.structureLoaded};
+      let fallbackScore;
+      try{fallbackScore=computeScore(currentSpecies,fallbackData,shared.microByIndex?.get(i)||null,{entries:[],best:null,treePoints:0},{score:0,count:0,examples:[]})}catch(_){fallbackScore={total:0,precipPts:0,tempPts:0,weatherPatternPts:0,phPts:0,monthPts:0,forestPts:0,treePts:0,microPts:0,mushroomPts:0,structurePts:0,synergyPts:0,treeLabel:'Baumart unbekannt',microLabel:'nicht verfügbar',dataConfidence:72,criticalCap:1,rawScore:0}}
+      next.push({forest:f,data:fallbackData,score:fallbackScore,micro:shared.microByIndex?.get(i)||null,treeSources:shared.treeSources||[],treeEvidence:{entries:[],best:null,leafType:'unknown',treePoints:0,confidence:0,corroboratedPartners:0},mushroomOccurrences:shared.mushroomOccurrences||[],mushroomEvidence:{score:0,count:0,nearestKm:null,recentCount:0,examples:[]},structure:fallbackData.structure,analysisStage:'teilweise'});
+    }
+  }
+  forestResults=next;renderAnalysisLayer();
+}
 
 /* ---------- Hauptsuche ---------- */
 document.getElementById('searchBtn').onclick=async()=>{
@@ -572,7 +587,7 @@ document.getElementById('searchBtn').onclick=async()=>{
     const core=await Promise.all([weatherP,soilP,elevP]);shared.weather=core[0].data||shared.weather;shared.soil=core[1].data||shared.soil;shared.elev=core[2].data||shared.elev;
     setProgressStep(7,'running','erste Scores werden angezeigt…',.35);rebuildResults(forests,shared);document.getElementById('status').textContent=`${forests.length} Waldflächen analysiert. Vorläufige Rangliste bereits sichtbar – weitere Daten werden ergänzt…`;
 
-    const treeResult=await treeP;shared.treeSources=treeResult.data||[];shared.treeLoaded=treeResult.ok;rebuildResults(forests,shared);setProgressStep(4,treeResult.ok?'done':'error',treeResult.ok?'fertig':'nicht verfügbar',1);
+    const treeResult=await treeP;shared.treeSources=treeResult.data||[];shared.treeLoaded=treeResult.ok;rebuildResults(forests,shared);setProgressStep(4,treeResult.ok?'done':'error',treeResult.ok?'geladen':'nicht verfügbar',1);
     document.getElementById('status').textContent=`${forests.length} Waldflächen bewertet. Baumarten ergänzt; weitere Habitat-/Pilzdaten folgen…`;
 
     const preliminary=forestResults.slice().sort((a,b)=>b.score.total-a.score.total);const selected=new Set(preliminary.slice(0,Math.min(MICRO_ANALYSIS_LIMIT,forests.length)).map(r=>r.forest.osmId||`${r.forest.centroid[0]}-${r.forest.centroid[1]}`));const microTargets=[],microIndexes=[];forests.forEach((f,i)=>{const k=f.osmId||`${f.centroid[0]}-${f.centroid[1]}`;if(selected.has(k)){microTargets.push(f);microIndexes.push(i)}});
@@ -601,4 +616,5 @@ renderScoreLegend();document.getElementById('detailDwd').style.display='none';do
 </script>
 </body>
 </html>
+
 
