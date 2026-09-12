@@ -50,7 +50,7 @@
     position:absolute;
     top:70px; left:16px;
     z-index:1000;
-    width:290px;
+    width:300px;
     background:var(--parchment);
     border-left:5px solid var(--moss);
     box-shadow:0 6px 18px rgba(0,0,0,0.25);
@@ -63,25 +63,39 @@
     margin:0 0 10px;
     color:var(--bark);
   }
-  .species-row{
-    display:flex; gap:8px; margin-bottom:14px;
+
+  .species-grid{
+    display:flex; flex-wrap:wrap; gap:6px;
+    margin-bottom:14px;
   }
-  .species-btn{
-    flex:1;
-    padding:9px 6px;
+  .species-pill{
+    display:flex; align-items:center; gap:5px;
     border:2px solid var(--moss);
     background:transparent;
-    color:var(--ink);
+    padding:6px 4px 6px 10px;
+    cursor:pointer;
+  }
+  .species-pill.active{ background:var(--moss); }
+  .species-pill.active .pill-label{ color:var(--parchment); }
+  .pill-label{
     font-family:var(--font-body);
     font-weight:600;
-    font-size:13px;
+    font-size:12.5px;
+    color:var(--ink);
+    background:none; border:none; padding:0; cursor:pointer;
+  }
+  .info-btn{
+    background:none; border:none;
+    font-size:14px;
+    line-height:1;
+    padding:2px 6px;
     cursor:pointer;
-    transition:background 0.15s, color 0.15s;
+    color:var(--bark);
+    opacity:0.7;
   }
-  .species-btn.active{
-    background:var(--moss);
-    color:var(--parchment);
-  }
+  .species-pill.active .info-btn{ color:var(--parchment); opacity:0.9; }
+  .info-btn:hover{ opacity:1; }
+
   .search-btn{
     width:100%;
     padding:11px;
@@ -132,12 +146,6 @@
     margin-top:12px;
     line-height:1.4;
   }
-  .leaflet-popup-content{
-    font-family:var(--font-body);
-    font-size:12.5px;
-    line-height:1.5;
-  }
-  .leaflet-popup-content b{font-family:var(--font-display);}
 
   .detail-panel{
     position:absolute;
@@ -153,13 +161,13 @@
     display:none;
   }
   .detail-panel.open{ display:block; }
-  .detail-panel .close-btn{
+  .close-btn{
     position:absolute; top:10px; right:12px;
     background:none; border:none;
     font-size:20px; line-height:1; cursor:pointer;
     color:var(--bark);
   }
-  .detail-panel h2{
+  .detail-panel h2, .modal-card h2{
     font-family:var(--font-display);
     font-size:17px;
     font-weight:700;
@@ -179,7 +187,7 @@
     opacity:0.75;
     margin-bottom:14px;
   }
-  .detail-section-title{
+  .section-title{
     font-size:11px;
     font-weight:600;
     text-transform:uppercase;
@@ -216,6 +224,58 @@
     height:100%;
     background:var(--chanterelle);
   }
+
+  .modal-overlay{
+    position:fixed; inset:0; z-index:2000;
+    background:rgba(30,20,10,0.55);
+    display:none;
+    align-items:center; justify-content:center;
+    padding:24px;
+  }
+  .modal-overlay.open{ display:flex; }
+  .modal-card{
+    position:relative;
+    background:var(--parchment);
+    width:100%; max-width:480px;
+    max-height:85vh;
+    overflow-y:auto;
+    padding:26px 28px;
+    border-left:6px solid var(--chanterelle);
+    box-shadow:0 10px 30px rgba(0,0,0,0.35);
+  }
+  .modal-latin{
+    font-style:italic;
+    font-size:13px;
+    color:var(--bark);
+    opacity:0.75;
+    margin:0 0 10px;
+  }
+  .badge{
+    display:inline-block;
+    font-size:11px;
+    font-weight:600;
+    padding:3px 9px;
+    background:var(--moss);
+    color:var(--parchment);
+    margin-bottom:4px;
+  }
+  .modal-p{ font-size:13.5px; line-height:1.55; margin:4px 0 0; }
+  .trait-row{ display:flex; gap:8px; font-size:13px; padding:3px 0; }
+  .trait-row .trait-label{ min-width:96px; color:var(--bark); opacity:0.8; font-weight:600; flex-shrink:0; }
+  .month-bar{ display:flex; gap:3px; margin-top:4px; }
+  .month-cell{
+    flex:1; text-align:center; font-size:10px; padding:5px 0;
+    background:var(--parchment-dim); color:var(--bark);
+  }
+  .month-cell.active{ background:var(--chanterelle); color:#231603; font-weight:700; }
+  .caution-box{
+    margin-top:6px;
+    padding:8px 10px;
+    background:#e7d3c9;
+    color:#5c2510;
+    font-size:12.5px;
+    line-height:1.45;
+  }
 </style>
 </head>
 <body>
@@ -229,10 +289,8 @@
 
 <div class="panel">
   <h2>Pilzart</h2>
-  <div class="species-row">
-    <button class="species-btn active" data-species="steinpilz">Steinpilz</button>
-    <button class="species-btn" data-species="pfifferling">Pfifferling</button>
-  </div>
+  <div class="species-grid" id="speciesGrid"></div>
+
   <button class="search-btn" id="searchBtn">Diesen Bereich durchsuchen</button>
   <div class="status" id="status">Karte auf ein Waldgebiet ausrichten und suchen.</div>
 
@@ -243,7 +301,7 @@
   </div>
 
   <div class="note">
-    Regelwerk basiert auf Waldtyp (OSM, inkl. Baumart), Boden-pH (SoilGrids), Niederschlag &amp; Temperatur der letzten Tage (Open-Meteo) sowie Höhenlage. Keine Garantie für tatsächliche Funde — bitte Sammelregeln und Naturschutzgebiete beachten.
+    Regelwerk basiert auf Waldtyp (OSM, inkl. Baumart), Boden-pH (SoilGrids), Niederschlag &amp; Temperatur der letzten Tage (Open-Meteo) sowie Höhenlage. Keine Garantie für tatsächliche Funde — bitte Sammelregeln, Naturschutzgebiete beachten und Funde vor dem Verzehr von einem Pilzsachverständigen bestätigen lassen.
   </div>
 </div>
 
@@ -254,25 +312,54 @@
   <div class="detail-score-label" id="detailScoreLabel">Gesamt-Score</div>
   <div class="score-bar-track"><div class="score-bar-fill" id="detailScoreBar" style="width:0%"></div></div>
 
-  <div class="detail-section-title">Fläche</div>
+  <div class="section-title">Fläche</div>
   <div class="detail-row"><span class="label">Waldtyp</span><span class="value" id="detailWaldtyp">–</span></div>
   <div class="detail-row"><span class="label">Größe (ca.)</span><span class="value" id="detailArea">–</span></div>
   <div class="detail-row"><span class="label">Höhenlage</span><span class="value" id="detailElevation">–</span></div>
   <div class="detail-row"><span class="label">Koordinaten</span><span class="value" id="detailCoords">–</span></div>
 
-  <div class="detail-section-title">Wetter (aktuell)</div>
+  <div class="section-title">Wetter (aktuell)</div>
   <div class="detail-row"><span class="label">Niederschlag 14 Tage</span><span class="value" id="detailPrecip">–</span></div>
   <div class="detail-row"><span class="label">Ø Temperatur 10 Tage</span><span class="value" id="detailTemp">–</span></div>
 
-  <div class="detail-section-title">Boden</div>
+  <div class="section-title">Boden</div>
   <div class="detail-row"><span class="label">pH-Wert (0–5cm)</span><span class="value" id="detailPh">–</span></div>
 
-  <div class="detail-section-title">Score-Zusammensetzung</div>
+  <div class="section-title">Score-Zusammensetzung</div>
   <div class="detail-row"><span class="label">Niederschlag</span><span class="value" id="detailPtsPrecip">–</span></div>
   <div class="detail-row"><span class="label">Temperatur</span><span class="value" id="detailPtsTemp">–</span></div>
   <div class="detail-row"><span class="label">Boden-pH</span><span class="value" id="detailPtsPh">–</span></div>
   <div class="detail-row"><span class="label">Saison</span><span class="value" id="detailPtsMonth">–</span></div>
   <div class="detail-row"><span class="label">Waldtyp</span><span class="value" id="detailPtsWaldtyp">–</span></div>
+</div>
+
+<div class="modal-overlay" id="speciesModal">
+  <div class="modal-card">
+    <button class="close-btn" id="closeSpeciesModal">✕</button>
+    <h2 id="modalName">–</h2>
+    <p class="modal-latin" id="modalLatin">–</p>
+    <span class="badge" id="modalSpeisewert">–</span>
+    <p class="modal-p" id="modalBeschreibung">–</p>
+
+    <div class="section-title">Merkmale</div>
+    <div class="trait-row"><span class="trait-label">Hut</span><span id="modalHut">–</span></div>
+    <div class="trait-row"><span class="trait-label">Stiel</span><span id="modalStiel">–</span></div>
+    <div class="trait-row"><span class="trait-label">Fleisch</span><span id="modalFleisch">–</span></div>
+    <div class="trait-row"><span class="trait-label">Geruch/Geschmack</span><span id="modalGeruch">–</span></div>
+
+    <div class="section-title">Wo er am liebsten wächst</div>
+    <div class="trait-row"><span class="trait-label">Baumpartner</span><span id="modalHabitat">–</span></div>
+    <div class="trait-row"><span class="trait-label">Boden</span><span id="modalBoden">–</span></div>
+    <div class="trait-row"><span class="trait-label">Klima</span><span id="modalKlima">–</span></div>
+
+    <div class="section-title">Saison</div>
+    <div class="month-bar" id="modalMonthBar"></div>
+
+    <div class="section-title">Besonderheit</div>
+    <p class="modal-p" id="modalBesonderheit">–</p>
+
+    <div class="caution-box" id="modalVerwechslung">–</div>
+  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -283,43 +370,268 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 18
 }).addTo(map);
 
-let currentSpecies = 'steinpilz';
 let resultLayer = L.layerGroup().addTo(map);
 
-document.querySelectorAll('.species-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.species-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentSpecies = btn.dataset.species;
-  });
-});
-
-const speciesConfig = {
-  steinpilz: {
+/* ============================================================
+   PILZART-DATENBANK
+   Jede Art ist ein eigener Eintrag in diesem Array. Um eine neue
+   Art zu ergänzen, einfach ein weiteres Objekt mit derselben Form
+   hinzufügen — Auswahl-UI, Scoring und Info-Modal lesen alle aus
+   diesem Array und müssen nicht angepasst werden.
+   ============================================================ */
+const SPECIES = [
+  {
+    id: 'steinpilz',
     label: 'Steinpilz',
+    latin: 'Boletus edulis',
     precip: { lo: 5, idealLo: 20, idealHi: 60, hi: 120, pts: 30 },
     temp:   { lo: 8, idealLo: 15, idealHi: 20, hi: 28, pts: 30 },
     ph:     { lo: 3.5, idealLo: 4.5, idealHi: 6.0, hi: 7.5, pts: 15 },
     months: [6,7,8,9,10],
-    monthPts: 15,
-    monthPtsOff: 4,
+    monthPts: 15, monthPtsOff: 4,
     elevMax: 1500,
-    // Steinpilz bildet Mykorrhiza v.a. mit Fichte, Kiefer, Buche
-    waldtyp: { coniferous: 10, mixed: 10, broadleaved: 8, unbekannt: 5 }
+    waldtyp: { coniferous: 10, mixed: 10, broadleaved: 8, unbekannt: 5 },
+    info: {
+      speisewert: 'Sehr guter Speisepilz',
+      beschreibung: 'Der Steinpilz ist einer der beliebtesten Speisepilze Europas und bildet eine Mykorrhiza mit verschiedenen Bäumen.',
+      hut: 'Braun bis rotbraun, halbkugelig bis polsterförmig, oft mit hellem Rand.',
+      stiel: 'Bauchig-keulig, weißlich bis hellbraun, mit feinem weißem Netzmuster im oberen Bereich.',
+      fleisch: 'Weiß, fest, verfärbt sich beim Anschneiden nicht.',
+      geruchGeschmack: 'Mild, angenehm pilzig-nussig.',
+      habitat: 'Fichte, Kiefer, Buche',
+      boden: 'Saure bis leicht saure, gut durchlässige Böden.',
+      klima: 'Braucht Regen gefolgt von mehreren warmen Tagen (typischer "Schub" nach Gewittern).',
+      besonderheit: 'Anschnitt bleibt weiß — wichtigstes Unterscheidungsmerkmal zu ungenießbaren Röhrlingen.',
+      verwechslung: 'Verwechslung möglich mit Gallenröhrling (bitter, aber ungiftig) und Hexenröhrlingen (roter Röhrenboden, Fleisch läuft blau an).'
+    }
   },
-  pfifferling: {
+  {
+    id: 'pfifferling',
     label: 'Pfifferling',
+    latin: 'Cantharellus cibarius',
     precip: { lo: 10, idealLo: 30, idealHi: 80, hi: 150, pts: 30 },
     temp:   { lo: 10, idealLo: 14, idealHi: 19, hi: 26, pts: 30 },
     ph:     { lo: 3.0, idealLo: 4.0, idealHi: 5.5, hi: 6.5, pts: 15 },
     months: [5,6,7,8,9,10,11],
-    monthPts: 15,
-    monthPtsOff: 4,
+    monthPts: 15, monthPtsOff: 4,
     elevMax: 1800,
-    // Pfifferling: Fichte/Kiefer bevorzugt, aber auch unter Eiche/Buche häufig
-    waldtyp: { coniferous: 10, mixed: 10, broadleaved: 8, unbekannt: 5 }
+    waldtyp: { coniferous: 10, mixed: 10, broadleaved: 8, unbekannt: 5 },
+    info: {
+      speisewert: 'Sehr guter Speisepilz',
+      beschreibung: 'Der Pfifferling wächst oft in Gruppen in moosigem Untergrund und ist für sein fruchtig-pfeffriges Aroma bekannt.',
+      hut: 'Dotter- bis eigelb, trichterförmig mit wellig-lappigem Rand, kein echter Hutrand.',
+      stiel: 'Mit dem Hut verwachsen, dieselbe Farbe, nach unten verjüngt.',
+      fleisch: 'Blassgelb, fest, faserig.',
+      geruchGeschmack: 'Fruchtig, an Aprikosen erinnernd, Geschmack leicht pfeffrig.',
+      habitat: 'Fichte, Kiefer, aber auch Eiche und Buche',
+      boden: 'Saure, moosige, gleichmäßig feuchte Böden.',
+      klima: 'Mag gleichmäßige Feuchtigkeit über mehrere Wochen, weniger abhängig von einzelnen Regenschüben.',
+      besonderheit: 'Hat Leisten statt echter Lamellen — diese sind gegabelt und laufen am Stiel herab.',
+      verwechslung: 'Verwechslung mit dem giftigen Falschen Pfifferling (dünnere, scharf abgesetzte Lamellen, oranger) möglich.'
+    }
+  },
+  {
+    id: 'maronenroehrling',
+    label: 'Maronenröhrling',
+    latin: 'Imleria badia',
+    precip: { lo: 5, idealLo: 15, idealHi: 50, hi: 110, pts: 30 },
+    temp:   { lo: 8, idealLo: 12, idealHi: 20, hi: 27, pts: 30 },
+    ph:     { lo: 3.0, idealLo: 3.5, idealHi: 5.5, hi: 6.5, pts: 15 },
+    months: [6,7,8,9,10,11],
+    monthPts: 15, monthPtsOff: 4,
+    elevMax: 1600,
+    waldtyp: { coniferous: 10, mixed: 9, broadleaved: 5, unbekannt: 5 },
+    info: {
+      speisewert: 'Guter Speisepilz',
+      beschreibung: 'Einer der häufigsten Röhrlinge in Nadelwäldern, gilt als robust und gut planbar, da er lange Saison hat.',
+      hut: 'Kastanien- bis dunkelbraun, glatt, bei Feuchtigkeit leicht schmierig.',
+      stiel: 'Zylindrisch, bräunlich, ohne Netzmuster.',
+      fleisch: 'Blassgelblich, verfärbt sich bei Druck oder Anschnitt leicht bläulich.',
+      geruchGeschmack: 'Mild, angenehm pilzig.',
+      habitat: 'Vor allem Kiefer und Fichte, auch in Mischwäldern',
+      boden: 'Saure, nährstoffarme Sand- und Waldböden.',
+      klima: 'Toleranter gegenüber Trockenheit als Steinpilz, braucht aber regelmäßige Feuchtigkeit.',
+      besonderheit: 'Gelbliche Röhren laufen bei Druck blau an — normales, harmloses Merkmal.',
+      verwechslung: 'Verwechslung mit Gallenröhrling möglich (bitterer Geschmack als Unterscheidung testen).'
+    }
+  },
+  {
+    id: 'birkenpilz',
+    label: 'Birkenpilz',
+    latin: 'Leccinum scabrum',
+    precip: { lo: 8, idealLo: 25, idealHi: 70, hi: 130, pts: 30 },
+    temp:   { lo: 8, idealLo: 13, idealHi: 19, hi: 26, pts: 30 },
+    ph:     { lo: 3.5, idealLo: 4.5, idealHi: 6.0, hi: 7.0, pts: 15 },
+    months: [6,7,8,9,10],
+    monthPts: 15, monthPtsOff: 4,
+    elevMax: 1800,
+    // Birkenpilz ist strikt an Birken gebunden; da OSM Birke i.d.R. nur als
+    // "broadleaved" führt, ist das hier eine Näherung, keine echte Arterkennung.
+    waldtyp: { broadleaved: 10, mixed: 7, coniferous: 3, unbekannt: 5 },
+    info: {
+      speisewert: 'Guter Speisepilz',
+      beschreibung: 'Wächst ausschließlich in Symbiose mit Birken und ist dadurch ein guter Zeigerpilz für Birkenbestände.',
+      hut: 'Graubraun bis dunkelbraun, halbkugelig, glatt.',
+      stiel: 'Weißlich, mit charakteristischen schwarzbraunen Schüppchen besetzt.',
+      fleisch: 'Weiß, weich, verfärbt sich beim Durchschneiden leicht rosa-grau.',
+      geruchGeschmack: 'Mild, unauffällig.',
+      habitat: 'Ausschließlich Birke',
+      boden: 'Toleriert ein breites Spektrum, oft auf feuchteren, nährstoffärmeren Böden.',
+      klima: 'Mag beständige Feuchtigkeit, weniger hitzeempfindlich als Röhrlinge unter Nadelbäumen.',
+      besonderheit: 'Die schwarzen Schüppchen am Stiel sind namensgebend und eindeutig erkennbar.',
+      verwechslung: 'Wenig Verwechslungsgefahr, da die Birkenbindung sehr eindeutig ist.'
+    }
+  },
+  {
+    id: 'butterpilz',
+    label: 'Butterpilz',
+    latin: 'Suillus luteus',
+    precip: { lo: 5, idealLo: 20, idealHi: 60, hi: 120, pts: 30 },
+    temp:   { lo: 9, idealLo: 14, idealHi: 21, hi: 28, pts: 30 },
+    ph:     { lo: 3.0, idealLo: 3.5, idealHi: 5.0, hi: 6.0, pts: 15 },
+    months: [7,8,9,10,11],
+    monthPts: 15, monthPtsOff: 4,
+    elevMax: 1400,
+    // Butterpilz wächst praktisch ausschließlich unter Kiefer
+    waldtyp: { coniferous: 10, mixed: 6, broadleaved: 2, unbekannt: 5 },
+    info: {
+      speisewert: 'Guter Speisepilz (Huthaut vor dem Kochen abziehen)',
+      beschreibung: 'Sehr häufiger Kiefernbegleiter, wächst oft in großen Gruppen, auch in jungen Kiefernpflanzungen.',
+      hut: 'Schmierig-schleimig, kastanienbraun bis gelbbraun, glänzend.',
+      stiel: 'Gelblich, mit einem hängenden weißlich-violetten Ring.',
+      fleisch: 'Gelblich, weich, mild.',
+      geruchGeschmack: 'Mild, leicht fruchtig.',
+      habitat: 'Ausschließlich Kiefer',
+      boden: 'Sehr saure, sandige, nährstoffarme Böden — typisch für Kiefernforste.',
+      klima: 'Kommt gut mit wechselnder Feuchtigkeit zurecht, solange es regelmäßig regnet.',
+      besonderheit: 'Die schmierige Huthaut sollte vor der Zubereitung abgezogen werden.',
+      verwechslung: 'Wenig Verwechslungsgefahr durch die eindeutige Kiefernbindung und den Ring am Stiel.'
+    }
+  },
+  {
+    id: 'rotkappe',
+    label: 'Rotkappe',
+    latin: 'Leccinum aurantiacum (Gruppe)',
+    precip: { lo: 8, idealLo: 25, idealHi: 70, hi: 130, pts: 30 },
+    temp:   { lo: 8, idealLo: 13, idealHi: 19, hi: 26, pts: 30 },
+    ph:     { lo: 4.0, idealLo: 5.0, idealHi: 6.5, hi: 7.5, pts: 15 },
+    months: [6,7,8,9,10],
+    monthPts: 15, monthPtsOff: 4,
+    elevMax: 1800,
+    waldtyp: { broadleaved: 10, mixed: 8, coniferous: 3, unbekannt: 5 },
+    info: {
+      speisewert: 'Guter Speisepilz',
+      beschreibung: 'Auffällig durch den leuchtend orangeroten Hut, Sammelbegriff für mehrere eng verwandte Birken- und Pappel-Rotkappen.',
+      hut: 'Orangerot bis ziegelrot, halbkugelig, Haut überragt den Rand leicht.',
+      stiel: 'Kräftig, weißlich mit rotbraunen bis schwärzlichen Schüppchen.',
+      fleisch: 'Weiß, verfärbt sich beim Anschnitt schnell grau-violett, später schwärzlich.',
+      geruchGeschmack: 'Mild, angenehm.',
+      habitat: 'Birke, Pappel, Espe',
+      boden: 'Feuchte, nährstoffreichere Böden, oft an Waldrändern und Lichtungen.',
+      klima: 'Braucht beständige Feuchtigkeit, mag keine lang anhaltende Trockenheit.',
+      besonderheit: 'Die auffällige Farbverfärbung des Fleisches beim Anschneiden ist normal und kein Warnzeichen.',
+      verwechslung: 'Verschiedene Rotkappen-Arten sind mikroskopisch schwer zu trennen, für den Speisewert aber unerheblich.'
+    }
+  },
+  {
+    id: 'krauseGlucke',
+    label: 'Krause Glucke',
+    latin: 'Sparassis crispa',
+    precip: { lo: 3, idealLo: 10, idealHi: 40, hi: 90, pts: 30 },
+    temp:   { lo: 10, idealLo: 15, idealHi: 22, hi: 28, pts: 30 },
+    ph:     { lo: 3.0, idealLo: 3.5, idealHi: 5.0, hi: 6.0, pts: 15 },
+    months: [8,9,10],
+    monthPts: 15, monthPtsOff: 3,
+    elevMax: 1200,
+    // Wächst an Wurzeln alter Kiefern (selten Fichte) — stark an alte Nadelbäume gebunden
+    waldtyp: { coniferous: 10, mixed: 5, broadleaved: 1, unbekannt: 4 },
+    info: {
+      speisewert: 'Guter, geschätzter Speisepilz (Fundort schwer zu erreichen)',
+      beschreibung: 'Wächst am Stammfuß alter, meist über 60-jähriger Kiefern und ist ein Schwächeparasit an den Wurzeln.',
+      hut: 'Kein klassischer Hut — hirnkorallenartig gekrauste, blumenkohlartige Struktur.',
+      stiel: 'Kurzer, verzweigter Stielansatz direkt am Baumstamm.',
+      fleisch: 'Weißlich bis cremefarben, elastisch-zäh.',
+      geruchGeschmack: 'Angenehm nussig, kräftiges Pilzaroma.',
+      habitat: 'Alte Kiefern (selten Fichte), am Stammfuß',
+      boden: 'Trockenere, sandige Kiefernstandorte im Flachland.',
+      klima: 'Eher trockenheitstolerant, braucht aber ausreichend warme Vegetationszeit im Spätsommer.',
+      besonderheit: 'Erscheint über Jahre am selben Baum wieder — einmal gefundene Stellen merken sich.',
+      verwechslung: 'Kaum Verwechslungsgefahr durch die einzigartige, blumenkohlartige Form.'
+    }
   }
-};
+];
+
+const speciesConfig = Object.fromEntries(SPECIES.map(s => [s.id, s]));
+let currentSpecies = SPECIES[0].id;
+
+function selectSpecies(id) {
+  currentSpecies = id;
+  document.querySelectorAll('.species-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.species === id);
+  });
+}
+
+function renderSpeciesGrid() {
+  const grid = document.getElementById('speciesGrid');
+  grid.innerHTML = '';
+  SPECIES.forEach(s => {
+    const pill = document.createElement('div');
+    pill.className = 'species-pill' + (s.id === currentSpecies ? ' active' : '');
+    pill.dataset.species = s.id;
+
+    const labelBtn = document.createElement('button');
+    labelBtn.className = 'pill-label';
+    labelBtn.textContent = s.label;
+    labelBtn.addEventListener('click', () => selectSpecies(s.id));
+
+    const infoBtn = document.createElement('button');
+    infoBtn.className = 'info-btn';
+    infoBtn.setAttribute('aria-label', 'Infos zu ' + s.label);
+    infoBtn.textContent = 'ⓘ';
+    infoBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openSpeciesModal(s.id);
+    });
+
+    pill.appendChild(labelBtn);
+    pill.appendChild(infoBtn);
+    grid.appendChild(pill);
+  });
+}
+renderSpeciesGrid();
+
+const MONTH_LABELS = ['J','F','M','A','M','J','J','A','S','O','N','D'];
+
+function openSpeciesModal(id) {
+  const s = speciesConfig[id];
+  document.getElementById('modalName').textContent = s.label;
+  document.getElementById('modalLatin').textContent = s.latin;
+  document.getElementById('modalSpeisewert').textContent = s.info.speisewert;
+  document.getElementById('modalBeschreibung').textContent = s.info.beschreibung;
+  document.getElementById('modalHut').textContent = s.info.hut;
+  document.getElementById('modalStiel').textContent = s.info.stiel;
+  document.getElementById('modalFleisch').textContent = s.info.fleisch;
+  document.getElementById('modalGeruch').textContent = s.info.geruchGeschmack;
+  document.getElementById('modalHabitat').textContent = s.info.habitat;
+  document.getElementById('modalBoden').textContent = s.info.boden;
+  document.getElementById('modalKlima').textContent = s.info.klima;
+  document.getElementById('modalBesonderheit').textContent = s.info.besonderheit;
+  document.getElementById('modalVerwechslung').textContent = '⚠ ' + s.info.verwechslung;
+
+  const bar = document.getElementById('modalMonthBar');
+  bar.innerHTML = MONTH_LABELS.map((lbl, idx) => {
+    const active = s.months.includes(idx + 1);
+    return `<div class="month-cell${active ? ' active' : ''}">${lbl}</div>`;
+  }).join('');
+
+  document.getElementById('speciesModal').classList.add('open');
+}
+document.getElementById('closeSpeciesModal').addEventListener('click', () => {
+  document.getElementById('speciesModal').classList.remove('open');
+});
+document.getElementById('speciesModal').addEventListener('click', (e) => {
+  if (e.target.id === 'speciesModal') e.target.classList.remove('open');
+});
 
 function waldtypScore(leafType, cfg) {
   return cfg.waldtyp[leafType] !== undefined ? cfg.waldtyp[leafType] : cfg.waldtyp.unbekannt;
@@ -336,7 +648,7 @@ function inferLeafType(tags) {
 
   const speciesTag = (tags.species || tags['species:de'] || tags.genus || tags['genus:de'] || '').toLowerCase();
   const conifers = ['picea','pinus','abies','larix','pseudotsuga','fichte','kiefer','tanne','lärche','laerche','douglasie'];
-  const broadleaf = ['fagus','quercus','betula','carpinus','tilia','acer','fraxinus','buche','eiche','birke','hainbuche','ahorn','esche'];
+  const broadleaf = ['fagus','quercus','betula','carpinus','tilia','acer','fraxinus','populus','buche','eiche','birke','hainbuche','ahorn','esche','pappel','espe'];
   if (conifers.some(k => speciesTag.includes(k))) return 'coniferous';
   if (broadleaf.some(k => speciesTag.includes(k))) return 'broadleaved';
   return 'unbekannt';
@@ -350,7 +662,6 @@ function triScore(value, cfg) {
   return pts * (hi - value) / (hi - idealHi);
 }
 
-// Ordnet einen Messwert relativ zu seinem Zielbereich ein (für die UI-Statusbadges)
 function rangeStatus(value, cfg) {
   if (value <= cfg.lo || value >= cfg.hi) return 'poor';
   if (value >= cfg.idealLo && value <= cfg.idealHi) return 'ideal';
@@ -396,13 +707,9 @@ function computeScoreBreakdown(species, data) {
   };
 }
 
-function computeScore(species, data) {
-  return computeScoreBreakdown(species, data).total;
-}
-
 function scoreColor(score) {
-  const low = [154,150,134];   // grey-green, muted
-  const high = [217,138,31];   // chanterelle orange
+  const low = [154,150,134];
+  const high = [217,138,31];
   const t = Math.max(0, Math.min(1, score / 100));
   const c = low.map((v,i) => Math.round(v + (high[i]-v)*t));
   return `rgb(${c[0]},${c[1]},${c[2]})`;
@@ -422,12 +729,11 @@ function centroid(coords) {
   return [lat / coords.length, lon / coords.length];
 }
 
-// Grobe Umrechnung von Grad² in Hektar, korrigiert für die geografische Breite
 function areaHectares(shoelaceDeg2, atLat) {
   const kmPerDegLat = 111.32;
   const kmPerDegLon = 111.32 * Math.cos(atLat * Math.PI / 180);
   const km2 = shoelaceDeg2 * kmPerDegLat * kmPerDegLon;
-  return Math.round(km2 * 100 * 10) / 10; // km² -> ha
+  return Math.round(km2 * 100 * 10) / 10;
 }
 
 async function overpassForests(south, west, north, east) {
@@ -491,9 +797,6 @@ function leafTypeLabel(lt) {
   return 'Unbekannt / gemischt';
 }
 
-// SoilGrids (ISRIC) liefert weltweit Boden-pH auf 250m-Raster, kostenlos.
-// Die API erlaubt nur Einzelpunkt-Abfragen, daher ein Request pro Fläche;
-// einzelne Fehler brechen die Gesamtsuche nicht ab (Promise.allSettled).
 async function fetchSoilPh(points) {
   const results = await Promise.allSettled(points.map(p => {
     const url = `https://rest.isric.org/soilgrids/v2.0/properties/query?lon=${p.centroid[1]}&lat=${p.centroid[0]}&property=phh2o&depth=0-5cm&value=mean`;
@@ -507,7 +810,7 @@ async function fetchSoilPh(points) {
     try {
       const layer = r.value.properties.layers.find(l => l.name === 'phh2o');
       const depth = layer.depths.find(d => d.label === '0-5cm');
-      const raw = depth.values.mean; // SoilGrids liefert pH * 10 als Ganzzahl
+      const raw = depth.values.mean;
       return raw != null ? Math.round((raw / 10) * 10) / 10 : null;
     } catch {
       return null;
@@ -619,7 +922,6 @@ searchBtn.addEventListener('click', async () => {
     searchBtn.disabled = false;
   }
 });
-
 </script>
 
 </body>
