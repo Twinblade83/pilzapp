@@ -131,7 +131,7 @@ const MAX_FORESTS=250;
 const MIN_FOREST_ZOOM=11;
 const FOREST_LAYER='landcover_wood';
 const TREE_EVIDENCE_RADIUS_KM=5;
-const ANALYSIS_CELL_SIZE_M=250;
+const ANALYSIS_CELL_SIZE_M=100;
 const MAX_ANALYSIS_CELLS=700;
 const CELL_MICRO_ANALYSIS_LIMIT=140;
 const CELL_DLR_ANALYSIS_LIMIT=100;
@@ -213,6 +213,14 @@ function weatherScore(data,s){
     if(Number.isFinite(moist))patternPts+=Math.max(-.5,Math.min(.5,(1-Math.abs(moist-target)/.12)*.5));
   }
   return{points:precipPts+tempPts,precipPts,tempPts,patternPts:Math.max(0,Math.min(2.5,patternPts))};
+}
+function distanceKm(lat1,lon1,lat2,lon2){
+  const R=6371;
+  const r=Math.PI/180;
+  const dLat=(Number(lat2)-Number(lat1))*r;
+  const dLon=(Number(lon2)-Number(lon1))*r;
+  const a=Math.sin(dLat/2)**2+Math.cos(Number(lat1)*r)*Math.cos(Number(lat2)*r)*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.min(1,Math.sqrt(a)));
 }
 function areaDeg2(coords){let a=0;for(let i=0;i<coords.length-1;i++)a+=coords[i][1]*coords[i+1][0]-coords[i+1][1]*coords[i][0];return Math.abs(a/2)}
 function centroid(coords){let lat=0,lon=0;for(const p of coords){lat+=p[0];lon+=p[1]}return[lat/coords.length,lon/coords.length]}
@@ -859,16 +867,14 @@ document.getElementById('searchBtn').onclick=async()=>{
     const soilP=safeTask(3,'Bodendaten',()=>fetchSoilPh(cells,(d,t)=>updateBatchProgress(3,'Bodendaten',d,t)),new Array(cells.length));
     const elevP=safeTask(4,'Höhen-/Reliefdaten',()=>fetchElevations(cells,(d,t)=>updateBatchProgress(4,'Höhen-/Reliefdaten',d,t)),new Array(cells.length));
     const osmP=safeTask(6,'Habitatstruktur',()=>loadOsmContext(map.getBounds()),null);
-    const treeEvidenceP=safeTask(5,'Baumarten',()=>loadTreeEvidence(species,map.getBounds()),[]);
+    const dlrP=safeTask(5,'Baumarten',()=>loadDlrTreeData(forests,(d,t)=>setProgressStep(5,'running',`Wälder ${d}/${t}`,d/Math.max(1,t))),new Array(forests.length));
+    const treeEvidenceP=loadTreeEvidence(species,map.getBounds()).catch(()=>[]);
     const mushroomP=loadMushroomEvidence(species,map.getBounds()).catch(()=>[]);
     const core=await Promise.all([weatherP,soilP,elevP]);shared.weather=core[0].data||shared.weather;shared.soil=core[1].data||shared.soil;shared.elev=core[2].data||shared.elev;
-    const treeResult=await treeEvidenceP;shared.treeSources=treeResult.data||[];shared.treeLoaded=treeResult.ok;
-    const parentDlr=await safeTask(5,'DLR-Baumartenkarte',()=>loadDlrTreeData(forests),new Array(forests.length));
-    const parentDlrData=parentDlr.data||new Array(forests.length);cells.forEach((c,i)=>{shared.dlrByIndex[i]=parentDlrData[c.parentForestIndex]||null});
+    const parentDlr=await dlrP;const parentDlrData=parentDlr.data||new Array(forests.length);cells.forEach((c,i)=>{shared.dlrByIndex[i]=parentDlrData[c.parentForestIndex]||null});
     const osmResult=await osmP;shared.osm=osmResult.data||null;shared.structureLoaded=osmResult.ok;
     rebuildResults(cells,shared);setProgressStep(7,'running','erste Rasterwerte werden angezeigt…',.35);document.getElementById('status').textContent=`${cells.length} Bereiche sichtbar. Verfeinere die besten Zellen…`;
-    const preliminary=forestResults.slice().sort((a,b)=>b.score.total-a.score.total);
-    const selectedDlr=preliminary.slice(0,Math.min(CELL_DLR_ANALYSIS_LIMIT,cells.length));let nextDlr=0;async function dlrWorker(){while(true){const idx=nextDlr++;if(idx>=selectedDlr.length)return;const r=selectedDlr[idx],i=cells.indexOf(r.forest);try{const lat=r.forest.centroid[0],lon=r.forest.centroid[1],point=await queryDlrTreePoint(lat,lon);if(point?.match){shared.dlrByIndex[i]={available:true,samples:[point],type:point.match.type,dominant:point.match,speciesCounts:{[point.match.id]:1},confidence:.9};}}catch(_){}setProgressStep(5,'running',`Top-Zellen ${idx+1}/${selectedDlr.length}`,Math.max(.1,.1+.85*((idx+1)/Math.max(1,selectedDlr.length))))}}await Promise.all(Array.from({length:Math.min(6,selectedDlr.length)},dlrWorker));rebuildResults(cells,shared);
+    treeEvidenceP.then(treeResult=>{if(runId!==searchRunId)return;shared.treeSources=treeResult||[];shared.treeLoaded=true;rebuildResults(cells,shared);renderAnalysisLayer()}).catch(()=>{});
     const selected=forestResults.slice().sort((a,b)=>b.score.total-a.score.total).slice(0,Math.min(CELL_MICRO_ANALYSIS_LIMIT,cells.length));const microTargets=[],microIndexes=[];selected.forEach(r=>{const i=cells.indexOf(r.forest);microTargets.push(r.forest);microIndexes.push(i)});
     const microValues=await fetchMicroBatch(microTargets,(d,t)=>setProgressStep(4,'running',`Top-Zellen Relief ${d}/${t}`,Math.max(.45,.45+.45*(d/Math.max(1,t)))));microValues.forEach((m,j)=>{shared.microByIndex.set(microIndexes[j],m)});rebuildResults(cells,shared);forestResults.forEach(r=>r.analysisStage='vollständig');setProgressStep(7,'done','Raster fertig',1);renderAnalysisLayer();microStageDone=true;
     Promise.resolve(mushroomP).then(()=>{if(runId!==searchRunId)return;shared.mushroomLoaded=true;optionalStageDone=true;setProgressStep(6,'done','Habitat geladen',1);finalizeSearch()}).catch(()=>{optionalStageDone=true;setProgressStep(6,'error','nicht verfügbar',1);finalizeSearch()});
