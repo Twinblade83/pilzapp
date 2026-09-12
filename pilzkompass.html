@@ -567,103 +567,26 @@ async function fetchCachedBatched(points,{batchSize,prefix,ttl,worker,concurrenc
   return out;
 }
 async function fetchElevations(points,onProgress=null,onBatch=null){
-  const out=new Array(points.length).fill(null);
-  const valid=points.map((p,i)=>({p,i})).filter(x=>Number.isFinite(x.p.centroid?.[0])&&Number.isFinite(x.p.centroid?.[1]));
+  const out=new Array(points.length).fill(null);const valid=points.map((p,i)=>({p,i})).filter(x=>Number.isFinite(x.p.centroid?.[0])&&Number.isFinite(x.p.centroid?.[1]));
   if(!valid.length){onProgress?.(points.length,points.length);return out}
-  const batchSize=60;
-  let done=0;
+  const batchSize=100;let done=0;
   for(let start=0;start<valid.length;start+=batchSize){
-    const group=valid.slice(start,start+batchSize);
-    const la=group.map(x=>x.p.centroid[0].toFixed(6)).join(','),lo=group.map(x=>x.p.centroid[1].toFixed(6)).join(',');
-    let values=null;
-    try{
-      const r=await fetchWithTimeout(`https://api.open-meteo.com/v1/elevation?latitude=${encodeURIComponent(la)}&longitude=${encodeURIComponent(lo)}`,{},25000);
-      if(!r.ok)throw new Error('Open-Meteo Höhe '+r.status);
-      const raw=await r.json();
-      if(Array.isArray(raw)) values=raw.map(x=>Number.isFinite(Number(x?.elevation))?Number(x.elevation):null);
-      else if(Array.isArray(raw?.elevation)) values=raw.elevation.map(v=>Number.isFinite(Number(v))?Number(v):null);
-      else if(Number.isFinite(Number(raw?.elevation))) values=[Number(raw.elevation)];
-    }catch(e){console.warn('Open-Meteo Höhen-Batch fehlgeschlagen:',e)}
-    if(!Array.isArray(values)||values.length!==group.length){
-      values=new Array(group.length).fill(null);
-      // Fallback: Open Topo Data, maximal 100 Punkte pro Anfrage.
-      try{
-        const loc=group.map(x=>`${x.p.centroid[0].toFixed(6)},${x.p.centroid[1].toFixed(6)}`).join('|');
-        const r=await fetchWithTimeout(`https://api.opentopodata.org/v1/srtm90m?locations=${encodeURIComponent(loc)}&interpolation=bilinear`,{},25000);
-        if(r.ok){const raw=await r.json();if(raw?.status==='OK'&&Array.isArray(raw?.results))values=group.map((_,i)=>Number.isFinite(Number(raw.results[i]?.elevation))?Number(raw.results[i].elevation):null)}
-      }catch(e){console.warn('Open Topo Data Höhen-Fallback nicht verfügbar:',e)}
-    }
-    values.forEach((v,j)=>{out[group[j].i]=v==null?null:v});
-    done+=group.length;onBatch?.(values,group.map(x=>x.p),group[0].i);onProgress?.(done,valid.length);
+    const group=valid.slice(start,start+batchSize),la=group.map(x=>x.p.centroid[0].toFixed(6)).join(','),lo=group.map(x=>x.p.centroid[1].toFixed(6)).join(',');let values=null;
+    try{const r=await fetchWithTimeout(`https://api.open-meteo.com/v1/elevation?latitude=${encodeURIComponent(la)}&longitude=${encodeURIComponent(lo)}`,{},25000);if(!r.ok)throw new Error('Open-Meteo Höhe '+r.status);const raw=await r.json();if(Array.isArray(raw?.elevation))values=raw.elevation.map(v=>Number.isFinite(Number(v))?Number(v):null)}catch(e){console.warn('Open-Meteo Höhen-Batch fehlgeschlagen:',e)}
+    if(!Array.isArray(values)||values.length!==group.length){values=new Array(group.length).fill(null);try{const loc=group.map(x=>`${x.p.centroid[0].toFixed(6)},${x.p.centroid[1].toFixed(6)}`).join('|');const r=await fetchWithTimeout(`https://api.opentopodata.org/v1/srtm90m?locations=${encodeURIComponent(loc)}&interpolation=bilinear`,{},25000);if(r.ok){const raw=await r.json();if(raw?.status==='OK'&&Array.isArray(raw?.results))values=group.map((_,i)=>Number.isFinite(Number(raw.results[i]?.elevation))?Number(raw.results[i].elevation):null)}}catch(e){console.warn('Open Topo Data Höhen-Fallback nicht verfügbar:',e)}}
+    values.forEach((v,j)=>{out[group[j].i]=v==null?null:v});done+=group.length;onBatch?.(values,group.map(x=>x.p),group[0].i);onProgress?.(done,valid.length)
   }
-  onProgress?.(points.length,points.length);return out;
+  if(!out.some(v=>Number.isFinite(v)))throw new Error('Keine Höhenwerte von den Reliefquellen erhalten');onProgress?.(points.length,points.length);return out;
 }
 async function parseWeatherResponse(raw){
-  const list=Array.isArray(raw)?raw:[raw];
-  const todayKey=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Berlin',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-  return list.map(x=>{
-    const d=x?.daily||{};
-    const dates=Array.isArray(d.time)?d.time:[];
-    const nums=name=>Array.isArray(d[name])?d[name].map(v=>Number.isFinite(Number(v))?Number(v):null):[];
-    const p=nums('precipitation_sum'),t=nums('temperature_2m_mean'),tm=nums('temperature_2m_max'),ph=nums('precipitation_hours'),sun=nums('sunshine_duration');
-    let todayIndex=dates.indexOf(todayKey);
-    if(todayIndex<0) todayIndex=dates.length?Math.max(0,dates.length-8):0;
-    const hist=(arr,n)=>{const a=[];for(let i=Math.max(0,todayIndex-n);i<todayIndex;i++){if(arr[i]!=null)a.push(arr[i])}return a};
-    const forecast=(arr,n)=>{const a=[];for(let i=todayIndex+1;i<=Math.min(arr.length-1,todayIndex+n);i++){if(arr[i]!=null)a.push(arr[i])}return a};
-    const mean=a=>a.length?Number((a.reduce((q,v)=>q+v,0)/a.length).toFixed(1)):null;
-    const last14=hist(p,14),last7=hist(p,7),last3=hist(p,3),temp10=hist(t,10),temp3=hist(t,3),max3=hist(tm,3),rain14=hist(ph,14),sun10=hist(sun,10),forecastPrecip=forecast(p,7),forecastTemp=forecast(t,7);
-    const sunHours=sun10.length?sun10.reduce((a,v)=>a+v,0)/3600:null;
-    const temp3Mean=mean(temp3),next7Mean=mean(forecastTemp),next7Precip=forecastPrecip.reduce((a,v)=>a+v,0);
-    const growthToday=calcGrowthIndex({precip3:last3.reduce((a,v)=>a+v,0),tempAvg3:temp3Mean,soilMoisture:null,forecastPrecip:next7Precip,forecastTemp:next7Mean});
-    const growth7=calcGrowthIndex({precip3:next7Precip/2,tempAvg3:next7Mean,soilMoisture:null,forecastPrecip:next7Precip,forecastTemp:next7Mean});
-    return {precip14:Number(last14.reduce((a,v)=>a+v,0).toFixed(1)),precip7:Number(last7.reduce((a,v)=>a+v,0).toFixed(1)),precip3:Number(last3.reduce((a,v)=>a+v,0).toFixed(1)),tempAvg10:mean(temp10),tempAvg3:temp3Mean,maxTemp3:mean(max3),rainHours14:Number(rain14.reduce((a,v)=>a+v,0).toFixed(1)),sunshine10:sunHours==null?null:Number(sunHours.toFixed(1)),soilMoisture:null,forecastPrecip7:Number(next7Precip.toFixed(1)),forecastTemp7:next7Mean,growthIndex:growthToday.index,growthTrend:Math.round((growth7.index-growthToday.index)*10)/10};
-  });
+  const list=Array.isArray(raw)?raw:[raw],todayKey=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Berlin',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  const nums=v=>Array.isArray(v)?v.map(x=>Number.isFinite(Number(x))?Number(x):null):[];
+  return list.map(x=>{const d=x?.daily||{},dates=Array.isArray(d.time)?d.time:[],p=nums(d.precipitation_sum),t=nums(d.temperature_2m_mean),tm=nums(d.temperature_2m_max),ph=nums(d.precipitation_hours),sun=nums(d.sunshine_duration);let ti=dates.indexOf(todayKey);if(ti<0)ti=dates.length?Math.max(1,dates.length-1):0;const hist=(a,n)=>{const z=[];for(let i=Math.max(0,ti-n);i<ti;i++)if(a[i]!=null)z.push(a[i]);return z},fore=(a,n)=>{const z=[];for(let i=ti+1;i<=Math.min(a.length-1,ti+n);i++)if(a[i]!=null)z.push(a[i]);return z},mean=a=>a.length?Number((a.reduce((q,v)=>q+v,0)/a.length).toFixed(1)):null,last14=hist(p,14),last7=hist(p,7),last3=hist(p,3),temp10=hist(t,10),temp3=hist(t,3),max3=hist(tm,3),rain14=hist(ph,14),sun10=hist(sun,10),nextPre=fore(p,7),nextTemp=fore(t,7),sunHours=sun10.length?sun10.reduce((a,v)=>a+v,0)/3600:null,next7Mean=mean(nextTemp),next7Precip=nextPre.reduce((a,v)=>a+v,0);if(!(last14.length||temp10.length||last7.length||last3.length))return null;const growthToday=calcGrowthIndex({precip3:last3.reduce((a,v)=>a+v,0),tempAvg3:mean(temp3),soilMoisture:null,forecastPrecip:next7Precip,forecastTemp:next7Mean}),growth7=calcGrowthIndex({precip3:next7Precip/2,tempAvg3:next7Mean,soilMoisture:null,forecastPrecip:next7Precip,forecastTemp:next7Mean});return{elevation:Number.isFinite(Number(x?.elevation))?Number(x.elevation):null,precip14:last14.length?Number(last14.reduce((a,v)=>a+v,0).toFixed(1)):null,precip7:last7.length?Number(last7.reduce((a,v)=>a+v,0).toFixed(1)):null,precip3:last3.length?Number(last3.reduce((a,v)=>a+v,0).toFixed(1)):null,tempAvg10:mean(temp10),tempAvg3:mean(temp3),maxTemp3:mean(max3),rainHours14:rain14.length?Number(rain14.reduce((a,v)=>a+v,0).toFixed(1)):null,sunshine10:sunHours==null?null:Number(sunHours.toFixed(1)),soilMoisture:null,forecastPrecip7:Number(next7Precip.toFixed(1)),forecastTemp7:next7Mean,growthIndex:growthToday.index,growthTrend:Math.round((growth7.index-growthToday.index)*10)/10}})
 }
 async function fetchWeather(points,onProgress=null,onBatch=null){
-  const out=new Array(points.length).fill(null);
-  const groups=new Map();
-  points.forEach((p,i)=>{
-    if(!Number.isFinite(p?.centroid?.[0])||!Number.isFinite(p?.centroid?.[1]))return;
-    const parent=p.parentForestIndex??i;
-    if(!groups.has(parent))groups.set(parent,{lat:Number(p.centroid[0]),lon:Number(p.centroid[1]),items:[]});
-    groups.get(parent).items.push(i);
-  });
-  const weatherGroups=[...groups.values()];
-  if(!weatherGroups.length){onProgress?.(points.length,points.length);return out}
-  const makeUrl=(lat,lon,includeSun=true)=>`https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&daily=precipitation_sum,temperature_2m_mean,temperature_2m_max,precipitation_hours${includeSun?',sunshine_duration':''}&past_days=14&forecast_days=7&timezone=Europe%2FBerlin&cell_selection=land`;
-  let done=0;
-  for(let start=0;start<weatherGroups.length;start+=20){
-    const batch=weatherGroups.slice(start,start+20);
-    let parsed=null;
-    for(const includeSun of [true,false]){
-      if(parsed)break;
-      try{
-        const la=batch.map(g=>g.lat.toFixed(5)).join(','),lo=batch.map(g=>g.lon.toFixed(5)).join(',');
-        const r=await fetchWithTimeout(makeUrl(la,lo,includeSun),{},30000);
-        if(!r.ok)throw new Error(`Open-Meteo ${r.status}`);
-        const raw=await r.json();
-        if(raw?.error)throw new Error(raw.reason||'Open-Meteo meldet einen Fehler');
-        const candidate=await parseWeatherResponse(raw);
-        if(Array.isArray(candidate)&&candidate.length===batch.length)parsed=candidate;
-      }catch(e){console.warn('Wetter-Mehrpunktabfrage fehlgeschlagen:',e)}
-    }
-    if(!parsed){
-      parsed=new Array(batch.length).fill(null);
-      for(let j=0;j<batch.length;j++){
-        const g=batch[j];
-        try{
-          let r=await fetchWithTimeout(makeUrl(g.lat,g.lon,true),{},25000);
-          if(!r.ok)r=await fetchWithTimeout(makeUrl(g.lat,g.lon,false),{},25000);
-          if(r.ok){const raw=await r.json();const one=await parseWeatherResponse(raw);parsed[j]=one[0]||null}
-        }catch(e){console.warn('Einzel-Wetterpunkt nicht verfügbar:',e)}
-      }
-    }
-    batch.forEach((g,j)=>g.items.forEach(i=>{out[i]=parsed[j]||null}));
-    done+=batch.length;onProgress?.(done,weatherGroups.length);onBatch?.(parsed,batch.map(g=>({centroid:[g.lat,g.lon]})),start);
-  }
-  const usable=out.filter(Boolean).length;
-  if(!usable)throw new Error('Open-Meteo lieferte keine verwertbaren Wetterwerte');
-  onProgress?.(points.length,points.length);return out;
+  const out=new Array(points.length).fill(null),groups=new Map();points.forEach((p,i)=>{if(!Number.isFinite(p?.centroid?.[0])||!Number.isFinite(p?.centroid?.[1]))return;const parent=p.parentForestIndex??i;if(!groups.has(parent))groups.set(parent,{lat:Number(p.centroid[0]),lon:Number(p.centroid[1]),items:[]});groups.get(parent).items.push(i)});const weatherGroups=[...groups.values()];if(!weatherGroups.length){onProgress?.(points.length,points.length);return out}
+  const makeUrl=(lat,lon,withSun=true)=>{const daily=['precipitation_sum','temperature_2m_mean','temperature_2m_max','precipitation_hours'];if(withSun)daily.push('sunshine_duration');return`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=${daily.join(',')}&past_days=14&forecast_days=7&timezone=Europe%2FBerlin&cell_selection=land`};
+  let cursor=0,done=0;const concurrency=5;async function worker(){while(true){const idx=cursor++;if(idx>=weatherGroups.length)return;const g=weatherGroups[idx];let value=null;for(const withSun of [true,false]){if(value)break;try{const r=await fetchWithTimeout(makeUrl(g.lat.toFixed(6),g.lon.toFixed(6),withSun),{},18000);if(!r.ok)throw new Error(`Open-Meteo ${r.status}`);const raw=await r.json();if(raw?.error)throw new Error(raw.reason||'Open-Meteo Fehler');value=(await parseWeatherResponse(raw))[0]||null}catch(e){console.warn('Wetterpunkt fehlgeschlagen:',e)}}if(!value){try{const d=await dwdPoint({centroid:[g.lat,g.lon]});if(d)value={elevation:null,precip14:d.precip14,precip7:null,precip3:null,tempAvg10:d.tempAvg10,tempAvg3:null,maxTemp3:null,rainHours14:null,sunshine10:null,soilMoisture:null,forecastPrecip7:null,forecastTemp7:null,growthIndex:null,growthTrend:0}}catch(e){console.warn('DWD-Wetterfallback fehlgeschlagen:',e)}}g.items.forEach(i=>out[i]=value);done++;onProgress?.(done,weatherGroups.length);onBatch?.([value],[{centroid:[g.lat,g.lon]}],idx)}}await Promise.all(Array.from({length:Math.min(concurrency,weatherGroups.length)},worker));if(!out.some(Boolean))throw new Error('Keine Wetterdaten von Open-Meteo oder DWD erhalten');onProgress?.(points.length,points.length);return out;
 }
 function calcGrowthIndex(x){
   const p=Number(x.precip3)||0,t=Number(x.tempAvg3),sm=x.soilMoisture==null?null:Number(x.soilMoisture);
@@ -757,6 +680,7 @@ function microScore(species,m,weather){
   return{points:Math.max(0,Math.min(10,p)),label:p>=8?'sehr günstig':p>=6?'günstig':p>=4?'mittel':'ungünstig'};
 }
 
+function deriveMicroclimateFromElevation(cells,elev){const lookup=new Map();cells.forEach((c,i)=>lookup.set(`${c.centroid[0].toFixed(5)}|${c.centroid[1].toFixed(5)}`,i));const out=new Array(cells.length).fill(null),size=Number(window.__analysisCellSize||100);for(let i=0;i<cells.length;i++){const c=cells[i],lat=c.centroid[0],lon=c.centroid[1],center=Number(elev[i]);if(!Number.isFinite(center))continue;const dLat=metersToLat(size),dLon=metersToLon(size,lat),get=(a,b)=>{const j=lookup.get(`${a.toFixed(5)}|${b.toFixed(5)}`);return Number.isInteger(j)&&Number.isFinite(elev[j])?Number(elev[j]):null},n=get(lat+dLat,lon),ss=get(lat-dLat,lon),e=get(lat,lon+dLon),w=get(lat,lon-dLon);if(!Number.isFinite(n)||!Number.isFinite(ss)||!Number.isFinite(e)||!Number.isFinite(w))continue;const gn=(n-ss)/(2*size),ge=(e-w)/(2*size),slope=Math.atan(Math.sqrt(gn*gn+ge*ge))*180/Math.PI,aspect=(Math.atan2(-ge,-gn)*180/Math.PI+360)%360,dirs=['N','NO','O','SO','S','SW','W','NW'];out[i]={elevation:center,slope,dir:dirs[Math.round(aspect/45)%8]}}return out}
 /* ---------- Score ---------- */
 function treeTypeScore(species,type){const w=speciesConfig[species].treeWeights;return{points:w[type]??0,label:leafTypeLabel(type)}}
 function dataQualityFactor(data){
@@ -984,20 +908,36 @@ document.getElementById('searchBtn').onclick=async()=>{
     const dlrP=safeTask(5,'Baumarten',()=>loadDlrTreeData(forests,(d,t)=>setProgressStep(5,'running',`Wälder ${d}/${t}`,d/Math.max(1,t))),new Array(forests.length));
     const treeEvidenceP=loadTreeEvidence(species,map.getBounds()).catch(()=>[]);
     const mushroomP=loadMushroomEvidence(species,map.getBounds()).catch(()=>[]);
-    const core=await Promise.all([weatherP,soilP,elevP]);shared.weather=core[0].data||shared.weather;shared.soil=core[1].data||shared.soil;shared.elev=core[2].data||shared.elev;
+    const core=await Promise.all([weatherP,soilP,elevP]);shared.weather=core[0].data||shared.weather;shared.soil=core[1].data||shared.soil;shared.elev=core[2].data||shared.elev;shared.weather.forEach((w,i)=>{if((shared.elev[i]==null||!Number.isFinite(Number(shared.elev[i])))&&w?.elevation!=null)shared.elev[i]=Number(w.elevation)});
     const parentDlr=await dlrP;const parentDlrData=parentDlr.data||new Array(forests.length);cells.forEach((c,i)=>{shared.dlrByIndex[i]=parentDlrData[c.parentForestIndex]||null});
     const osmResult=await osmP;shared.osm=osmResult.data||null;shared.structureLoaded=true;
     rebuildResults(cells,shared);setProgressStep(7,'running','erste Rasterwerte werden angezeigt…',.35);document.getElementById('status').textContent=`${cells.length} Bereiche sichtbar. Verfeinere die besten Zellen…`;
     treeEvidenceP.then(treeResult=>{if(runId!==searchRunId)return;shared.treeSources=treeResult||[];shared.treeLoaded=true;rebuildResults(cells,shared);renderAnalysisLayer()}).catch(()=>{});
-    const selected=forestResults.slice().sort((a,b)=>b.score.total-a.score.total).slice(0,Math.min(CELL_MICRO_ANALYSIS_LIMIT,cells.length));const microTargets=[],microIndexes=[];selected.forEach(r=>{const i=cells.indexOf(r.forest);microTargets.push(r.forest);microIndexes.push(i)});
+    const derivedMicro=deriveMicroclimateFromElevation(cells,shared.elev);
+    derivedMicro.forEach((m,i)=>{if(m)shared.microByIndex.set(i,m)});
+    rebuildResults(cells,shared);
+    const selected=forestResults.slice().sort((a,b)=>b.score.total-a.score.total).slice(0,Math.min(CELL_MICRO_ANALYSIS_LIMIT,cells.length));
+    const microTargets=[],microIndexes=[];
+    selected.forEach(r=>{
+      const i=cells.indexOf(r.forest);
+      if(!shared.microByIndex.has(i)){
+        microTargets.push(r.forest);
+        microIndexes.push(i);
+      }
+    });
     try{
-      const microValues=await fetchMicroBatch(microTargets,(d,t)=>setProgressStep(4,'running',`Top-Zellen Relief ${d}/${t}`,Math.max(.45,.45+.45*(d/Math.max(1,t)))));
-      microValues.forEach((m,j)=>{if(m)shared.microByIndex.set(microIndexes[j],m)});
+      if(microTargets.length){
+        const microValues=await fetchMicroBatch(
+          microTargets,
+          (d,t)=>setProgressStep(4,'running',`Top-Zellen Relief ${d}/${t}`,Math.max(.45,.45+.45*(d/Math.max(1,t))))
+        );
+        microValues.forEach((m,j)=>{if(m)shared.microByIndex.set(microIndexes[j],m)});
+      }
       rebuildResults(cells,shared);
       forestResults.forEach(r=>r.analysisStage='vollständig');
       microStageDone=true;
     }catch(e){
-      console.warn('Mikroklima konnte für einzelne Top-Zellen nicht vollständig geladen werden:',e);
+      console.warn('Mikroklima-Feinabfrage konnte nicht vollständig geladen werden:',e);
       rebuildResults(cells,shared);
       forestResults.forEach(r=>r.analysisStage='teilweise');
       microStageDone=true;
@@ -1015,4 +955,5 @@ renderScoreLegend();document.getElementById('detailDwd').style.display='none';do
 </script>
 </body>
 </html>
+
 
