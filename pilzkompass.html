@@ -76,8 +76,9 @@ header{position:absolute;top:0;left:0;right:0;z-index:1000;background:var(--cano
       <div class="detail-row"><span class="label">Saison</span><span class="value" id="detailPtsMonth">–</span></div>
       <div class="detail-row"><span class="label">Waldstruktur</span><span class="value" id="detailPtsForest">–</span></div>
       <div class="detail-row"><span class="label">Baumart</span><span class="value" id="detailPtsTrees">–</span></div>
-      <div class="detail-row"><span class="label">Mikroklima</span><span class="value" id="detailPtsMicro">–</span></div><div class="detail-row"><span class="label">Waldstruktur & Gewässer</span><span class="value" id="detailPtsStructure">–</span></div><div class="detail-row"><span class="label">Synergiebonus</span><span class="value" id="detailPtsSynergy">–</span></div><div class="detail-row"><span class="label">Datenvertrauen</span><span class="value" id="detailDataConfidence">–</span></div>
+      <div class="detail-row"><span class="label">Mikroklima</span><span class="value" id="detailPtsMicro">–</span></div><div class="detail-row"><span class="label">Pilznachweise</span><span class="value" id="detailPtsMushroom">–</span></div><div class="detail-row"><span class="label">Waldstruktur & Gewässer</span><span class="value" id="detailPtsStructure">–</span></div><div class="detail-row"><span class="label">Synergiebonus</span><span class="value" id="detailPtsSynergy">–</span></div><div class="detail-row"><span class="label">Datenvertrauen</span><span class="value" id="detailDataConfidence">–</span></div>
       <div class="section-title">Mikroklima</div><div id="detailMicroclimate" class="micro-grid"><div class="micro-card">–</div></div>
+      <div class="section-title">Baumarten-Referenz</div><div id="detailTreeSources" class="source-note"></div>
       <div class="section-title">Baumarten-Nachweise</div><div id="detailTreeEvidence" class="tree-evidence-list"></div><div class="section-title">Pilz-Nachweise</div><div id="detailMushroomEvidence" class="tree-evidence-list"></div><div class="section-title">Habitat-Struktur</div><div id="detailHabitatInfo" class="tree-evidence-list"></div>
       <div class="detail-actions" id="detailActions"></div>
     </div>
@@ -105,7 +106,6 @@ header{position:absolute;top:0;left:0;right:0;z-index:1000;background:var(--cano
 <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/dist/leaflet-maplibre-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf@7.3.0/turf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/geotiff@2.1.3/dist-browser/geotiff.js"></script>
 <script>
 /* ============================================================
    BAUMARTEN-QUELLEN
@@ -130,7 +130,6 @@ const FOREST_LAYER='landcover_wood';
 const TREE_EVIDENCE_RADIUS_KM=5;
 const MUSHROOM_EVIDENCE_RADIUS_KM=5;
 const OSM_CONTEXT_RADIUS_KM=5;
-const OSM_OVERPASS_ENDPOINTS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter'];
 const TREE_QUERY_LIMIT=300;
 const MICRO_ANALYSIS_LIMIT=90;
 const API_BATCH_CONCURRENCY=5;
@@ -174,7 +173,6 @@ function scoreBand(score){const n=Math.max(0,Math.min(100,Math.round(Number(scor
 function scoreColor(score){return scoreBand(score).color}
 function renderScoreLegend(){const el=document.getElementById('scoreLegend');if(!el)return;el.innerHTML=SCORE_BANDS.map(b=>`<div class="score-legend-cell" style="background:${b.color}" title="Score ${b.label}">${b.label}</div>`).join('')}
 function leafTypeLabel(t){return t==='coniferous'?'Nadelwald':t==='broadleaved'?'Laubwald':t==='mixed'?'Mischwald':'unbekannt'}
-function treeDisplayLabel(leafType,best){if(best?.score>0&&best.common)return best.common;if(leafType==='coniferous')return'Nadelbäume';if(leafType==='broadleaved')return'Laubbäume';if(leafType==='mixed')return'Mischbestand';return'Keine lokale Baumarten-Evidenz'}
 function statusTagHtml(status){const labels={ideal:'ideal',ok:'okay',poor:'ungünstig'};return `<span class="status-tag status-${status}">${labels[status]}</span>`}
 function rangeStatus(v,cfg){if(v<=cfg.lo||v>=cfg.hi)return'poor';if(v>=cfg.idealLo&&v<=cfg.idealHi)return'ideal';return'ok'}
 function phStatusLabel(ph){if(ph<4.5)return'stark sauer';if(ph<5.5)return'sauer';if(ph<6.5)return'leicht sauer';if(ph<7.2)return'neutral';return'alkalisch'}
@@ -223,13 +221,7 @@ document.getElementById('closeDetail').addEventListener('click',showForestRankin
 function showForestRanking(){activeForest=null;rankView.style.display='block';detailView.style.display='none';selectedLayer.clearLayers();if(detailPanelCollapsed)setDetailPanelCollapsed(false)}
 
 /* ---------- Vector tiles / Waldsuche ---------- */
-function inferForestTypeFromTags(tags){
-  const t=Object.entries(tags||{}).map(([k,v])=>`${k}:${v}`).join(' ').toLowerCase();
-  const con=/(conifer|needleleaved|nadel|fichte|picea|kiefer|pinus|tanne|abies|lärche|larix|douglasie|pseudotsuga|juniper|wacholder|taxus)/i.test(t);
-  const broad=/(broadleaf|broadleaved|deciduous|laub|buche|fagus|eiche|quercus|birke|betula|espe|populus|ahorn|acer|ulme|ulmus|linde|tilia|kastanie|castanea)/i.test(t);
-  if(con&&broad)return'mixed'; if(con)return'coniferous'; if(broad)return'broadleaved'; return'unknown';
-}
-function forestFromFeature(f){const g=f.geometry,p=f.properties||{};if(!g||!['Polygon','MultiPolygon'].includes(g.type))return[];const polys=g.type==='Polygon'?[g.coordinates]:g.coordinates;return polys.map(poly=>poly?.[0]).filter(r=>r&&r.length>=4).map(r=>{const coords=r.map(x=>[x[1],x[0]]);return{coords,area:areaDeg2(coords),centroid:centroid(coords),leafType:inferForestTypeFromTags(p),tags:{...p,'sourceLayer':f.sourceLayer||''},osmId:f.id||`${coords[0][0]}-${coords[0][1]}-${coords.length}`}})}
+function forestFromFeature(f){const g=f.geometry,p=f.properties||{};if(!g||!['Polygon','MultiPolygon'].includes(g.type))return[];const polys=g.type==='Polygon'?[g.coordinates]:g.coordinates;return polys.map(poly=>poly?.[0]).filter(r=>r&&r.length>=4).map(r=>{const coords=r.map(x=>[x[1],x[0]]);return{coords,area:areaDeg2(coords),centroid:centroid(coords),leafType:'unknown',tags:{...p,'sourceLayer':f.sourceLayer||''},osmId:f.id||`${coords[0][0]}-${coords[0][1]}-${coords.length}`}})}
 function dedupeForests(fs){const seen=new Set;return fs.filter(f=>{const k=`${f.osmId}|${f.coords[0][0].toFixed(5)}|${f.coords[0][1].toFixed(5)}|${f.coords.length}`;if(seen.has(k))return false;seen.add(k);return true})}
 function getVisibleForests(){if(!mapLibreLayer)return[];let gl=null;try{gl=mapLibreLayer.getMaplibreMap()}catch(_){return[]}if(!gl)return[];let feats=[];try{feats=gl.queryRenderedFeatures({layers:[FOREST_LAYER]})}catch(_){try{feats=gl.queryRenderedFeatures().filter(f=>f.sourceLayer==='landcover'&&String(f.properties?.class||'').toLowerCase()==='wood')}catch(__){return[]}}return dedupeForests(feats.flatMap(forestFromFeature))}
 function mergeTouchingForests(fs){if(!window.turf||fs.length<2)return fs;const indexed=fs.map((f,i)=>{const ft=turf.polygon([f.coords.map(p=>[p[1],p[0]])]);ft.properties={i};return ft});const groups=[],used=new Set;for(let i=0;i<fs.length;i++){if(used.has(i))continue;const members=[i];used.add(i);let changed=true;while(changed){changed=false;for(let j=0;j<fs.length;j++){if(used.has(j))continue;for(const k of members){try{const intersects=turf.booleanIntersects(indexed[k],indexed[j]);const touches=typeof turf.booleanTouches==='function'&&turf.booleanTouches(indexed[k],indexed[j]);if(intersects||touches){members.push(j);used.add(j);changed=true;break}}catch(_){}}}}groups.push(members)}const out=[];for(const members of groups){if(members.length===1){out.push(fs[members[0]]);continue}try{let combined=indexed[members[0]];for(let i=1;i<members.length;i++)combined=turf.union(turf.featureCollection([combined,indexed[members[i]]]))||combined;const flattened=turf.flatten(combined);for(const ft of flattened.features){const ring=ft.geometry.coordinates[0].map(p=>[p[1],p[0]]);const source=fs[members[0]];out.push({...source,coords:ring,area:areaDeg2(ring),centroid:centroid(ring),osmId:`merged-${members.join('-')}`,tags:{...source.tags,mergedCount:members.length}})}}catch(_){out.push(fs[members[0]])}}return out}
@@ -338,9 +330,7 @@ async function loadOsmContext(bounds){
   if(persistent?.water&&persistent?.majorRoads){osmCache.water=persistent.water;osmCache.majorRoads=persistent.majorRoads;osmCache.loaded=true;return osmCache}
   const ext=bboxExpanded(bounds,OSM_CONTEXT_RADIUS_KM);const bbox=`${ext[1]},${ext[0]},${ext[3]},${ext[2]}`;
   const query=`[out:json][timeout:25];(nwr["natural"="water"](${bbox});nwr["waterway"~"^(river|stream|canal)$"](${bbox});nwr["highway"~"^(motorway|trunk|primary|secondary)$"](${bbox}););out center;`;
-  let lastError=null,j=null;
-  for(const endpoint of OSM_OVERPASS_ENDPOINTS){try{const r=await fetchWithTimeout(endpoint,{method:'POST',body:query,headers:{'Content-Type':'text/plain'}},30000);if(!r.ok)throw new Error(`OSM Overpass ${r.status}`);j=await r.json();break}catch(e){lastError=e}}
-  if(!j)throw(lastError||new Error('OSM Overpass nicht verfügbar'));
+  const r=await fetchWithTimeout(OSM_OVERPASS_ENDPOINT,{method:'POST',body:query,headers:{'Content-Type':'text/plain'}},30000);if(!r.ok)throw new Error(`OSM Overpass ${r.status}`);const j=await r.json();
   for(const e of j.elements||[]){const lat=Number(e.lat??e.center?.lat),lon=Number(e.lon??e.center?.lon);if(!Number.isFinite(lat)||!Number.isFinite(lon))continue;const water=e.tags?.natural==='water'||/^(river|stream|canal)$/.test(String(e.tags?.waterway||''));const road=/^(motorway|trunk|primary|secondary)$/.test(String(e.tags?.highway||''));if(water)osmCache.water.push({lat,lon});if(road)osmCache.majorRoads.push({lat,lon})}
   setApiCache(persistentKey,{water:osmCache.water,majorRoads:osmCache.majorRoads});osmCache.loaded=true;return osmCache;
 }
@@ -404,47 +394,8 @@ async function fetchCachedBatched(points,{batchSize,prefix,ttl,worker,concurrenc
 }
 async function fetchElevations(points,onProgress=null,onBatch=null){return fetchCachedBatched(points,{batchSize:50,prefix:'elevation',ttl:API_CACHE_TTL.elevation,concurrency:API_BATCH_CONCURRENCY,onProgress,onBatch,worker:async b=>{const la=b.map(x=>x.centroid[0]).join(','),lo=b.map(x=>x.centroid[1]).join(','),r=await fetchWithTimeout(`https://api.open-meteo.com/v1/elevation?latitude=${la}&longitude=${lo}`,{},15000);if(!r.ok)throw new Error('Open-Meteo Höhe '+r.status);return(await r.json()).elevation||[]}})}
 async function fetchWeather(points,onProgress=null,onBatch=null){return fetchCachedBatched(points,{batchSize:25,prefix:'weather',ttl:API_CACHE_TTL.weather,concurrency:API_BATCH_CONCURRENCY,onProgress,onBatch,worker:async b=>{const la=b.map(x=>x.centroid[0]).join(','),lo=b.map(x=>x.centroid[1]).join(','),r=await fetchWithTimeout(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=precipitation_sum,temperature_2m_mean,temperature_2m_max,precipitation_hours,sunshine_duration&hourly=soil_moisture_0_to_7cm&past_days=16&forecast_days=1&timezone=auto`,{},20000);if(!r.ok)throw new Error('Open-Meteo Wetter '+r.status);const parsed=await r.json(),json=Array.isArray(parsed)?parsed:[parsed];return json.map(x=>{const p=x.daily?.precipitation_sum||[],t=x.daily?.temperature_2m_mean||[],tm=x.daily?.temperature_2m_max||[],ph=x.daily?.precipitation_hours||[],sun=x.daily?.sunshine_duration||[],last14=p.slice(-15,-1).filter(v=>v!=null),last7=p.slice(-8,-1).filter(v=>v!=null),last3=p.slice(-4,-1).filter(v=>v!=null),temp10=t.slice(-11,-1).filter(v=>v!=null),temp3=t.slice(-4,-1).filter(v=>v!=null),max3=tm.slice(-4,-1).filter(v=>v!=null),rainHours14=ph.slice(-15,-1).filter(v=>v!=null).reduce((a,v)=>a+v,0),sunshine10=sun.slice(-11,-1).filter(v=>v!=null).reduce((a,v)=>a+v,0)/3600,sm=(x.hourly?.soil_moisture_0_to_7cm||[]).slice(-24).filter(v=>v!=null),soilMoisture=sm.length?sm.reduce((a,v)=>a+v,0)/sm.length:null;return{precip14:Number(last14.reduce((a,v)=>a+v,0).toFixed(1)),precip7:Number(last7.reduce((a,v)=>a+v,0).toFixed(1)),precip3:Number(last3.reduce((a,v)=>a+v,0).toFixed(1)),tempAvg10:Number((temp10.reduce((a,v)=>a+v,0)/Math.max(temp10.length,1)).toFixed(1)),tempAvg3:Number((temp3.reduce((a,v)=>a+v,0)/Math.max(temp3.length,1)).toFixed(1)),maxTemp3:Number((max3.reduce((a,v)=>a+v,0)/Math.max(max3.length,1)).toFixed(1)),rainHours14:Number(rainHours14.toFixed(1)),sunshine10:Number(sunshine10.toFixed(1)),soilMoisture:soilMoisture==null?null:Number(soilMoisture.toFixed(3))}})}})}
-async function fetchSoilPh(points,onProgress=null,onBatch=null){
-  const valid=points.filter(p=>Number.isFinite(p.centroid?.[0])&&Number.isFinite(p.centroid?.[1]));
-  const out=new Array(points.length).fill(null);
-  if(!valid.length)return out;
-  const bounds=map.getBounds();
-  const cacheKey=`soilgrid-wcs|${boundsCacheKey(bounds)}|phh2o_0-5cm_mean`;
-  const cached=getApiCache(cacheKey,API_CACHE_TTL.soil);
-  if(Array.isArray(cached)&&cached.length===points.length){
-    cached.forEach((v,i)=>out[i]=v);onProgress?.(points.length,points.length);return out;
-  }
-  try{
-    if(typeof GeoTIFF==='undefined')throw new Error('GeoTIFF-Bibliothek nicht geladen');
-    const west=bounds.getWest(),south=bounds.getSouth(),east=bounds.getEast(),north=bounds.getNorth();
-    const padLat=Math.max(.01,(north-south)*.08),padLon=Math.max(.01,(east-west)*.08);
-    const x0=Math.max(-180,west-padLon),x1=Math.min(180,east+padLon),y0=Math.max(-90,south-padLat),y1=Math.min(90,north+padLat);
-    const url='https://maps.isric.org/mapserv?map=/map/phh2o.map&'+[
-      'SERVICE=WCS','VERSION=2.0.1','REQUEST=GetCoverage','COVERAGEID=phh2o_0-5cm_mean','FORMAT=GEOTIFF_INT16',
-      `SUBSET=X(${x0},${x1})`,`SUBSET=Y(${y0},${y1})`,
-      'SUBSETTINGCRS=http://www.opengis.net/def/crs/EPSG/0/4326','OUTPUTCRS=http://www.opengis.net/def/crs/EPSG/0/4326',
-      'RESOLUTION=X(0.0025)','RESOLUTION=Y(0.0025)'
-    ].join('&');
-    const r=await fetchWithTimeout(url,{},30000);if(!r.ok)throw new Error(`SoilGrids WCS ${r.status}`);
-    const tiff=await GeoTIFF.fromArrayBuffer(await r.arrayBuffer()),image=await tiff.getImage(0),bbox=image.getBoundingBox(),width=image.getWidth(),height=image.getHeight();
-    const rasters=await image.readRasters({interleave:true});
-    const rx=(bbox[2]-bbox[0])/width,ry=(bbox[3]-bbox[1])/height;
-    const sample=(lat,lon)=>{
-      let px=Math.round((lon-bbox[0])/rx),py=Math.round((bbox[3]-lat)/ry);
-      const clamp=(v,max)=>Math.max(0,Math.min(max-1,v));px=clamp(px,width);py=clamp(py,height);
-      const candidates=[];
-      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const x=clamp(px+dx,width),y=clamp(py+dy,height),v=Number(rasters[y*width+x]);if(Number.isFinite(v)&&v>-10000&&v<10000)candidates.push(v)}
-      if(!candidates.length)return null;
-      const v=candidates.reduce((a,b)=>a+b,0)/candidates.length;return Math.round((v/10)*10)/10;
-    };
-    for(let i=0;i<points.length;i++){const p=points[i];out[i]=sample(p.centroid[0],p.centroid[1]);onProgress?.(i+1,points.length)}
-    setApiCache(cacheKey,out);return out;
-  }catch(e){
-    console.warn('SoilGrids WCS nicht verfügbar, pH bleibt für diese Suche ggf. leer:',e);
-    onProgress?.(points.length,points.length);
-    return out;
-  }
-}
+async function fetchSoilPh(points,onProgress=null,onBatch=null){return fetchCachedBatched(points,{batchSize:20,prefix:'soil',ttl:API_CACHE_TTL.soil,concurrency:API_BATCH_CONCURRENCY,onProgress,onBatch,worker:async b=>{const part=await Promise.allSettled(b.map(p=>fetchWithTimeout(`https://rest.isric.org/soilgrids/v2.0/properties/query?lon=${p.centroid[1]}&lat=${p.centroid[0]}&property=phh2o&depth=0-5cm&value=mean`,{},20000).then(r=>r.ok?r.json():Promise.reject(r.status))));return part.map(r=>{if(r.status!=='fulfilled')return null;try{const l=r.value.properties.layers.find(x=>x.name==='phh2o'),d=l.depths.find(x=>x.label==='0-5cm');return d.values.mean==null?null:Math.round((d.values.mean/10)*10)/10}catch(_){return null}})}})}
+
 /* ---------- Mikroklima ---------- */
 async function fetchMicro(f){const lat=f.centroid[0],lon=f.centroid[1],d=.012,pts=[[lat,lon],[lat+d,lon],[lat-d,lon],[lat,lon+d],[lat,lon-d]],r=await fetchWithTimeout(`https://api.open-meteo.com/v1/elevation?latitude=${pts.map(p=>p[0]).join(',')}&longitude=${pts.map(p=>p[1]).join(',')}`,{},15000);if(!r.ok)throw new Error('Relief '+r.status);const e=(await r.json()).elevation||[];if(e.length<5)throw new Error('Relief unvollständig');const[c,n,s,o,w]=e,ns=2*d*111320,ew=2*d*111320*Math.cos(lat*Math.PI/180),gn=(n-s)/ns,ge=(o-w)/ew,slope=Math.atan(Math.sqrt(gn*gn+ge*ge))*180/Math.PI,aspect=(Math.atan2(-ge,-gn)*180/Math.PI+360)%360,dirs=['N','NO','O','SO','S','SW','W','NW'];return{elevation:c,slope,dir:dirs[Math.round(aspect/45)%8]}}
 async function fetchMicroBatch(points,onProgress=null,onBatch=null){return fetchCachedBatched(points,{batchSize:20,prefix:'micro',ttl:API_CACHE_TTL.micro,concurrency:API_BATCH_CONCURRENCY,onProgress,onBatch,worker:async batch=>{const coords=[];batch.forEach(f=>{const lat=f.centroid[0],lon=f.centroid[1],d=.012;coords.push([lat,lon],[lat+d,lon],[lat-d,lon],[lat,lon+d],[lat,lon-d])});const latitudes=coords.map(p=>p[0]).join(','),longitudes=coords.map(p=>p[1]).join(','),r=await fetchWithTimeout(`https://api.open-meteo.com/v1/elevation?latitude=${latitudes}&longitude=${longitudes}`,{},15000);if(!r.ok)throw new Error('Relief '+r.status);const e=(await r.json()).elevation||[],out=[];for(let j=0;j<batch.length;j++){const off=j*5;if(e.length<off+5||e.slice(off,off+5).some(v=>!Number.isFinite(v))){out.push(null);continue}const[c,n,s,o,w]=e.slice(off,off+5),lat=batch[j].centroid[0],d=.012,ns=2*d*111320,ew=2*d*111320*Math.cos(lat*Math.PI/180),gn=(n-s)/ns,ge=(o-w)/ew,slope=Math.atan(Math.sqrt(gn*gn+ge*ge))*180/Math.PI,aspect=(Math.atan2(-ge,-gn)*180/Math.PI+360)%360,dirs=['N','NO','O','SO','S','SW','W','NW'];out.push({elevation:c,slope,dir:dirs[Math.round(aspect/45)%8]})}return out}})}
@@ -473,10 +424,11 @@ function microScore(species,m,weather){
 /* ---------- Score ---------- */
 function treeTypeScore(species,type){const w=speciesConfig[species].treeWeights;return{points:w[type]??0,label:leafTypeLabel(type)}}
 function dataQualityFactor(data){
-  let available=0,total=6;
+  let available=0,total=7;
   if(data.precip14!=null&&data.precip7!=null&&data.precip3!=null&&data.tempAvg10!=null&&data.tempAvg3!=null)available++;
   if(data.ph!=null)available++;
   if(data.treeEvidenceLoaded)available++;
+  if(data.mushroomEvidenceLoaded)available++;
   if(data.structureLoaded)available++;
   if(data.microAvailable)available++;
   if(data.elevation!=null)available++;
@@ -491,14 +443,16 @@ function criticalHabitatCap(species,data,treeEvidence,mushroomEvidence){
   if(treeEvidence&&treeEvidence.entries?.length && treeStrong<.08){cap*=.72;}
   else if(treeEvidence&&treeStrong<.2){cap*=.86;}
   if(['birkenpilz','rotkappe'].includes(species)&&treeEvidence&&treeStrong<.08)cap*=.82;
+  if(mushroomEvidence&&mushroomEvidence.score===0)cap*=.96;
   return Math.max(.55,cap);
 }
 function synergyBonus(data,treeEvidence,mushroomEvidence){
   let bonus=0;
   const tree=treeEvidence?.best?.score||0;
   const mushroom=mushroomEvidence?.score||0;
-  if(data.weatherPattern>=1.5)bonus+=2;
-  if(tree>=.55)bonus+=2;
+  if(tree>=.35&&mushroom>=.25)bonus+=3;
+  if(tree>=.55&&mushroom>=.45)bonus+=2;
+  if(data.weatherPattern>=1.5&&mushroom>=.3)bonus+=2;
   if((data.structure?.waterKm!=null&&data.structure.waterKm<.8)&&data.precip7>5)bonus+=1;
   if(data.ph!=null&&data.ph>3.5&&data.ph<6.5&&tree>=.3)bonus+=1;
   return Math.min(10,bonus);
@@ -513,8 +467,9 @@ function computeScore(species,data,micro,treeEvidence=null,mushroomEvidence=null
   const forestPts=Math.min(12,Number(data.structure?.points||0));
   const treePoints=Math.max(0,Math.min(18,Number(data.treePoints||0)));
   const microInfo=microScore(species,micro,data);const microPts=microInfo.points;
-  const synergy=synergyBonus({...data,weatherPattern:w.patternPts},treeEvidence,null);
-  const base=t1+t3+t4+forestPts+treePoints+microPts;
+  const mushroomPts=Math.min(10,(mushroomEvidence?.score||0)*10);
+  const synergy=synergyBonus({...data,weatherPattern:w.patternPts},treeEvidence,mushroomEvidence);
+  const base=t1+t3+t4+forestPts+treePoints+microPts+mushroomPts;
   const criticalCap=criticalHabitatCap(species,data,treeEvidence,mushroomEvidence);
   const raw=Math.min(100,base+synergy);
   const dq=dataQualityFactor({...data,microAvailable:!!micro});
@@ -529,6 +484,7 @@ function computeScore(species,data,micro,treeEvidence=null,mushroomEvidence=null
     forestPts:Math.round(forestPts),
     treePts:Math.round(treePoints),
     microPts:Math.round(microPts),
+    mushroomPts:Math.round(mushroomPts),
     structurePts:Math.round(forestPts),
     synergyPts:Math.round(synergy),
     treeLabel:data.treeLabel||treeTypeScore(species,data.treeType||data.leafType||'unknown').label,
@@ -581,8 +537,9 @@ async function openForestDetail(r){
   document.getElementById('detailPrecip').innerHTML=`${d.precip14} mm · 7 Tage ${d.precip7} mm · 3 Tage ${d.precip3} mm ${statusTagHtml(rangeStatus(d.precip14,s.precip))}`;
   document.getElementById('detailTemp').innerHTML=`Ø 10 Tage ${d.tempAvg10} °C · 3 Tage ${d.tempAvg3} °C · Bodenfeuchte ${d.soilMoisture!=null?Math.round(d.soilMoisture*100)+' %':'–'} · Sonne 10 T. ${d.sunshine10!=null?d.sunshine10.toFixed(0)+' h':'–'} ${statusTagHtml(rangeStatus(d.tempAvg10,s.temp))}`;
   document.getElementById('detailPh').innerHTML=d.ph!=null?`${d.ph} · ${phStatusLabel(d.ph)} ${statusTagHtml(rangeStatus(d.ph,s.ph))}`:'nicht verfügbar';
-  document.getElementById('detailPtsPrecip').textContent=`${r.score.precipPts} / 12`;document.getElementById('detailPtsTemp').textContent=`${r.score.tempPts} / 8`;document.getElementById('detailPtsPh').textContent=`${r.score.phPts} / 12`;document.getElementById('detailPtsWeatherPattern').textContent=`${r.score.weatherPatternPts} Einfluss`;document.getElementById('detailPtsMonth').textContent=`${r.score.monthPts} / 8`;document.getElementById('detailPtsForest').textContent=`${r.score.forestPts} / 12`;document.getElementById('detailPtsTrees').textContent=`${r.score.treePts} / 18`;document.getElementById('detailPtsMicro').textContent=`${r.score.microPts} / 10`;document.getElementById('detailPtsStructure').textContent=`${r.score.structurePts} / 12`;document.getElementById('detailPtsSynergy').textContent=`+${r.score.synergyPts} / 10`;document.getElementById('detailDataConfidence').innerHTML=`${r.score.dataConfidence}% <span class="data-quality-${r.score.dataConfidence>=88?'good':r.score.dataConfidence>=78?'medium':'low'}">${r.score.dataConfidence>=88?'hoch':r.score.dataConfidence>=78?'mittel':'niedrig'}</span>`;
+  document.getElementById('detailPtsPrecip').textContent=`${r.score.precipPts} / 12`;document.getElementById('detailPtsTemp').textContent=`${r.score.tempPts} / 8`;document.getElementById('detailPtsPh').textContent=`${r.score.phPts} / 12`;document.getElementById('detailPtsWeatherPattern').textContent=`${r.score.weatherPatternPts} Einfluss`;document.getElementById('detailPtsMonth').textContent=`${r.score.monthPts} / 8`;document.getElementById('detailPtsForest').textContent=`${r.score.forestPts} / 12`;document.getElementById('detailPtsTrees').textContent=`${r.score.treePts} / 18`;document.getElementById('detailPtsMicro').textContent=`${r.score.microPts} / 10`;document.getElementById('detailPtsMushroom').textContent=`${r.score.mushroomPts} / 10`;document.getElementById('detailPtsStructure').textContent=`${r.score.structurePts} / 12`;document.getElementById('detailPtsSynergy').textContent=`+${r.score.synergyPts} / 10`;document.getElementById('detailDataConfidence').innerHTML=`${r.score.dataConfidence}% <span class="data-quality-${r.score.dataConfidence>=88?'good':r.score.dataConfidence>=78?'medium':'low'}">${r.score.dataConfidence>=88?'hoch':r.score.dataConfidence>=78?'mittel':'niedrig'}</span>`;
   document.getElementById('detailMicroclimate').innerHTML=renderMicro(r.micro,r.data);
+  document.getElementById('detailTreeSources').innerHTML=`<span class="source-pill">JRC European Atlas</span><span class="source-pill">EU-Trees4F</span><span class="source-pill">GBIF</span><p>Die JRC-Daten dienen als wissenschaftliche Referenz für Baumartenverbreitung und Habitat-Eignung. Der aktuelle Baumarten-Indikator wird aus öffentlichen GBIF-Vorkommen im ${TREE_EVIDENCE_RADIUS_KM}-km-Radius berechnet.</p><p><a href="${JRC_ATLAS_URL}" target="_blank" rel="noopener">JRC European Atlas öffnen</a></p><p><a href="${JRC_TREES4F_URL}" target="_blank" rel="noopener">EU-Trees4F öffnen</a></p>`;
   document.getElementById('detailTreeEvidence').innerHTML=renderTreeEvidence(r.treeEvidence?.entries||[]);document.getElementById('detailMushroomEvidence').innerHTML=renderMushroomEvidence(r.mushroomEvidence);document.getElementById('detailHabitatInfo').innerHTML=renderHabitatInfo(r.structure);
   document.getElementById('detailActions').innerHTML='<button id="addTourBtn">🥾 Zur Tour hinzufügen</button><button id="backRankBtn">← Bestenliste</button>';
   document.getElementById('addTourBtn').onclick=()=>addTourForest(f,d,r.score.total);document.getElementById('backRankBtn').onclick=showForestRanking;
@@ -605,7 +562,7 @@ map.on('click',e=>{if(TOUR.selecting){TOUR.start=e.latlng;TOUR.selecting=false;r
 function renderSpeciesModal(id){const s=speciesConfig[id];document.getElementById('modalName').textContent=s.label;document.getElementById('modalLatin').textContent=s.latin;document.getElementById('modalSpeisewert').textContent=s.info.speisewert;document.getElementById('modalBeschreibung').textContent=s.info.beschreibung;document.getElementById('modalHut').textContent=s.info.hut;document.getElementById('modalStiel').textContent=s.info.stiel;document.getElementById('modalFleisch').textContent=s.info.fleisch;document.getElementById('modalGeruch').textContent=s.info.geruch;document.getElementById('modalHabitat').textContent=s.info.habitat;document.getElementById('modalBoden').textContent=s.info.boden;document.getElementById('modalKlima').textContent=s.info.klima;document.getElementById('modalBesonderheit').textContent=s.info.besonderheit;document.getElementById('modalVerwechslung').textContent='⚠ '+s.info.verwechslung;document.getElementById('modalMonthBar').innerHTML=['J','F','M','A','M','J','J','A','S','O','N','D'].map((x,i)=>`<div class="month-cell${s.months.includes(i+1)?' active':''}">${x}</div>`).join('');document.getElementById('modalHabitatTrees').textContent=s.info.habitat;document.getElementById('modalHabitatSoil').textContent=s.info.boden;document.getElementById('modalHabitatClimate').textContent=s.info.klima;document.getElementById('modalSeasonBar').innerHTML=document.getElementById('modalMonthBar').innerHTML;document.getElementById('modalSeasonText').textContent=s.months.includes(new Date().getMonth()+1)?`Jetzt ist Saison für ${s.label}.`:`Außerhalb der Kern-Saison von ${s.label}.`;document.getElementById('modalSeasonWeather').innerHTML=['Regen','Temperatur','Boden','Saison','Wald','Relief'].map((x,i)=>`<div class="${i<3?'good':'best'}">${x}</div>`).join('');document.getElementById('modalLookalikes').innerHTML=`<div class="observation-card">${escapeHtml(s.info.verwechslung)}</div>`;document.getElementById('modalImages').innerHTML='<span class="source-note">Lade Bilder…</span>';document.getElementById('recognitionList').innerHTML='<span class="source-note">Lade Vergleichsbilder…</span>';document.getElementById('modalObservations').innerHTML='<span class="source-note">Lade Beobachtungen…</span>';document.getElementById('indexFungorumContent').textContent='Index Fungorum wird geladen…';document.getElementById('taxonomyHistory').innerHTML='';document.getElementById('speciesSources').innerHTML=`<span class="source-pill">iNaturalist</span><span class="source-pill">GBIF</span><span class="source-pill">Index Fungorum</span><span class="source-pill">JRC European Atlas</span><span class="source-pill">EU-Trees4F</span><p><a href="${JRC_ATLAS_URL}" target="_blank" rel="noopener">JRC European Atlas öffnen</a></p><p><a href="${JRC_TREES4F_URL}" target="_blank" rel="noopener">EU-Trees4F öffnen</a></p>`;document.getElementById('modalMicroclimate').innerHTML=activeForest?renderMicro(activeForest.micro):'<div class="micro-card">Wird beim Öffnen eines Waldgebietes berechnet.</div>';document.querySelectorAll('.species-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab==='general'));document.querySelectorAll('.species-tab-panel').forEach(p=>p.classList.toggle('active',p.dataset.panel==='general'));document.getElementById('speciesModal').classList.add('open');bestImages(s.iNatName,12).then(imgs=>document.getElementById('modalImages').innerHTML=imgs.map(x=>`<figure><a href="${x.original}" target="_blank" rel="noopener"><img src="${x.url}" loading="lazy" alt="Pilzfoto"></a><figcaption>Foto: ${escapeHtml(x.credit)} · ${x.source}</figcaption></figure>`).join('')||'<span class="source-note">Keine Bilder gefunden.</span>').catch(()=>{});fetchINatObservations(s.iNatName);fetchIF(s.latin).then(d=>{document.getElementById('indexFungorumContent').innerHTML=`<span class="source-pill">Index Fungorum</span><div class="detail-row"><span class="label">Name</span><span class="value">${escapeHtml(d?.name||s.latin)}</span></div><div class="detail-row"><span class="label">Autor</span><span class="value">${escapeHtml(d?.author||'–')}</span></div><div class="detail-row"><span class="label">Status</span><span class="value">${escapeHtml(d?.status||'–')}</span></div><div class="detail-row"><span class="label">Aktueller Name</span><span class="value">${escapeHtml(d?.current||'–')}</span></div>`;document.getElementById('taxonomyHistory').innerHTML=`<div class="taxonomy-item">${escapeHtml(d?.name||s.latin)}</div>`}).catch(()=>{})}
 async function fetchINatObservations(name){try{const id=await inatTaxon(name),r=await fetch(`https://api.inaturalist.org/v1/observations?taxon_id=${id}&photos=true&per_page=6&order_by=observed_on&order=desc`),j=await r.json();document.getElementById('modalObservations').innerHTML=(j.results||[]).map(o=>`<div class="observation-card"><b>${escapeHtml(o.observed_on||o.created_at||'Datum unbekannt')}</b><div>${escapeHtml(o.place_guess||'Ort nicht angegeben')}</div><a href="https://www.inaturalist.org/observations/${o.id}" target="_blank" rel="noopener">Beobachtung öffnen</a></div>`).join('')||'<span class="source-note">Keine Beobachtungen gefunden.</span>'}catch(_){document.getElementById('modalObservations').innerHTML='<span class="source-note">Aktuelle Beobachtungen momentan nicht verfügbar.</span>'}}
 
-document.getElementById('speciesSelect').addEventListener('change',e=>{currentSpecies=e.target.value;if(forestResults.length){forestResults=forestResults.map(r=>{const treeEval=evaluateTreeEvidenceForForest(r.forest,r.treeSources||[]);const mushEval=evaluateMushroomEvidenceForForest(r.forest,r.mushroomOccurrences||[]);const data={...r.data,leafType:treeEval.leafType,treeType:treeEval.leafType,treePoints:treeEval.treePoints,treeLabel:treeDisplayLabel(treeEval.leafType,treeEval.best)};const score=computeScore(currentSpecies,data,r.micro,treeEval,mushEval);return{...r,data,score,treeEvidence:treeEval,mushroomEvidence:mushEval}}).sort((a,b)=>b.score.total-a.score.total);renderForestRanking();if(activeForest){const same=forestResults.find(r=>r.forest.osmId===activeForest.forest.osmId);if(same)openForestDetail(same)}}});
+document.getElementById('speciesSelect').addEventListener('change',e=>{currentSpecies=e.target.value;if(forestResults.length){forestResults=forestResults.map(r=>{const treeEval=evaluateTreeEvidenceForForest(r.forest,r.treeSources||[]);const mushEval=evaluateMushroomEvidenceForForest(r.forest,r.mushroomOccurrences||[]);const data={...r.data,leafType:treeEval.leafType,treeType:treeEval.leafType,treePoints:treeEval.treePoints,treeLabel:treeEval.best?.score>0?`${treeEval.best.common}`:'Baumart unbekannt'};const score=computeScore(currentSpecies,data,r.micro,treeEval,mushEval);return{...r,data,score,treeEvidence:treeEval,mushroomEvidence:mushEval}}).sort((a,b)=>b.score.total-a.score.total);renderForestRanking();if(activeForest){const same=forestResults.find(r=>r.forest.osmId===activeForest.forest.osmId);if(same)openForestDetail(same)}}});
 document.getElementById('speciesInfoBtn').onclick=()=>renderSpeciesModal(currentSpecies);document.getElementById('closeSpeciesModal').onclick=()=>document.getElementById('speciesModal').classList.remove('open');document.getElementById('speciesModal').onclick=e=>{if(e.target.id==='speciesModal')e.currentTarget.classList.remove('open')};document.querySelectorAll('.species-tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.species-tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.species-tab-panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelector(`.species-tab-panel[data-panel="${b.dataset.tab}"]`).classList.add('active')});
 
 /* ---------- Suchfortschritt ---------- */
@@ -618,7 +575,7 @@ function setProgressStep(index,state='running',detail='läuft…',fraction=null)
 function updateBatchProgress(stepIndex,label,totalDone,total){const f=total?totalDone/total:1;setProgressStep(stepIndex,'running',`${totalDone}/${total}`,f);setProgress(progressValue,`${label} (${totalDone}/${total})`)}
 function finishProgress(){for(let i=0;i<8;i++)if(progressState[i]?.state!=='error')progressState[i]={state:'done',fraction:1};setProgress(100,'Analyse abgeschlossen')}
 function renderAnalysisLayer(){resultLayer.clearLayers();forestResults.sort((a,b)=>b.score.total-a.score.total);forestResults.forEach(r=>L.polygon(r.forest.coords,{pane:'forestPane',color:'#3a2c1a',weight:1.5,opacity:.9,fillColor:scoreColor(r.score.total),fillOpacity:.62}).on('click',()=>openForestDetail(r)).on('mouseover',e=>e.target.setStyle({weight:3})).on('mouseout',e=>e.target.setStyle({weight:1.5})).addTo(resultLayer));renderForestRanking()}
-function buildForestResult(f,i,elev,weather,soil,treeSources,mushroomOccurrences,osm,treeLoaded,mushroomLoaded,structureLoaded,micro){const fTree=evaluateTreeEvidenceForForest(f,treeSources||[]),fMush=evaluateMushroomEvidenceForForest(f,mushroomOccurrences||[]),structure=forestStructureScore(f,osm),leafType=fTree.leafType!=='unknown'?fTree.leafType:(f.leafType||inferForestTypeFromTags(f.tags));const treeLabel=treeDisplayLabel(leafType,fTree.best);const data={elevation:elev[i]??null,precip14:weather[i]?.precip14??null,precip7:weather[i]?.precip7??null,precip3:weather[i]?.precip3??null,tempAvg10:weather[i]?.tempAvg10??null,tempAvg3:weather[i]?.tempAvg3??null,maxTemp3:weather[i]?.maxTemp3??null,rainHours14:weather[i]?.rainHours14??0,sunshine10:weather[i]?.sunshine10??null,soilMoisture:weather[i]?.soilMoisture??null,ph:soil[i]??null,leafType,treeType:leafType,treePoints:fTree.treePoints,treeLabel,structure,treeEvidenceLoaded:treeLoaded,mushroomEvidenceLoaded:mushroomLoaded,structureLoaded};const score=computeScore(currentSpecies,data,micro||null,fTree,null);return{forest:f,data,score,micro:micro||null,treeSources:treeSources||[],treeEvidence:fTree,mushroomOccurrences:mushroomOccurrences||[],mushroomEvidence:fMush,structure,analysisStage:micro?'vollständig':'vorläufig'}}
+function buildForestResult(f,i,elev,weather,soil,treeSources,mushroomOccurrences,osm,treeLoaded,mushroomLoaded,structureLoaded,micro){const fTree=evaluateTreeEvidenceForForest(f,treeSources||[]),fMush=evaluateMushroomEvidenceForForest(f,mushroomOccurrences||[]),structure=forestStructureScore(f,osm),leafType=fTree.leafType;const data={elevation:elev[i]??null,precip14:weather[i]?.precip14??null,precip7:weather[i]?.precip7??null,precip3:weather[i]?.precip3??null,tempAvg10:weather[i]?.tempAvg10??null,tempAvg3:weather[i]?.tempAvg3??null,maxTemp3:weather[i]?.maxTemp3??null,rainHours14:weather[i]?.rainHours14??0,sunshine10:weather[i]?.sunshine10??null,soilMoisture:weather[i]?.soilMoisture??null,ph:soil[i],leafType,treeType:leafType,treePoints:fTree.treePoints,treeLabel:fTree.best?.score>0?fTree.best.common:'Baumart unbekannt',structure,treeEvidenceLoaded:treeLoaded,mushroomEvidenceLoaded:mushroomLoaded,structureLoaded};const score=computeScore(currentSpecies,data,micro||null,fTree,fMush);return{forest:f,data,score,micro:micro||null,treeSources:treeSources||[],treeEvidence:fTree,mushroomOccurrences:mushroomOccurrences||[],mushroomEvidence:fMush,structure,analysisStage:micro?'vollständig':'vorläufig'}}
 function rebuildResults(forests,shared){
   const next=[];
   for(let i=0;i<forests.length;i++){
@@ -627,9 +584,9 @@ function rebuildResults(forests,shared){
       next.push(buildForestResult(f,i,shared.elev||[],shared.weather||[],shared.soil||[],shared.treeSources||[],shared.mushroomOccurrences||[],shared.osm,!!shared.treeLoaded,!!shared.mushroomLoaded,!!shared.structureLoaded,shared.microByIndex?.get(i)||null));
     }catch(e){
       console.warn('Waldfläche konnte nicht vollständig bewertet werden:',i,e);
-      const fallbackData={elevation:shared.elev?.[i]??null,precip14:shared.weather?.[i]?.precip14??null,precip7:shared.weather?.[i]?.precip7??null,precip3:shared.weather?.[i]?.precip3??null,tempAvg10:shared.weather?.[i]?.tempAvg10??null,tempAvg3:shared.weather?.[i]?.tempAvg3??null,maxTemp3:shared.weather?.[i]?.maxTemp3??null,rainHours14:shared.weather?.[i]?.rainHours14??0,sunshine10:shared.weather?.[i]?.sunshine10??null,soilMoisture:shared.weather?.[i]?.soilMoisture??null,ph:shared.soil?.[i]??null,leafType:(f.leafType&&f.leafType!=='unknown'?f.leafType:inferForestTypeFromTags(f.tags)),treeType:(f.leafType&&f.leafType!=='unknown'?f.leafType:inferForestTypeFromTags(f.tags)),treePoints:0,treeLabel:treeDisplayLabel(f.leafType,null),structure:forestStructureScore(f,shared.osm),treeEvidenceLoaded:!!shared.treeLoaded,mushroomEvidenceLoaded:!!shared.mushroomLoaded,structureLoaded:!!shared.structureLoaded};
+      const fallbackData={elevation:shared.elev?.[i]??null,precip14:shared.weather?.[i]?.precip14??null,precip7:shared.weather?.[i]?.precip7??null,precip3:shared.weather?.[i]?.precip3??null,tempAvg10:shared.weather?.[i]?.tempAvg10??null,tempAvg3:shared.weather?.[i]?.tempAvg3??null,maxTemp3:shared.weather?.[i]?.maxTemp3??null,rainHours14:shared.weather?.[i]?.rainHours14??0,sunshine10:shared.weather?.[i]?.sunshine10??null,soilMoisture:shared.weather?.[i]?.soilMoisture??null,ph:shared.soil?.[i]??null,leafType:'unknown',treeType:'unknown',treePoints:0,treeLabel:'Baumart unbekannt',structure:forestStructureScore(f,shared.osm),treeEvidenceLoaded:!!shared.treeLoaded,mushroomEvidenceLoaded:!!shared.mushroomLoaded,structureLoaded:!!shared.structureLoaded};
       let fallbackScore;
-      try{fallbackScore=computeScore(currentSpecies,fallbackData,shared.microByIndex?.get(i)||null,{entries:[],best:null,treePoints:0},{score:0,count:0,examples:[]})}catch(_){fallbackScore={total:0,precipPts:0,tempPts:0,weatherPatternPts:0,phPts:0,monthPts:0,forestPts:0,treePts:0,microPts:0,structurePts:0,synergyPts:0,treeLabel:'Keine lokale Baumarten-Evidenz',microLabel:'nicht verfügbar',dataConfidence:72,criticalCap:1,rawScore:0}}
+      try{fallbackScore=computeScore(currentSpecies,fallbackData,shared.microByIndex?.get(i)||null,{entries:[],best:null,treePoints:0},{score:0,count:0,examples:[]})}catch(_){fallbackScore={total:0,precipPts:0,tempPts:0,weatherPatternPts:0,phPts:0,monthPts:0,forestPts:0,treePts:0,microPts:0,mushroomPts:0,structurePts:0,synergyPts:0,treeLabel:'Baumart unbekannt',microLabel:'nicht verfügbar',dataConfidence:72,criticalCap:1,rawScore:0}}
       next.push({forest:f,data:fallbackData,score:fallbackScore,micro:shared.microByIndex?.get(i)||null,treeSources:shared.treeSources||[],treeEvidence:{entries:[],best:null,leafType:'unknown',treePoints:0,confidence:0,corroboratedPartners:0},mushroomOccurrences:shared.mushroomOccurrences||[],mushroomEvidence:{score:0,count:0,nearestKm:null,recentCount:0,examples:[]},structure:fallbackData.structure,analysisStage:'teilweise'});
     }
   }
