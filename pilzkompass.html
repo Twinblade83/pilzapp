@@ -64,37 +64,51 @@
     color:var(--bark);
   }
 
-  .species-grid{
-    display:flex; flex-wrap:wrap; gap:6px;
+  .species-select-row{
+    display:flex; align-items:stretch; gap:8px;
     margin-bottom:14px;
   }
-  .species-pill{
-    display:flex; align-items:center; gap:5px;
+  .species-select{
+    flex:1;
+    padding:8px 10px;
     border:2px solid var(--moss);
-    background:transparent;
-    padding:6px 4px 6px 10px;
-    cursor:pointer;
-  }
-  .species-pill.active{ background:var(--moss); }
-  .species-pill.active .pill-label{ color:var(--parchment); }
-  .pill-label{
+    background:var(--parchment);
+    color:var(--ink);
     font-family:var(--font-body);
     font-weight:600;
-    font-size:12.5px;
-    color:var(--ink);
-    background:none; border:none; padding:0; cursor:pointer;
+    font-size:13px;
+    cursor:pointer;
   }
   .info-btn{
-    background:none; border:none;
-    font-size:14px;
+    background:var(--moss);
+    border:none;
+    color:var(--parchment);
+    font-size:16px;
     line-height:1;
-    padding:2px 6px;
+    padding:0 14px;
     cursor:pointer;
-    color:var(--bark);
-    opacity:0.7;
+    flex-shrink:0;
   }
-  .species-pill.active .info-btn{ color:var(--parchment); opacity:0.9; }
-  .info-btn:hover{ opacity:1; }
+  .info-btn:hover{ background:var(--chanterelle); }
+
+  .modal-images{
+    display:flex; gap:8px; margin:10px 0 4px;
+    overflow-x:auto;
+  }
+  .modal-images figure{
+    margin:0; flex-shrink:0; width:110px;
+  }
+  .modal-images img{
+    width:110px; height:110px; object-fit:cover; display:block;
+    background:var(--parchment-dim);
+  }
+  .modal-images figcaption{
+    font-size:9.5px; color:var(--bark); opacity:0.7;
+    margin-top:3px; line-height:1.3;
+  }
+  .modal-images-note{
+    font-size:11.5px; color:var(--bark); opacity:0.7; font-style:italic;
+  }
 
   .search-btn{
     width:100%;
@@ -289,7 +303,10 @@
 
 <div class="panel">
   <h2>Pilzart</h2>
-  <div class="species-grid" id="speciesGrid"></div>
+  <div class="species-select-row">
+    <select class="species-select" id="speciesSelect"></select>
+    <button class="info-btn" id="speciesInfoBtn" aria-label="Pilzinfos anzeigen">ⓘ</button>
+  </div>
 
   <button class="search-btn" id="searchBtn">Diesen Bereich durchsuchen</button>
   <div class="status" id="status">Karte auf ein Waldgebiet ausrichten und suchen.</div>
@@ -298,10 +315,11 @@
     <h3>Trefferwahrscheinlichkeit</h3>
     <div class="legend-bar"></div>
     <div class="legend-labels"><span>niedrig</span><span>hoch</span></div>
+    <div class="note" style="margin-top:8px;">⚪ Weiße Punkte = bestätigte GBIF-Fundmeldungen dieser Art im Bereich.</div>
   </div>
 
   <div class="note">
-    Regelwerk basiert auf Waldtyp (OSM, inkl. Baumart), Boden-pH (SoilGrids), Niederschlag &amp; Temperatur der letzten Tage (Open-Meteo) sowie Höhenlage. Keine Garantie für tatsächliche Funde — bitte Sammelregeln, Naturschutzgebiete beachten und Funde vor dem Verzehr von einem Pilzsachverständigen bestätigen lassen.
+    Regelwerk basiert auf Waldtyp (OSM, inkl. Baumart), Boden-pH (SoilGrids), Niederschlag &amp; Temperatur der letzten Tage (Open-Meteo) sowie Höhenlage. Fundmeldungen von GBIF (Global Biodiversity Information Facility). Keine Garantie für tatsächliche Funde — bitte Sammelregeln, Naturschutzgebiete beachten und Funde vor dem Verzehr von einem Pilzsachverständigen bestätigen lassen.
   </div>
 </div>
 
@@ -339,6 +357,7 @@
     <h2 id="modalName">–</h2>
     <p class="modal-latin" id="modalLatin">–</p>
     <span class="badge" id="modalSpeisewert">–</span>
+    <div class="modal-images" id="modalImages"></div>
     <p class="modal-p" id="modalBeschreibung">–</p>
 
     <div class="section-title">Merkmale</div>
@@ -371,6 +390,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 let resultLayer = L.layerGroup().addTo(map);
+let gbifLayer = L.layerGroup().addTo(map);
 
 /* ============================================================
    PILZART-DATENBANK
@@ -384,6 +404,7 @@ const SPECIES = [
     id: 'steinpilz',
     label: 'Steinpilz',
     latin: 'Boletus edulis',
+    gbifName: 'Boletus edulis',
     precip: { lo: 5, idealLo: 20, idealHi: 60, hi: 120, pts: 30 },
     temp:   { lo: 8, idealLo: 15, idealHi: 20, hi: 28, pts: 30 },
     ph:     { lo: 3.5, idealLo: 4.5, idealHi: 6.0, hi: 7.5, pts: 15 },
@@ -409,6 +430,7 @@ const SPECIES = [
     id: 'pfifferling',
     label: 'Pfifferling',
     latin: 'Cantharellus cibarius',
+    gbifName: 'Cantharellus cibarius',
     precip: { lo: 10, idealLo: 30, idealHi: 80, hi: 150, pts: 30 },
     temp:   { lo: 10, idealLo: 14, idealHi: 19, hi: 26, pts: 30 },
     ph:     { lo: 3.0, idealLo: 4.0, idealHi: 5.5, hi: 6.5, pts: 15 },
@@ -434,6 +456,7 @@ const SPECIES = [
     id: 'maronenroehrling',
     label: 'Maronenröhrling',
     latin: 'Imleria badia',
+    gbifName: 'Imleria badia',
     precip: { lo: 5, idealLo: 15, idealHi: 50, hi: 110, pts: 30 },
     temp:   { lo: 8, idealLo: 12, idealHi: 20, hi: 27, pts: 30 },
     ph:     { lo: 3.0, idealLo: 3.5, idealHi: 5.5, hi: 6.5, pts: 15 },
@@ -459,6 +482,7 @@ const SPECIES = [
     id: 'birkenpilz',
     label: 'Birkenpilz',
     latin: 'Leccinum scabrum',
+    gbifName: 'Leccinum scabrum',
     precip: { lo: 8, idealLo: 25, idealHi: 70, hi: 130, pts: 30 },
     temp:   { lo: 8, idealLo: 13, idealHi: 19, hi: 26, pts: 30 },
     ph:     { lo: 3.5, idealLo: 4.5, idealHi: 6.0, hi: 7.0, pts: 15 },
@@ -486,6 +510,7 @@ const SPECIES = [
     id: 'butterpilz',
     label: 'Butterpilz',
     latin: 'Suillus luteus',
+    gbifName: 'Suillus luteus',
     precip: { lo: 5, idealLo: 20, idealHi: 60, hi: 120, pts: 30 },
     temp:   { lo: 9, idealLo: 14, idealHi: 21, hi: 28, pts: 30 },
     ph:     { lo: 3.0, idealLo: 3.5, idealHi: 5.0, hi: 6.0, pts: 15 },
@@ -512,6 +537,7 @@ const SPECIES = [
     id: 'rotkappe',
     label: 'Rotkappe',
     latin: 'Leccinum aurantiacum (Gruppe)',
+    gbifName: 'Leccinum aurantiacum',
     precip: { lo: 8, idealLo: 25, idealHi: 70, hi: 130, pts: 30 },
     temp:   { lo: 8, idealLo: 13, idealHi: 19, hi: 26, pts: 30 },
     ph:     { lo: 4.0, idealLo: 5.0, idealHi: 6.5, hi: 7.5, pts: 15 },
@@ -537,6 +563,7 @@ const SPECIES = [
     id: 'krauseGlucke',
     label: 'Krause Glucke',
     latin: 'Sparassis crispa',
+    gbifName: 'Sparassis crispa',
     precip: { lo: 3, idealLo: 10, idealHi: 40, hi: 90, pts: 30 },
     temp:   { lo: 10, idealLo: 15, idealHi: 22, hi: 28, pts: 30 },
     ph:     { lo: 3.0, idealLo: 3.5, idealHi: 5.0, hi: 6.0, pts: 15 },
@@ -564,43 +591,68 @@ const SPECIES = [
 const speciesConfig = Object.fromEntries(SPECIES.map(s => [s.id, s]));
 let currentSpecies = SPECIES[0].id;
 
-function selectSpecies(id) {
-  currentSpecies = id;
-  document.querySelectorAll('.species-pill').forEach(p => {
-    p.classList.toggle('active', p.dataset.species === id);
+function renderSpeciesSelect() {
+  const select = document.getElementById('speciesSelect');
+  select.innerHTML = SPECIES.map(s => `<option value="${s.id}">${s.label}</option>`).join('');
+  select.value = currentSpecies;
+  select.addEventListener('change', () => {
+    currentSpecies = select.value;
   });
 }
+renderSpeciesSelect();
 
-function renderSpeciesGrid() {
-  const grid = document.getElementById('speciesGrid');
-  grid.innerHTML = '';
-  SPECIES.forEach(s => {
-    const pill = document.createElement('div');
-    pill.className = 'species-pill' + (s.id === currentSpecies ? ' active' : '');
-    pill.dataset.species = s.id;
-
-    const labelBtn = document.createElement('button');
-    labelBtn.className = 'pill-label';
-    labelBtn.textContent = s.label;
-    labelBtn.addEventListener('click', () => selectSpecies(s.id));
-
-    const infoBtn = document.createElement('button');
-    infoBtn.className = 'info-btn';
-    infoBtn.setAttribute('aria-label', 'Infos zu ' + s.label);
-    infoBtn.textContent = 'ⓘ';
-    infoBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      openSpeciesModal(s.id);
-    });
-
-    pill.appendChild(labelBtn);
-    pill.appendChild(infoBtn);
-    grid.appendChild(pill);
-  });
-}
-renderSpeciesGrid();
+document.getElementById('speciesInfoBtn').addEventListener('click', () => {
+  openSpeciesModal(currentSpecies);
+});
 
 const MONTH_LABELS = ['J','F','M','A','M','J','J','A','S','O','N','D'];
+
+// GBIF (Global Biodiversity Information Facility) liefert kostenlos echte
+// Community-Fotos von Fundmeldungen. Ergebnisse werden pro Art zwischengespeichert,
+// damit das Modal beim erneuten Öffnen nicht erneut anfragen muss.
+const gbifImageCache = {};
+
+async function fetchGbifImages(scientificName) {
+  if (gbifImageCache[scientificName]) return gbifImageCache[scientificName];
+  const url = `https://api.gbif.org/v1/occurrence/search?scientificName=${encodeURIComponent(scientificName)}&mediaType=StillImage&limit=30`;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error('GBIF ' + resp.status);
+  const json = await resp.json();
+  const images = [];
+  const seen = new Set();
+  for (const rec of json.results || []) {
+    for (const m of rec.media || []) {
+      if (m.type === 'StillImage' && m.identifier && !seen.has(m.identifier)) {
+        seen.add(m.identifier);
+        images.push({
+          url: m.identifier,
+          credit: m.rightsHolder || m.creator || 'GBIF-Community',
+          occurrenceKey: rec.key
+        });
+      }
+      if (images.length >= 6) break;
+    }
+    if (images.length >= 6) break;
+  }
+  gbifImageCache[scientificName] = images;
+  return images;
+}
+
+function renderModalImages(images) {
+  const container = document.getElementById('modalImages');
+  if (!images.length) {
+    container.innerHTML = '<span class="modal-images-note">Keine GBIF-Bilder für diese Art gefunden.</span>';
+    return;
+  }
+  container.innerHTML = images.map(img => `
+    <figure>
+      <a href="https://www.gbif.org/occurrence/${img.occurrenceKey}" target="_blank" rel="noopener">
+        <img src="${img.url}" loading="lazy" alt="Foto">
+      </a>
+      <figcaption>Foto: ${img.credit}</figcaption>
+    </figure>
+  `).join('');
+}
 
 function openSpeciesModal(id) {
   const s = speciesConfig[id];
@@ -624,7 +676,15 @@ function openSpeciesModal(id) {
     return `<div class="month-cell${active ? ' active' : ''}">${lbl}</div>`;
   }).join('');
 
+  document.getElementById('modalImages').innerHTML = '<span class="modal-images-note">Lade Bilder von GBIF…</span>';
   document.getElementById('speciesModal').classList.add('open');
+
+  fetchGbifImages(s.gbifName)
+    .then(renderModalImages)
+    .catch(() => {
+      document.getElementById('modalImages').innerHTML =
+        '<span class="modal-images-note">Bilder momentan nicht verfügbar (GBIF nicht erreichbar).</span>';
+    });
 }
 document.getElementById('closeSpeciesModal').addEventListener('click', () => {
   document.getElementById('speciesModal').classList.remove('open');
@@ -818,6 +878,17 @@ async function fetchSoilPh(points) {
   });
 }
 
+// GBIF-Fundmeldungen (echte, gemeldete Beobachtungen) im sichtbaren Bereich —
+// dient als Realitätscheck neben dem berechneten Score, nicht als Ersatz dafür.
+async function fetchGbifOccurrences(scientificName, south, west, north, east) {
+  const url = `https://api.gbif.org/v1/occurrence/search?scientificName=${encodeURIComponent(scientificName)}` +
+    `&decimalLatitude=${south},${north}&decimalLongitude=${west},${east}&hasCoordinate=true&limit=100`;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error('GBIF ' + resp.status);
+  const json = await resp.json();
+  return (json.results || []).filter(r => r.decimalLatitude != null && r.decimalLongitude != null);
+}
+
 const statusEl = document.getElementById('status');
 const searchBtn = document.getElementById('searchBtn');
 const detailPanel = document.getElementById('detailPanel');
@@ -869,13 +940,15 @@ function openDetailPanel(f, data, breakdown, species) {
 
 searchBtn.addEventListener('click', async () => {
   resultLayer.clearLayers();
+  gbifLayer.clearLayers();
   detailPanel.classList.remove('open');
   searchBtn.disabled = true;
   statusEl.textContent = 'Suche Waldflächen im sichtbaren Bereich…';
 
   try {
     const b = map.getBounds();
-    const forests = await overpassForests(b.getSouth(), b.getWest(), b.getNorth(), b.getEast());
+    const south = b.getSouth(), west = b.getWest(), north = b.getNorth(), east = b.getEast();
+    const forests = await overpassForests(south, west, north, east);
 
     if (forests.length === 0) {
       statusEl.textContent = 'Keine Waldflächen in diesem Kartenausschnitt gefunden. Etwas herauszoomen oder woanders hin schwenken.';
@@ -884,11 +957,27 @@ searchBtn.addEventListener('click', async () => {
     }
 
     statusEl.textContent = `${forests.length} Waldflächen gefunden. Lade Wetter-, Boden- und Höhendaten…`;
-    const [elevations, weather, soilPh] = await Promise.all([
+    const cfg = speciesConfig[currentSpecies];
+    const [elevations, weather, soilPh, gbifOccurrences] = await Promise.all([
       fetchElevations(forests),
       fetchWeather(forests),
-      fetchSoilPh(forests)
+      fetchSoilPh(forests),
+      fetchGbifOccurrences(cfg.gbifName, south, west, north, east).catch(() => [])
     ]);
+
+    gbifOccurrences.forEach(occ => {
+      const marker = L.circleMarker([occ.decimalLatitude, occ.decimalLongitude], {
+        radius: 5, color: '#2b2b2b', weight: 1.5, fillColor: '#f4f1e6', fillOpacity: 0.9
+      }).addTo(gbifLayer);
+      const date = occ.eventDate ? occ.eventDate.split('T')[0] : (occ.year || 'Datum unbekannt');
+      marker.bindPopup(`
+        <b>GBIF-Fundmeldung</b><br>
+        ${cfg.label}<br>
+        Datum: ${date}<br>
+        Gemeldet von: ${occ.recordedBy || 'unbekannt'}<br>
+        <a href="https://www.gbif.org/occurrence/${occ.key}" target="_blank" rel="noopener">Zum Datensatz</a>
+      `);
+    });
 
     let maxScore = 0;
     forests.forEach((f, i) => {
@@ -915,7 +1004,10 @@ searchBtn.addEventListener('click', async () => {
       polygon.on('mouseout', () => polygon.setStyle({ weight: 1 }));
     });
 
-    statusEl.textContent = `Fertig. ${forests.length} Flächen bewertet, höchster Score: ${maxScore}/100. Fläche antippen für Details.`;
+    const gbifNote = gbifOccurrences.length
+      ? ` Außerdem ${gbifOccurrences.length} bestätigte GBIF-Fundmeldung(en) dieser Art im Bereich (weiße Punkte).`
+      : '';
+    statusEl.textContent = `Fertig. ${forests.length} Flächen bewertet, höchster Score: ${maxScore}/100.${gbifNote} Fläche antippen für Details.`;
   } catch (err) {
     statusEl.textContent = 'Fehler: ' + err.message + ' (Overpass ist manchmal überlastet — kurz warten und erneut versuchen.)';
   } finally {
@@ -926,3 +1018,4 @@ searchBtn.addEventListener('click', async () => {
 
 </body>
 </html>
+
