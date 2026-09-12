@@ -138,6 +138,84 @@
     line-height:1.5;
   }
   .leaflet-popup-content b{font-family:var(--font-display);}
+
+  .detail-panel{
+    position:absolute;
+    top:70px; right:16px; bottom:16px;
+    z-index:1000;
+    width:320px;
+    max-width:calc(100vw - 32px);
+    background:var(--parchment);
+    border-right:5px solid var(--chanterelle);
+    box-shadow:0 6px 18px rgba(0,0,0,0.25);
+    padding:18px 20px;
+    overflow-y:auto;
+    display:none;
+  }
+  .detail-panel.open{ display:block; }
+  .detail-panel .close-btn{
+    position:absolute; top:10px; right:12px;
+    background:none; border:none;
+    font-size:20px; line-height:1; cursor:pointer;
+    color:var(--bark);
+  }
+  .detail-panel h2{
+    font-family:var(--font-display);
+    font-size:17px;
+    font-weight:700;
+    margin:0 0 2px;
+    color:var(--bark);
+    padding-right:20px;
+  }
+  .detail-score{
+    font-family:var(--font-display);
+    font-size:34px;
+    font-weight:700;
+    margin:6px 0 2px;
+  }
+  .detail-score-label{
+    font-size:11px;
+    color:var(--bark);
+    opacity:0.75;
+    margin-bottom:14px;
+  }
+  .detail-section-title{
+    font-size:11px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    color:var(--moss);
+    margin:16px 0 8px;
+    border-top:1px solid var(--parchment-dim);
+    padding-top:12px;
+  }
+  .detail-row{
+    display:flex; justify-content:space-between; gap:10px;
+    font-size:13px;
+    padding:4px 0;
+  }
+  .detail-row .label{ color:var(--bark); opacity:0.8; }
+  .detail-row .value{ font-weight:600; text-align:right; }
+  .status-tag{
+    font-size:10.5px;
+    font-weight:600;
+    padding:1px 6px;
+    margin-left:6px;
+    display:inline-block;
+  }
+  .status-ideal{ background:#d7e3cf; color:#33521f; }
+  .status-ok{ background:#f0e0bd; color:#7a4e0c; }
+  .status-poor{ background:#e7d3c9; color:#7a2f10; }
+  .score-bar-track{
+    height:7px;
+    background:var(--parchment-dim);
+    margin-top:3px;
+    margin-bottom:10px;
+  }
+  .score-bar-fill{
+    height:100%;
+    background:var(--chanterelle);
+  }
 </style>
 </head>
 <body>
@@ -167,6 +245,34 @@
   <div class="note">
     Regelwerk basiert auf Waldtyp (OSM, inkl. Baumart), Boden-pH (SoilGrids), Niederschlag &amp; Temperatur der letzten Tage (Open-Meteo) sowie Höhenlage. Keine Garantie für tatsächliche Funde — bitte Sammelregeln und Naturschutzgebiete beachten.
   </div>
+</div>
+
+<div class="detail-panel" id="detailPanel">
+  <button class="close-btn" id="closeDetail">✕</button>
+  <h2 id="detailTitle">Waldfläche</h2>
+  <div class="detail-score" id="detailScoreNum">–</div>
+  <div class="detail-score-label" id="detailScoreLabel">Gesamt-Score</div>
+  <div class="score-bar-track"><div class="score-bar-fill" id="detailScoreBar" style="width:0%"></div></div>
+
+  <div class="detail-section-title">Fläche</div>
+  <div class="detail-row"><span class="label">Waldtyp</span><span class="value" id="detailWaldtyp">–</span></div>
+  <div class="detail-row"><span class="label">Größe (ca.)</span><span class="value" id="detailArea">–</span></div>
+  <div class="detail-row"><span class="label">Höhenlage</span><span class="value" id="detailElevation">–</span></div>
+  <div class="detail-row"><span class="label">Koordinaten</span><span class="value" id="detailCoords">–</span></div>
+
+  <div class="detail-section-title">Wetter (aktuell)</div>
+  <div class="detail-row"><span class="label">Niederschlag 14 Tage</span><span class="value" id="detailPrecip">–</span></div>
+  <div class="detail-row"><span class="label">Ø Temperatur 10 Tage</span><span class="value" id="detailTemp">–</span></div>
+
+  <div class="detail-section-title">Boden</div>
+  <div class="detail-row"><span class="label">pH-Wert (0–5cm)</span><span class="value" id="detailPh">–</span></div>
+
+  <div class="detail-section-title">Score-Zusammensetzung</div>
+  <div class="detail-row"><span class="label">Niederschlag</span><span class="value" id="detailPtsPrecip">–</span></div>
+  <div class="detail-row"><span class="label">Temperatur</span><span class="value" id="detailPtsTemp">–</span></div>
+  <div class="detail-row"><span class="label">Boden-pH</span><span class="value" id="detailPtsPh">–</span></div>
+  <div class="detail-row"><span class="label">Saison</span><span class="value" id="detailPtsMonth">–</span></div>
+  <div class="detail-row"><span class="label">Waldtyp</span><span class="value" id="detailPtsWaldtyp">–</span></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -244,18 +350,54 @@ function triScore(value, cfg) {
   return pts * (hi - value) / (hi - idealHi);
 }
 
-function computeScore(species, data) {
+// Ordnet einen Messwert relativ zu seinem Zielbereich ein (für die UI-Statusbadges)
+function rangeStatus(value, cfg) {
+  if (value <= cfg.lo || value >= cfg.hi) return 'poor';
+  if (value >= cfg.idealLo && value <= cfg.idealHi) return 'ideal';
+  return 'ok';
+}
+
+function phStatusLabel(ph) {
+  if (ph == null) return '';
+  if (ph < 4.5) return 'stark sauer';
+  if (ph < 5.5) return 'sauer';
+  if (ph < 6.5) return 'leicht sauer';
+  if (ph < 7.2) return 'neutral';
+  return 'alkalisch';
+}
+
+function computeScoreBreakdown(species, data) {
   const cfg = speciesConfig[species];
-  if (data.elevation > cfg.elevMax) return 0;
-  let score = 0;
-  score += triScore(data.precip14, cfg.precip);
-  score += triScore(data.tempAvg10, cfg.temp);
-  // Fehlender pH-Wert (z.B. API nicht erreichbar) -> neutraler Mittelwert statt 0
-  score += data.ph != null ? triScore(data.ph, cfg.ph) : cfg.ph.pts * 0.5;
   const month = new Date().getMonth() + 1;
-  score += cfg.months.includes(month) ? cfg.monthPts : cfg.monthPtsOff;
-  score += waldtypScore(data.leafType, cfg);
-  return Math.max(0, Math.min(100, Math.round(score)));
+  const inSeason = cfg.months.includes(month);
+
+  if (data.elevation > cfg.elevMax) {
+    return {
+      total: 0, elevationBlocked: true,
+      precipPts: 0, tempPts: 0, phPts: 0, monthPts: 0, waldtypPts: 0,
+      precipMax: cfg.precip.pts, tempMax: cfg.temp.pts, phMax: cfg.ph.pts,
+      monthMax: cfg.monthPts, waldtypMax: 10
+    };
+  }
+
+  const precipPts = triScore(data.precip14, cfg.precip);
+  const tempPts = triScore(data.tempAvg10, cfg.temp);
+  const phPts = data.ph != null ? triScore(data.ph, cfg.ph) : cfg.ph.pts * 0.5;
+  const monthPts = inSeason ? cfg.monthPts : cfg.monthPtsOff;
+  const waldtypPts = waldtypScore(data.leafType, cfg);
+  const total = Math.max(0, Math.min(100, Math.round(precipPts + tempPts + phPts + monthPts + waldtypPts)));
+
+  return {
+    total, elevationBlocked: false,
+    precipPts: Math.round(precipPts), tempPts: Math.round(tempPts), phPts: Math.round(phPts),
+    monthPts, waldtypPts,
+    precipMax: cfg.precip.pts, tempMax: cfg.temp.pts, phMax: cfg.ph.pts,
+    monthMax: cfg.monthPts, waldtypMax: 10
+  };
+}
+
+function computeScore(species, data) {
+  return computeScoreBreakdown(species, data).total;
 }
 
 function scoreColor(score) {
@@ -280,6 +422,14 @@ function centroid(coords) {
   return [lat / coords.length, lon / coords.length];
 }
 
+// Grobe Umrechnung von Grad² in Hektar, korrigiert für die geografische Breite
+function areaHectares(shoelaceDeg2, atLat) {
+  const kmPerDegLat = 111.32;
+  const kmPerDegLon = 111.32 * Math.cos(atLat * Math.PI / 180);
+  const km2 = shoelaceDeg2 * kmPerDegLat * kmPerDegLon;
+  return Math.round(km2 * 100 * 10) / 10; // km² -> ha
+}
+
 async function overpassForests(south, west, north, east) {
   const query = `[out:json][timeout:25];
 (
@@ -301,7 +451,8 @@ out geom;`;
         coords,
         area: shoelaceArea(coords),
         centroid: centroid(coords),
-        leafType: inferLeafType(el.tags)
+        leafType: inferLeafType(el.tags),
+        tags: el.tags || {}
       };
     })
     .sort((a,b) => b.area - a.area)
@@ -366,9 +517,56 @@ async function fetchSoilPh(points) {
 
 const statusEl = document.getElementById('status');
 const searchBtn = document.getElementById('searchBtn');
+const detailPanel = document.getElementById('detailPanel');
+document.getElementById('closeDetail').addEventListener('click', () => {
+  detailPanel.classList.remove('open');
+});
+
+function statusTagHtml(status) {
+  const labels = { ideal: 'ideal', ok: 'okay', poor: 'ungünstig' };
+  return `<span class="status-tag status-${status}">${labels[status]}</span>`;
+}
+
+function openDetailPanel(f, data, breakdown, species) {
+  const cfg = speciesConfig[species];
+  const areaHa = areaHectares(f.area, f.centroid[0]);
+
+  document.getElementById('detailTitle').textContent = f.tags.name || (cfg.label + '-Fläche');
+  const scoreEl = document.getElementById('detailScoreNum');
+  scoreEl.textContent = breakdown.total;
+  scoreEl.style.color = scoreColor(breakdown.total);
+  document.getElementById('detailScoreLabel').textContent =
+    breakdown.elevationBlocked ? `Über Höhengrenze (${cfg.elevMax} m) für ${cfg.label}` : `Trefferwahrscheinlichkeit für ${cfg.label}`;
+  document.getElementById('detailScoreBar').style.width = breakdown.total + '%';
+  document.getElementById('detailScoreBar').style.background = scoreColor(breakdown.total);
+
+  document.getElementById('detailWaldtyp').textContent =
+    leafTypeLabel(f.leafType) + (f.tags.leaf_type || f.tags.species ? ` (OSM: ${f.tags.leaf_type || f.tags.species})` : '');
+  document.getElementById('detailArea').textContent = areaHa >= 1 ? `${areaHa} ha` : `${Math.round(areaHa*10000)} m²`;
+  document.getElementById('detailElevation').textContent = `${Math.round(data.elevation)} m`;
+  document.getElementById('detailCoords').textContent = `${f.centroid[0].toFixed(4)}, ${f.centroid[1].toFixed(4)}`;
+
+  document.getElementById('detailPrecip').innerHTML =
+    `${data.precip14} mm ${statusTagHtml(rangeStatus(data.precip14, cfg.precip))}`;
+  document.getElementById('detailTemp').innerHTML =
+    `${data.tempAvg10} °C ${statusTagHtml(rangeStatus(data.tempAvg10, cfg.temp))}`;
+
+  document.getElementById('detailPh').innerHTML = data.ph != null
+    ? `${data.ph} · ${phStatusLabel(data.ph)} ${statusTagHtml(rangeStatus(data.ph, cfg.ph))}`
+    : 'nicht verfügbar (Schätzung genutzt)';
+
+  document.getElementById('detailPtsPrecip').textContent = `${breakdown.precipPts} / ${breakdown.precipMax}`;
+  document.getElementById('detailPtsTemp').textContent = `${breakdown.tempPts} / ${breakdown.tempMax}`;
+  document.getElementById('detailPtsPh').textContent = `${breakdown.phPts} / ${breakdown.phMax}`;
+  document.getElementById('detailPtsMonth').textContent = `${breakdown.monthPts} / ${breakdown.monthMax}`;
+  document.getElementById('detailPtsWaldtyp').textContent = `${breakdown.waldtypPts} / ${breakdown.waldtypMax}`;
+
+  detailPanel.classList.add('open');
+}
 
 searchBtn.addEventListener('click', async () => {
   resultLayer.clearLayers();
+  detailPanel.classList.remove('open');
   searchBtn.disabled = true;
   statusEl.textContent = 'Suche Waldflächen im sichtbaren Bereich…';
 
@@ -398,9 +596,9 @@ searchBtn.addEventListener('click', async () => {
         ph: soilPh[i],
         leafType: f.leafType
       };
-      const score = computeScore(currentSpecies, data);
-      maxScore = Math.max(maxScore, score);
-      const color = scoreColor(score);
+      const breakdown = computeScoreBreakdown(currentSpecies, data);
+      maxScore = Math.max(maxScore, breakdown.total);
+      const color = scoreColor(breakdown.total);
 
       const polygon = L.polygon(f.coords, {
         color: color,
@@ -409,16 +607,9 @@ searchBtn.addEventListener('click', async () => {
         fillOpacity: 0.55
       }).addTo(resultLayer);
 
-      const phLine = data.ph != null ? `${data.ph} (gemessen)` : 'nicht verfügbar';
-
-      polygon.bindPopup(`
-        <b>${speciesConfig[currentSpecies].label} — Score ${score}/100</b><br>
-        Waldtyp: ${leafTypeLabel(f.leafType)}<br>
-        Höhe: ${Math.round(data.elevation)} m<br>
-        Niederschlag (14 Tage): ${data.precip14} mm<br>
-        Ø Temperatur (10 Tage): ${data.tempAvg10} °C<br>
-        Boden-pH (0–5cm): ${phLine}
-      `);
+      polygon.on('click', () => openDetailPanel(f, data, breakdown, currentSpecies));
+      polygon.on('mouseover', () => polygon.setStyle({ weight: 3 }));
+      polygon.on('mouseout', () => polygon.setStyle({ weight: 1 }));
     });
 
     statusEl.textContent = `Fertig. ${forests.length} Flächen bewertet, höchster Score: ${maxScore}/100. Fläche antippen für Details.`;
@@ -428,6 +619,7 @@ searchBtn.addEventListener('click', async () => {
     searchBtn.disabled = false;
   }
 });
+
 </script>
 
 </body>
