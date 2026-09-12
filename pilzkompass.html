@@ -16,20 +16,24 @@ header h1{font-family:var(--font-display);font-weight:600;font-size:22px;margin:
 .panel{position:absolute;top:70px;left:16px;z-index:1000;width:315px;max-height:calc(100vh - 90px);overflow:auto;background:var(--parchment);border-left:5px solid var(--moss);box-shadow:0 6px 18px rgba(0,0,0,.25);padding:16px 18px 18px}.panel h2{font-family:var(--font-display);font-size:15px;font-weight:600;margin:0 0 10px;color:var(--bark)}
 .species-select-row{display:flex;align-items:stretch;gap:8px;margin-bottom:14px}.species-select{flex:1;padding:8px 10px;border:2px solid var(--moss);background:var(--parchment);color:var(--ink);font-family:var(--font-body);font-weight:600;font-size:13px;cursor:pointer}.info-btn{background:var(--moss);border:0;color:var(--parchment);font-size:16px;padding:0 14px;cursor:pointer}.info-btn:hover{background:var(--chanterelle)}
 .search-btn{width:100%;padding:11px;background:var(--chanterelle);color:#231603;border:0;font-family:var(--font-body);font-weight:600;font-size:14px;cursor:pointer;margin-bottom:10px}.search-btn:disabled{background:var(--grey-low);cursor:default}.search-btn:hover:not(:disabled){background:var(--chanterelle-deep)}.tool-btn{width:100%;padding:9px 10px;border:1px solid var(--moss);background:transparent;color:var(--bark);font:600 12px var(--font-body);cursor:pointer;margin-top:6px}.tool-btn:hover{background:rgba(91,112,82,.1)}
-.status{font-size:12.5px;line-height:1.45;color:var(--bark);min-height:18px}.note,.source-note{font-size:11.5px;color:var(--bark);opacity:.78;line-height:1.45}.note{margin-top:12px}.legend{margin-top:14px;padding-top:12px;border-top:1px solid var(--parchment-dim)}.legend h3{font-size:12px;margin:0 0 6px;font-weight:600;color:var(--bark)}.score-legend{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;margin-top:7px}.score-legend-cell{min-width:0;text-align:center;padding:5px 1px;font-size:8.5px;font-weight:600;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.45);border-radius:2px}.legend-note{display:flex;justify-content:space-between;gap:8px;font-size:9.5px;color:var(--bark);opacity:.8;margin-top:4px}.detail-panel.panel-collapsed{width:58px;height:58px;bottom:auto;overflow:hidden;padding:0}.detail-panel.panel-collapsed #detailPanelContent{display:none}.detail-panel.panel-collapsed #closeDetail{display:none}.detail-panel.panel-collapsed #panelCollapseBtn{top:10px;right:10px;width:38px;height:38px}.panel-collapse-btn{position:absolute;top:10px;right:42px;width:30px;height:30px;border:1px solid var(--moss);background:var(--parchment);color:var(--bark);font:700 16px var(--font-body);line-height:1;cursor:pointer;z-index:2}.panel-collapse-btn:hover{background:rgba(91,112,82,.12)}
-.detail-panel{position:absolute;top:70px;right:16px;bottom:16px;z-index:1000;width:370px;max-width:calc(100vw - 32px);background:var(--parchment);border-right:5px solid var(--chanterelle);box-shadow:0 6px 18px rgba(0,0,0,.25);padding:18px 20px;overflow-y:auto}.detail-panel h2{font-family:var(--font-display);font-size:17px;font-weight:700;margin:0 0 2px;color:var(--bark);padding-right:20px}.close-btn{position:absolute;top:10px;right:12px;background:none;border:0;font-size:20px;line-height:1;cursor:pointer;color:var(--bark)}
+.status{font-size:12.5px;line-height:1.45;color:var(--bark);min-height:18px}.note,.source-note{font-size:11.5px;color:var(--bark);opacity:.78;line-height:1.45}.note{margin-top:12px}.legend{margin-top:14px;padding-top:12px;border-top:1px solid var(--parchment-dim)}.legend h3{font-size:12px;margin:0 0 6px;font-weight:600;color:var(--bark)}.score-legend{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;margin-top:7px}.score-legend-cell{min-width:0;text-align:center;padding:5px 1px;font-size:8.5px;font-weight:600;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.45);border-radius:2px}.legend-note{display:flex;justify-content:space-between;gap:8px;font-size:9.5px;color:var(--bark);opacity:.8;margin-top:4px}
+.detail-panel.panel-collapsed{width:58px;height:58px;bottom:auto;overflow:hidden;padding:0}.detail-panel.panel-collapsed #detailPanelContent{display:none}.detail-panel.panel-collapsed #panelCollapseBtn{top:10px;right:10px;width:38px;height:38px}.panel-collapse-btn{position:absolute;top:10px;right:42px;width:30px;height:30px;border:1px solid var(--moss);background:var(--parchment);color:var(--bark);font:700 16px var(--font-body);line-height:1;cursor:pointer;z-index:2}.panel-collapse-btn:hover{background:rgba(91,112,82,.12)}
+.detail-panel{position:absolute;top:70px;right:16px;bottom:16px;z-index:1000;width:370px;max-width:calc(100vw - 32px);background:var(--parchment);border-right:5px solid var(--chanterelle);box-shadow:0 6px 18px rgba(0,0,0,.25);padding:18px 20px;overflow-y:auto}.detail-panel h2{font-family:var(--font-display);font-size:17px;font-weight:700;margin:0 0 2px;color:var(--bark);padding-right:20px}
 .detail-score{font-family:var(--font-display);font-size:34px;font-weight:700;margin:6px 0 2px}.detail-score-label{font-size:11px;color:var(--bark);opacity:.75;margin-bottom:14px}.score-bar-track{height:7px;background:var(--parchment-dim);margin-top:3px;margin-bottom:10px}.score-bar-fill{height:100%}.section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--moss);margin:16px 0 8px;border-top:1px solid var(--parchment-dim);padding-top:12px}.detail-row{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:4px 0}.detail-row .label{color:var(--bark);opacity:.8}.detail-row .value{font-weight:600;text-align:right;max-width:62%}.status-tag{font-size:10.5px;font-weight:600;padding:1px 6px;margin-left:6px;display:inline-block}.status-ideal{background:#d7e3cf;color:#33521f}.status-ok{background:#f0e0bd;color:#7a4e0c}.status-poor{background:#e7d3c9;color:#7a2f10}
-.ranking-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}.ranking-header h2{margin:0}.ranking-toggle{flex:0 0 auto;border:1px solid var(--moss);background:transparent;color:var(--bark);font:600 11px var(--font-body);padding:6px 8px;cursor:pointer}.ranking-toggle:hover{background:rgba(91,112,82,.1)}.ranking-body{overflow:hidden;max-height:1400px;opacity:1;transition:max-height .22s ease,opacity .18s ease}.ranking-body.collapsed{max-height:0;opacity:0;pointer-events:none}.rank-list{display:grid;gap:7px}.rank-item{display:grid;grid-template-columns:28px 1fr auto;gap:8px;align-items:center;padding:8px 9px;border:1px solid var(--parchment-dim);background:rgba(255,255,255,.22);cursor:pointer}.rank-item:hover{background:rgba(91,112,82,.08)}.rank-num{font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--moss);text-align:center}.rank-name b{display:block;font-size:12px;color:var(--bark)}.rank-name span{display:block;font-size:10px;opacity:.72}.rank-score{font-family:var(--font-display);font-size:20px;font-weight:700}
+.ranking-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}.ranking-header h2{margin:0}.ranking-body{overflow:hidden;max-height:1400px;opacity:1}.rank-list{display:grid;gap:7px}.rank-item{display:grid;grid-template-columns:28px 1fr auto;gap:8px;align-items:center;padding:8px 9px;border:1px solid var(--parchment-dim);background:rgba(255,255,255,.22);cursor:pointer}.rank-item:hover{background:rgba(91,112,82,.08)}.rank-num{font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--moss);text-align:center}.rank-name b{display:block;font-size:12px;color:var(--bark)}.rank-name span{display:block;font-size:10px;opacity:.72}.rank-score{font-family:var(--font-display);font-size:20px;font-weight:700}
 .micro-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.micro-card{padding:8px;background:rgba(91,112,82,.08);border:1px solid var(--parchment-dim);font-size:11px}.micro-card b{display:block;font-size:13px;color:var(--bark)}.detail-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px}.detail-actions button{padding:8px 6px;border:1px solid var(--moss);background:transparent;color:var(--bark);font:600 11px var(--font-body);cursor:pointer}.detail-actions button:hover{background:rgba(91,112,82,.1)}
-.config-box{margin-top:10px;padding:10px;background:rgba(255,255,255,.25);border:1px solid var(--parchment-dim)}.config-title{font-size:11px;font-weight:700;color:var(--moss);text-transform:uppercase}.config-box label{display:block;font-size:10px;font-weight:600;color:var(--bark);margin-top:7px}.config-box input{width:100%;padding:7px;margin-top:3px;border:1px solid var(--moss);background:#f8f4e8;font:11px var(--font-body)}.config-box small{display:block;margin-top:7px;font-size:9.5px;line-height:1.35;color:var(--bark);opacity:.72}
-.modal-overlay{position:fixed;inset:0;z-index:2000;background:rgba(30,20,10,.55);display:none;align-items:center;justify-content:center;padding:24px}.modal-overlay.open{display:flex}.modal-card{position:relative;background:var(--parchment);width:100%;max-width:980px;max-height:90vh;overflow-y:auto;padding:26px 28px;border-left:6px solid var(--chanterelle);box-shadow:0 10px 30px rgba(0,0,0,.35)}.modal-card h2{font-family:var(--font-display);font-size:17px;margin:0 0 2px;color:var(--bark)}.species-tabs{display:flex;gap:4px;flex-wrap:wrap;margin:16px 0 18px;border-bottom:2px solid var(--parchment-dim)}.species-tab{border:0;background:transparent;color:var(--bark);font:600 12px var(--font-body);padding:9px 12px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}.species-tab.active{color:var(--chanterelle-deep);border-bottom-color:var(--chanterelle);background:rgba(217,138,31,.08)}.species-tab-panel{display:none}.species-tab-panel.active{display:block}.modal-latin{font-style:italic;font-size:13px;color:var(--bark);opacity:.75;margin:0 0 10px}.badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;background:var(--moss);color:var(--parchment);margin-bottom:4px}.modal-p{font-size:13.5px;line-height:1.55;margin:4px 0}.trait-row{display:flex;gap:8px;font-size:13px;padding:3px 0}.trait-label{min-width:96px;color:var(--bark);opacity:.8;font-weight:600;flex-shrink:0}.month-bar{display:flex;gap:3px;margin-top:4px}.month-cell{flex:1;text-align:center;font-size:10px;padding:5px 0;background:var(--parchment-dim);color:var(--bark)}.month-cell.active{background:var(--chanterelle);color:#231603;font-weight:700}.caution-box{margin-top:6px;padding:8px 10px;background:#e7d3c9;color:#5c2510;font-size:12.5px;line-height:1.45}.image-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.image-grid figure{margin:0;background:var(--parchment-dim);padding:5px}.image-grid img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}.image-grid figcaption{font-size:9.5px;line-height:1.3;margin-top:5px;color:var(--bark)}.recognition-list{display:grid;gap:14px}.recognition-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;border:1px solid var(--parchment-dim);padding:10px;background:rgba(255,255,255,.25)}.recognition-side img{width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--parchment-dim);display:block}.recognition-side h4{margin:0 0 7px;font-size:12px;color:var(--bark)}.recognition-side p{font-size:11.5px;line-height:1.45;margin:7px 0}.observation-card{padding:8px;border:1px solid var(--parchment-dim);margin:6px 0;background:rgba(255,255,255,.25)}.source-pill{display:inline-block;padding:3px 7px;background:var(--moss);color:var(--parchment);font-size:10px;margin:0 4px 4px 0}.timeline{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin-top:8px}.timeline div{font-size:9px;text-align:center;padding:6px 2px;background:var(--parchment-dim)}.timeline .good{background:#d7e3cf}.timeline .best{background:var(--chanterelle);font-weight:700}.taxonomy-history{display:grid;gap:6px;margin-top:10px}.taxonomy-item{padding:7px 9px;border-left:3px solid var(--moss);background:rgba(91,112,82,.06);font-size:11.5px}.ai-preview{width:100%;max-height:260px;object-fit:contain;background:#fff;border:1px solid var(--parchment-dim);margin:8px 0}.ai-status{font-size:12px;line-height:1.45;color:var(--bark);padding:8px 10px;background:rgba(91,112,82,.08);border-left:3px solid var(--moss)}.ai-candidate{padding:8px 10px;border:1px solid var(--parchment-dim);margin:6px 0;background:rgba(255,255,255,.25)}.ai-candidate strong{display:block}.ai-meter{height:7px;background:var(--parchment-dim);margin-top:5px}.ai-meter span{display:block;height:100%;background:var(--chanterelle)}
+.config-box{margin-top:10px;padding:10px;background:rgba(255,255,255,.25);border:1px solid var(--parchment-dim)}.config-title{font-size:11px;font-weight:700;color:var(--moss);text-transform:uppercase}.config-box label{display:block;font-size:10px;font-weight:600;color:var(--bark);margin-top:7px}.config-box input{width:100%;padding:7px;margin-top:3px;border:1px solid var(--moss);background:#f8f4e8;font:11px var(--font-body)}.config-box small{display:block;margin-top:7px;font-size:9.5px;line-height:1.35;color:var(--bark);opacity:.72}.cop-status{margin-top:8px;padding:6px 8px;border-left:3px solid var(--moss);background:rgba(91,112,82,.08);font-size:10px;line-height:1.4}
+.modal-overlay{position:fixed;inset:0;z-index:2000;background:rgba(30,20,10,.55);display:none;align-items:center;justify-content:center;padding:24px}.modal-overlay.open{display:flex}.modal-card{position:relative;background:var(--parchment);width:100%;max-width:980px;max-height:90vh;overflow-y:auto;padding:26px 28px;border-left:6px solid var(--chanterelle);box-shadow:0 10px 30px rgba(0,0,0,.35)}.modal-card h2{font-family:var(--font-display);font-size:17px;margin:0 0 2px;color:var(--bark)}.modal-card .close-btn{position:absolute;top:10px;right:12px;background:none;border:0;font-size:20px;line-height:1;cursor:pointer;color:var(--bark)}
+.species-tabs{display:flex;gap:4px;flex-wrap:wrap;margin:16px 0 18px;border-bottom:2px solid var(--parchment-dim)}.species-tab{border:0;background:transparent;color:var(--bark);font:600 12px var(--font-body);padding:9px 12px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}.species-tab.active{color:var(--chanterelle-deep);border-bottom-color:var(--chanterelle);background:rgba(217,138,31,.08)}.species-tab-panel{display:none}.species-tab-panel.active{display:block}.modal-latin{font-style:italic;font-size:13px;color:var(--bark);opacity:.75;margin:0 0 10px}.badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;background:var(--moss);color:var(--parchment);margin-bottom:4px}.modal-p{font-size:13.5px;line-height:1.55;margin:4px 0}.trait-row{display:flex;gap:8px;font-size:13px;padding:3px 0}.trait-label{min-width:96px;color:var(--bark);opacity:.8;font-weight:600;flex-shrink:0}.month-bar{display:flex;gap:3px;margin-top:4px}.month-cell{flex:1;text-align:center;font-size:10px;padding:5px 0;background:var(--parchment-dim);color:var(--bark)}.month-cell.active{background:var(--chanterelle);color:#231603;font-weight:700}.caution-box{margin-top:6px;padding:8px 10px;background:#e7d3c9;color:#5c2510;font-size:12.5px;line-height:1.45}.image-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.image-grid figure{margin:0;background:var(--parchment-dim);padding:5px}.image-grid img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}.image-grid figcaption{font-size:9.5px;line-height:1.3;margin-top:5px;color:var(--bark)}.recognition-list{display:grid;gap:14px}.recognition-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;border:1px solid var(--parchment-dim);padding:10px;background:rgba(255,255,255,.25)}.recognition-side img{width:100%;aspect-ratio:4/3;object-fit:cover;background:var(--parchment-dim);display:block}.recognition-side h4{margin:0 0 7px;font-size:12px;color:var(--bark)}.recognition-side p{font-size:11.5px;line-height:1.45;margin:7px 0}.observation-card{padding:8px;border:1px solid var(--parchment-dim);margin:6px 0;background:rgba(255,255,255,.25)}.source-pill{display:inline-block;padding:3px 7px;background:var(--moss);color:var(--parchment);font-size:10px;margin:0 4px 4px 0}.timeline{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin-top:8px}.timeline div{font-size:9px;text-align:center;padding:6px 2px;background:var(--parchment-dim)}.timeline .good{background:#d7e3cf}.timeline .best{background:var(--chanterelle);font-weight:700}.taxonomy-history{display:grid;gap:6px;margin-top:10px}.taxonomy-item{padding:7px 9px;border-left:3px solid var(--moss);background:rgba(91,112,82,.06);font-size:11.5px}.ai-preview{width:100%;max-height:260px;object-fit:contain;background:#fff;border:1px solid var(--parchment-dim);margin:8px 0}.ai-status{font-size:12px;line-height:1.45;color:var(--bark);padding:8px 10px;background:rgba(91,112,82,.08);border-left:3px solid var(--moss)}.ai-candidate{padding:8px 10px;border:1px solid var(--parchment-dim);margin:6px 0;background:rgba(255,255,255,.25)}.ai-candidate strong{display:block}.ai-meter{height:7px;background:var(--parchment-dim);margin-top:5px}.ai-meter span{display:block;height:100%;background:var(--chanterelle)}
 .tour-panel{position:absolute;left:16px;bottom:16px;z-index:1000;width:310px;max-width:calc(100vw - 32px);background:var(--parchment);border-left:5px solid var(--chanterelle);box-shadow:0 6px 18px rgba(0,0,0,.25);padding:13px 16px;display:none}.tour-panel.open{display:block}.tour-panel h3{font-family:var(--font-display);font-size:15px;margin:0 0 8px;color:var(--bark)}.tour-list{max-height:150px;overflow:auto;font-size:11.5px}.tour-item{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--parchment-dim)}.tour-item button{border:0;background:none;color:var(--chanterelle-deep);cursor:pointer}.tour-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.tour-actions button{padding:8px;border:1px solid var(--moss);background:transparent;color:var(--bark);font:600 11px var(--font-body);cursor:pointer}.tour-summary{font-size:11px;line-height:1.45;margin-top:8px}
 @media(max-width:850px){.detail-panel{top:auto;right:8px;left:8px;bottom:8px;width:auto;max-height:56vh}.panel{left:8px;top:70px;width:300px}}@media(max-width:700px){header span{display:none}.modal-card{padding:22px 16px;max-height:94vh}.recognition-pair{grid-template-columns:1fr}.species-tab{padding:8px;font-size:11px}.detail-actions{grid-template-columns:1fr}.tour-panel{left:8px;right:8px;bottom:8px;width:auto}}
 </style>
 </head>
 <body>
 <header><h1>Pilzkompass</h1><span>Waldflächen · Baumtyp · Mikroklima · Wetter · Boden · Fundmeldungen</span></header>
+
 <div id="map"></div>
+
 <div class="panel">
   <h2>Pilzart</h2>
   <div class="species-select-row"><select class="species-select" id="speciesSelect"></select><button class="info-btn" id="speciesInfoBtn" aria-label="Pilzinfos anzeigen">ⓘ</button></div>
@@ -38,106 +42,270 @@ header h1{font-family:var(--font-display);font-weight:600;font-size:22px;margin:
   <button class="tool-btn" id="tourToggleBtn">🥾 Pilztour planen</button>
   <input id="photoInput" type="file" accept="image/*" capture="environment" style="display:none">
   <div class="status" id="status">Karte auf ein Waldgebiet ausrichten und suchen.</div>
-  <div class="legend"><h3>Trefferwahrscheinlichkeit</h3><div id="scoreLegend" class="score-legend"></div><div class="legend-note"><span>0–10 sehr niedrig</span><span>91–100 sehr hoch</span></div><div class="note" style="margin-top:8px">⚪ Weiße Punkte = bestätigte GBIF-Fundmeldungen dieser Art im Bereich.</div></div>
-  <div class="config-box">
-    <div class="config-title">Copernicus Baumtyp (optional)</div>
-    <small>Die Zugangsdaten werden direkt oben im JavaScript in <code>COPERNICUS_CLIENT_ID</code> und <code>COPERNICUS_CLIENT_SECRET</code> eingetragen. Im App-Fenster müssen keine Zugangsdaten eingegeben oder gespeichert werden.</small>
-    <small style="margin-top:6px">Die offizielle Dominant-Leaf-Type-Datenquelle liefert 10-m-Raster für Europa. Ohne Zugangsdaten bleibt der Copernicus-Anteil deaktiviert.</small>
+
+  <div class="legend">
+    <h3>Trefferwahrscheinlichkeit</h3>
+    <div id="scoreLegend" class="score-legend"></div>
+    <div class="legend-note"><span>0–10 sehr niedrig</span><span>91–100 sehr hoch</span></div>
+    <div class="note" style="margin-top:8px">⚪ Weiße Punkte = bestätigte GBIF-Fundmeldungen dieser Art im Bereich.</div>
   </div>
+
+  <div class="config-box">
+    <div class="config-title">Copernicus Baumtyp</div>
+    <small>Die Zugangsdaten werden direkt oben im JavaScript in <code>COPERNICUS_CLIENT_ID</code> und <code>COPERNICUS_CLIENT_SECRET</code> eingetragen. Im App-Fenster müssen keine Zugangsdaten eingegeben oder gespeichert werden.</small>
+    <small style="margin-top:6px">Verwendet wird die offizielle Copernicus-Land-Monitoring-Service-Schicht „Dominant Leaf Type“ mit 10 m Auflösung für Europa.</small>
+    <div class="cop-status" id="copStatus">Copernicus wird bei der Waldsuche automatisch verwendet, sobald gültige Zugangsdaten vorhanden sind.</div>
+  </div>
+
   <div class="note">JRC European Atlas dient als Baumarten-Referenz. Die JRC-RPP-Daten sind modellierte relative Präsenzwahrscheinlichkeiten und keine Bestandsanteile.</div>
 </div>
 
 <div class="detail-panel" id="detailPanel">
-  <button class="close-btn" id="closeDetail" aria-label="Zur Waldgebiet-Rangliste" title="Zur Waldgebiet-Rangliste">✕</button>
   <button class="panel-collapse-btn" id="panelCollapseBtn" type="button" aria-label="Waldgebiet-Fenster zuklappen" title="Fenster zuklappen">−</button>
+
   <div id="detailPanelContent">
-  <div id="rankingView"><div class="ranking-header"><h2>Beste Waldgebiete</h2><button class="ranking-toggle" id="rankingToggleBtn" type="button" aria-expanded="true">⌃ Einklappen</button></div><div id="rankingBody" class="ranking-body"><p class="source-note">Noch kein Waldgebiet ausgewählt. Hier kannst du ein Gebiet direkt nach Score auswählen.</p><div class="section-title">Nach Score geordnet</div><div id="forestRankList" class="rank-list"><div class="source-note">Noch keine Suche durchgeführt.</div></div></div></div>
-  <div id="detailView" style="display:none">
-    <h2 id="detailTitle">Waldfläche</h2>
-    <div class="detail-score" id="detailScoreNum">–</div>
-    <div class="detail-score-label" id="detailScoreLabel">Trefferwahrscheinlichkeit</div>
-    <div class="score-bar-track"><div class="score-bar-fill" id="detailScoreBar" style="width:0"></div></div>
-    <div class="section-title">Fläche</div>
-    <div class="detail-row"><span class="label">Waldtyp</span><span class="value" id="detailWaldtyp">–</span></div>
-    <div class="detail-row"><span class="label">Baumtyp</span><span class="value" id="detailTreeType">–</span></div>
-    <div class="detail-row"><span class="label">Größe</span><span class="value" id="detailArea">–</span></div>
-    <div class="detail-row"><span class="label">Höhenlage</span><span class="value" id="detailElevation">–</span></div>
-    <div class="detail-row"><span class="label">Koordinaten</span><span class="value" id="detailCoords">–</span></div>
-    <div class="section-title">Wetter</div>
-    <div class="detail-row"><span class="label">Niederschlag 14 Tage</span><span class="value" id="detailPrecip">–</span></div>
-    <div class="detail-row"><span class="label">Ø Temperatur 10 Tage</span><span class="value" id="detailTemp">–</span></div>
-    <div class="dwd-box" id="detailDwd"></div>
-    <div class="section-title">Boden</div>
-    <div class="detail-row"><span class="label">pH-Wert 0–5 cm</span><span class="value" id="detailPh">–</span></div>
-    <div class="section-title">Score-Zusammensetzung</div>
-    <div class="detail-row"><span class="label">Niederschlag</span><span class="value" id="detailPtsPrecip">–</span></div>
-    <div class="detail-row"><span class="label">Temperatur</span><span class="value" id="detailPtsTemp">–</span></div>
-    <div class="detail-row"><span class="label">Boden-pH</span><span class="value" id="detailPtsPh">–</span></div>
-    <div class="detail-row"><span class="label">Saison</span><span class="value" id="detailPtsMonth">–</span></div>
-    <div class="detail-row"><span class="label">Waldtyp</span><span class="value" id="detailPtsForest">–</span></div>
-    <div class="detail-row"><span class="label">Baumtyp</span><span class="value" id="detailPtsTrees">–</span></div>
-    <div class="detail-row"><span class="label">Mikroklima</span><span class="value" id="detailPtsMicro">–</span></div>
-    <div class="section-title">Mikroklima</div><div id="detailMicroclimate" class="micro-grid"><div class="micro-card">–</div></div>
-    <div class="section-title">Baumarten-Referenz</div><div id="detailTreeSources" class="source-note"></div>
-    <div class="detail-actions" id="detailActions"></div>
-  </div>
+
+    <div id="rankingView">
+      <div class="ranking-header">
+        <h2>Beste Waldgebiete</h2>
+      </div>
+
+      <div id="rankingBody" class="ranking-body">
+        <p class="source-note">Noch kein Waldgebiet ausgewählt. Hier kannst du ein Gebiet direkt nach Score auswählen.</p>
+        <div class="section-title">Nach Score geordnet</div>
+        <div id="forestRankList" class="rank-list">
+          <div class="source-note">Noch keine Suche durchgeführt.</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="detailView" style="display:none">
+      <h2 id="detailTitle">Waldfläche</h2>
+      <div class="detail-score" id="detailScoreNum">–</div>
+      <div class="detail-score-label" id="detailScoreLabel">Trefferwahrscheinlichkeit</div>
+      <div class="score-bar-track"><div class="score-bar-fill" id="detailScoreBar" style="width:0"></div></div>
+
+      <div class="section-title">Fläche</div>
+      <div class="detail-row"><span class="label">Waldtyp</span><span class="value" id="detailWaldtyp">–</span></div>
+      <div class="detail-row"><span class="label">Baumtyp</span><span class="value" id="detailTreeType">–</span></div>
+      <div class="detail-row"><span class="label">Größe</span><span class="value" id="detailArea">–</span></div>
+      <div class="detail-row"><span class="label">Höhenlage</span><span class="value" id="detailElevation">–</span></div>
+      <div class="detail-row"><span class="label">Koordinaten</span><span class="value" id="detailCoords">–</span></div>
+
+      <div class="section-title">Wetter</div>
+      <div class="detail-row"><span class="label">Niederschlag 14 Tage</span><span class="value" id="detailPrecip">–</span></div>
+      <div class="detail-row"><span class="label">Ø Temperatur 10 Tage</span><span class="value" id="detailTemp">–</span></div>
+      <div class="dwd-box" id="detailDwd"></div>
+
+      <div class="section-title">Boden</div>
+      <div class="detail-row"><span class="label">pH-Wert 0–5 cm</span><span class="value" id="detailPh">–</span></div>
+
+      <div class="section-title">Score-Zusammensetzung</div>
+      <div class="detail-row"><span class="label">Niederschlag</span><span class="value" id="detailPtsPrecip">–</span></div>
+      <div class="detail-row"><span class="label">Temperatur</span><span class="value" id="detailPtsTemp">–</span></div>
+      <div class="detail-row"><span class="label">Boden-pH</span><span class="value" id="detailPtsPh">–</span></div>
+      <div class="detail-row"><span class="label">Saison</span><span class="value" id="detailPtsMonth">–</span></div>
+      <div class="detail-row"><span class="label">Waldtyp</span><span class="value" id="detailPtsForest">–</span></div>
+      <div class="detail-row"><span class="label">Baumtyp</span><span class="value" id="detailPtsTrees">–</span></div>
+      <div class="detail-row"><span class="label">Mikroklima</span><span class="value" id="detailPtsMicro">–</span></div>
+
+      <div class="section-title">Mikroklima</div>
+      <div id="detailMicroclimate" class="micro-grid"><div class="micro-card">–</div></div>
+
+      <div class="section-title">Baumarten-Referenz</div>
+      <div id="detailTreeSources" class="source-note"></div>
+
+      <div class="detail-actions" id="detailActions"></div>
+    </div>
+
   </div>
 </div>
 
-<div class="tour-panel" id="tourPanel"><h3>🥾 Pilztour</h3><div class="status" id="tourStartText">Startpunkt: Kartenmitte</div><div class="tour-list" id="tourList">Noch keine Waldflächen ausgewählt.</div><div class="tour-actions"><button id="tourStartBtn">📍 Startpunkt wählen</button><button id="tourRouteBtn">🧭 Route berechnen</button></div><button class="tool-btn" id="tourClearBtn">Tour leeren</button><div class="tour-summary" id="tourSummary"></div></div>
+<div class="tour-panel" id="tourPanel">
+  <h3>🥾 Pilztour</h3>
+  <div class="status" id="tourStartText">Startpunkt: Kartenmitte</div>
+  <div class="tour-list" id="tourList">Noch keine Waldflächen ausgewählt.</div>
+  <div class="tour-actions">
+    <button id="tourStartBtn">📍 Startpunkt wählen</button>
+    <button id="tourRouteBtn">🧭 Route berechnen</button>
+  </div>
+  <button class="tool-btn" id="tourClearBtn">Tour leeren</button>
+  <div class="tour-summary" id="tourSummary"></div>
+</div>
 
-<div class="modal-overlay" id="aiModal"><div class="modal-card" style="max-width:760px"><button class="close-btn" id="closeAiModal">✕</button><h2>Pilzfoto analysieren</h2><p class="modal-p">Experimentelle Browser-Analyse mit einem allgemeinen Zero-Shot-Bildmodell; kein Ersatz für eine fachkundige Bestimmung.</p><img id="aiPreview" class="ai-preview" alt="Vorschau" style="display:none"><div class="ai-status" id="aiStatus">Wähle ein Pilzfoto aus.</div><div id="aiResult"></div><button class="search-btn" id="aiChooseBtn">📷 Foto auswählen</button><button class="tool-btn" id="aiAnalyzeBtn" disabled>🤖 Analyse starten</button></div></div>
+<div class="modal-overlay" id="aiModal">
+  <div class="modal-card" style="max-width:760px">
+    <button class="close-btn" id="closeAiModal">✕</button>
+    <h2>Pilzfoto analysieren</h2>
+    <p class="modal-p">Experimentelle Browser-Analyse mit einem allgemeinen Zero-Shot-Bildmodell; kein Ersatz für eine fachkundige Bestimmung.</p>
+    <img id="aiPreview" class="ai-preview" alt="Vorschau" style="display:none">
+    <div class="ai-status" id="aiStatus">Wähle ein Pilzfoto aus.</div>
+    <div id="aiResult"></div>
+    <button class="search-btn" id="aiChooseBtn">📷 Foto auswählen</button>
+    <button class="tool-btn" id="aiAnalyzeBtn" disabled>🤖 Analyse starten</button>
+  </div>
+</div>
 
-<div class="modal-overlay" id="speciesModal"><div class="modal-card"><button class="close-btn" id="closeSpeciesModal">✕</button><h2 id="modalName">–</h2><p class="modal-latin" id="modalLatin">–</p><span class="badge" id="modalSpeisewert">–</span><div class="species-tabs" role="tablist"><button class="species-tab active" data-tab="general" role="tab">Allgemein</button><button class="species-tab" data-tab="images" role="tab">Bilder</button><button class="species-tab" data-tab="recognition" role="tab">Erkennung</button><button class="species-tab" data-tab="season" role="tab">Saison</button><button class="species-tab" data-tab="habitat" role="tab">Lebensraum</button><button class="species-tab" data-tab="lookalikes" role="tab">Verwechslungen</button><button class="species-tab" data-tab="observations" role="tab">Beobachtungen</button><button class="species-tab" data-tab="taxonomy" role="tab">Taxonomie</button><button class="species-tab" data-tab="sources" role="tab">Quellen</button></div>
-  <div class="species-tab-panel active" data-panel="general"><p class="modal-p" id="modalBeschreibung">–</p><div class="section-title">Merkmale</div><div class="trait-row"><span class="trait-label">Hut</span><span id="modalHut">–</span></div><div class="trait-row"><span class="trait-label">Stiel</span><span id="modalStiel">–</span></div><div class="trait-row"><span class="trait-label">Fleisch</span><span id="modalFleisch">–</span></div><div class="trait-row"><span class="trait-label">Geruch/Geschmack</span><span id="modalGeruch">–</span></div><div class="section-title">Wo er wächst</div><div class="trait-row"><span class="trait-label">Baumpartner</span><span id="modalHabitat">–</span></div><div class="trait-row"><span class="trait-label">Boden</span><span id="modalBoden">–</span></div><div class="trait-row"><span class="trait-label">Klima</span><span id="modalKlima">–</span></div><div class="section-title">Saison</div><div class="month-bar" id="modalMonthBar"></div><div class="section-title">Besonderheit</div><p class="modal-p" id="modalBesonderheit">–</p><div class="caution-box" id="modalVerwechslung">–</div></div>
-  <div class="species-tab-panel" data-panel="images"><p class="source-note">iNaturalist, mit GBIF als Fallback.</p><div class="image-grid" id="modalImages"></div></div>
-  <div class="species-tab-panel" data-panel="recognition"><div class="recognition-list" id="recognitionList"></div></div>
-  <div class="species-tab-panel" data-panel="season"><div class="section-title">Saisonverlauf</div><div class="month-bar" id="modalSeasonBar"></div><div class="section-title">Aktuelle Einordnung</div><div id="modalSeasonText" class="source-note"></div><div class="section-title">Wetterfenster</div><div id="modalSeasonWeather" class="timeline"></div></div>
-  <div class="species-tab-panel" data-panel="habitat"><div class="section-title">Lebensraum</div><div class="trait-row"><span class="trait-label">Baumpartner</span><span id="modalHabitatTrees">–</span></div><div class="trait-row"><span class="trait-label">Boden</span><span id="modalHabitatSoil">–</span></div><div class="trait-row"><span class="trait-label">Klima</span><span id="modalHabitatClimate">–</span></div><div class="section-title">Mikroklima</div><div id="modalMicroclimate" class="micro-grid"><div class="micro-card">Wird beim Öffnen berechnet…</div></div></div>
-  <div class="species-tab-panel" data-panel="lookalikes"><div class="section-title">Wichtige Verwechslungspartner</div><div id="modalLookalikes" class="recognition-list"></div></div>
-  <div class="species-tab-panel" data-panel="observations"><p class="source-note">Öffentliche Beobachtungen werden aus iNaturalist geladen.</p><div id="modalObservations"></div></div>
-  <div class="species-tab-panel" data-panel="taxonomy"><div id="indexFungorumContent" class="source-note">Index Fungorum wird geladen…</div><div class="section-title">Namenshistorie</div><div id="taxonomyHistory" class="taxonomy-history"></div></div>
-  <div class="species-tab-panel" data-panel="sources"><div id="speciesSources" class="source-note"></div></div>
-</div></div>
+<div class="modal-overlay" id="speciesModal">
+  <div class="modal-card">
+    <button class="close-btn" id="closeSpeciesModal">✕</button>
+    <h2 id="modalName">–</h2>
+    <p class="modal-latin" id="modalLatin">–</p>
+    <span class="badge" id="modalSpeisewert">–</span>
+
+    <div class="species-tabs" role="tablist">
+      <button class="species-tab active" data-tab="general" role="tab">Allgemein</button>
+      <button class="species-tab" data-tab="images" role="tab">Bilder</button>
+      <button class="species-tab" data-tab="recognition" role="tab">Erkennung</button>
+      <button class="species-tab" data-tab="season" role="tab">Saison</button>
+      <button class="species-tab" data-tab="habitat" role="tab">Lebensraum</button>
+      <button class="species-tab" data-tab="lookalikes" role="tab">Verwechslungen</button>
+      <button class="species-tab" data-tab="observations" role="tab">Beobachtungen</button>
+      <button class="species-tab" data-tab="taxonomy" role="tab">Taxonomie</button>
+      <button class="species-tab" data-tab="sources" role="tab">Quellen</button>
+    </div>
+
+    <div class="species-tab-panel active" data-panel="general">
+      <p class="modal-p" id="modalBeschreibung">–</p>
+      <div class="section-title">Merkmale</div>
+      <div class="trait-row"><span class="trait-label">Hut</span><span id="modalHut">–</span></div>
+      <div class="trait-row"><span class="trait-label">Stiel</span><span id="modalStiel">–</span></div>
+      <div class="trait-row"><span class="trait-label">Fleisch</span><span id="modalFleisch">–</span></div>
+      <div class="trait-row"><span class="trait-label">Geruch/Geschmack</span><span id="modalGeruch">–</span></div>
+      <div class="section-title">Wo er wächst</div>
+      <div class="trait-row"><span class="trait-label">Baumpartner</span><span id="modalHabitat">–</span></div>
+      <div class="trait-row"><span class="trait-label">Boden</span><span id="modalBoden">–</span></div>
+      <div class="trait-row"><span class="trait-label">Klima</span><span id="modalKlima">–</span></div>
+      <div class="section-title">Saison</div>
+      <div class="month-bar" id="modalMonthBar"></div>
+      <div class="section-title">Besonderheit</div>
+      <p class="modal-p" id="modalBesonderheit">–</p>
+      <div class="caution-box" id="modalVerwechslung">–</div>
+    </div>
+
+    <div class="species-tab-panel" data-panel="images">
+      <p class="source-note">iNaturalist, mit GBIF als Fallback.</p>
+      <div class="image-grid" id="modalImages"></div>
+    </div>
+
+    <div class="species-tab-panel" data-panel="recognition">
+      <div class="recognition-list" id="recognitionList"></div>
+    </div>
+
+    <div class="species-tab-panel" data-panel="season">
+      <div class="section-title">Saisonverlauf</div>
+      <div class="month-bar" id="modalSeasonBar"></div>
+      <div class="section-title">Aktuelle Einordnung</div>
+      <div id="modalSeasonText" class="source-note"></div>
+      <div class="section-title">Wetterfenster</div>
+      <div id="modalSeasonWeather" class="timeline"></div>
+    </div>
+
+    <div class="species-tab-panel" data-panel="habitat">
+      <div class="section-title">Lebensraum</div>
+      <div class="trait-row"><span class="trait-label">Baumpartner</span><span id="modalHabitatTrees">–</span></div>
+      <div class="trait-row"><span class="trait-label">Boden</span><span id="modalHabitatSoil">–</span></div>
+      <div class="trait-row"><span class="trait-label">Klima</span><span id="modalHabitatClimate">–</span></div>
+      <div class="section-title">Mikroklima</div>
+      <div id="modalMicroclimate" class="micro-grid"><div class="micro-card">Wird beim Öffnen berechnet…</div></div>
+    </div>
+
+    <div class="species-tab-panel" data-panel="lookalikes">
+      <div class="section-title">Wichtige Verwechslungspartner</div>
+      <div id="modalLookalikes" class="recognition-list"></div>
+    </div>
+
+    <div class="species-tab-panel" data-panel="observations">
+      <p class="source-note">Öffentliche Beobachtungen werden aus iNaturalist geladen.</p>
+      <div id="modalObservations"></div>
+    </div>
+
+    <div class="species-tab-panel" data-panel="taxonomy">
+      <div id="indexFungorumContent" class="source-note">Index Fungorum wird geladen…</div>
+      <div class="section-title">Namenshistorie</div>
+      <div id="taxonomyHistory" class="taxonomy-history"></div>
+    </div>
+
+    <div class="species-tab-panel" data-panel="sources">
+      <div id="speciesSources" class="source-note"></div>
+    </div>
+
+  </div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://unpkg.com/maplibre-gl@5.23.0/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/dist/leaflet-maplibre-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf@7.3.0/turf.min.js"></script>
+
 <script>
 /* ============================================================
    COPERNICUS-ZUGANGSDATEN
-   Hier einmalig eintragen. Nichts davon muss in der App-Oberfläche
-   eingegeben oder in localStorage gespeichert werden.
-
-   WICHTIG: Bei einer reinen Browser-App ist ein Client Secret für
-   technisch jeden sichtbar, der die HTML-Datei und Browser-Requests
-   einsehen kann. Für eine öffentliche Produktiv-App sollte das Secret
-   deshalb nicht im Frontend liegen.
    ============================================================ */
+
 const COPERNICUS_CLIENT_ID = 'sh-514bfe30-d8a5-4733-87e9-b3975be511e2';
 const COPERNICUS_CLIENT_SECRET = '8Cg3s0aR25OgHBRqwGbbPFTWAqGzoRmd';
 
-const MAX_FORESTS=120,MIN_FOREST_ZOOM=11,FOREST_LAYER='landcover_wood';
+const MAX_FORESTS=250;
+const MIN_FOREST_ZOOM=11;
+const FOREST_LAYER='landcover_wood';
+
 const JRC_ATLAS_URL='https://forest.jrc.ec.europa.eu/en/european-atlas/atlas-data-and-metadata/';
+
 const COP_TOKEN_URL='https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token';
 const COP_PROCESS_URL='https://sh.dataspace.copernicus.eu/process/v1';
-const COP_DLT_COLLECTION='byoc-42b2ef44-5983-4bd1-9e2f-52c093c08b3d';
-const COP_DLT_YEAR='2023';
+
+/*
+  Wichtig:
+  Copernicus erwartet für BYOC:
+  input.data.type = byoc-<collectionId>
+*/
+const COP_DLT_COLLECTION_ID='42b2ef44-5983-4bd1-9e2f-52c093c08b3d';
+const COP_DLT_DATA_TYPE=`byoc-${COP_DLT_COLLECTION_ID}`;
+
+const COP_DLT_START='2018-01-01T00:00:00Z';
+
 const map=L.map('map',{zoomControl:true,minZoom:3}).setView([48.9483,9.1332],13);
-const fallbackTiles=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap-Mitwirkende'}).addTo(map);
+
+const fallbackTiles=L.tileLayer(
+  'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  {
+    maxZoom:19,
+    attribution:'© OpenStreetMap-Mitwirkende'
+  }
+).addTo(map);
+
 let mapLibreLayer=null;
+
 try{
-  mapLibreLayer=L.maplibreGL({style:'https://tiles.openfreemap.org/styles/liberty',interactive:false}).addTo(map);
+  mapLibreLayer=L.maplibreGL({
+    style:'https://tiles.openfreemap.org/styles/liberty',
+    interactive:false
+  }).addTo(map);
+
   fallbackTiles.setOpacity(0);
-  mapLibreLayer.on('error',()=>fallbackTiles.setOpacity(1));
+
+  mapLibreLayer.on('error',()=>{
+    fallbackTiles.setOpacity(1);
+  });
 }catch(e){
   console.warn('MapLibre konnte nicht geladen werden, OpenStreetMap-Fallback aktiv:',e);
   mapLibreLayer=null;
 }
-const resultLayer=L.layerGroup().addTo(map),gbifLayer=L.layerGroup().addTo(map),selectedLayer=L.layerGroup().addTo(map);
-map.createPane('gbifPane');map.getPane('gbifPane').style.zIndex=650;map.createPane('forestPane');map.getPane('forestPane').style.zIndex=500;map.createPane('selectedForestPane');map.getPane('selectedForestPane').style.zIndex=550;
+
+const resultLayer=L.layerGroup().addTo(map);
+const gbifLayer=L.layerGroup().addTo(map);
+const selectedLayer=L.layerGroup().addTo(map);
+
+map.createPane('gbifPane');
+map.getPane('gbifPane').style.zIndex=650;
+
+map.createPane('forestPane');
+map.getPane('forestPane').style.zIndex=500;
+
+map.createPane('selectedForestPane');
+map.getPane('selectedForestPane').style.zIndex=550;
 
 const SPECIES=[
 {id:'steinpilz',label:'Steinpilz',latin:'Boletus edulis',gbifName:'Boletus edulis',iNatName:'Boletus edulis',hosts:[['Fichte','Picea abies'],['Buche','Fagus sylvatica'],['Kiefer','Pinus sylvestris']],treeWeights:{coniferous:18,broadleaved:14,mixed:18,unknown:9},micro:{moist:true,slope:[1,12]},precip:{lo:5,idealLo:20,idealHi:60,hi:120,pts:20},temp:{lo:8,idealLo:15,idealHi:20,hi:28,pts:20},ph:{lo:3.5,idealLo:4.5,idealHi:6,hi:7.5,pts:12},months:[6,7,8,9,10],monthPts:8,monthOff:2,forest:{coniferous:12,broadleaved:9,mixed:12,unknown:6},info:{speisewert:'Sehr guter Speisepilz',beschreibung:'Beliebter europäischer Mykorrhizapilz verschiedener Bäume.',hut:'Braun bis rotbraun, halbkugelig bis polsterförmig.',stiel:'Bauchig-keulig, hell mit feinem Netz.',fleisch:'Weiß und fest.',geruch:'Mild, pilzig-nussig.',habitat:'Fichte, Buche, Kiefer.',boden:'Saure bis leicht saure, gut durchlässige Böden.',klima:'Regen gefolgt von warmen Tagen kann einen Fruktifikationsschub begünstigen.',besonderheit:'Das Fleisch bleibt beim Anschneiden weiß.',verwechslung:'Verwechslung mit Gallenröhrling und anderen Röhrlingen möglich.'}},
@@ -148,9 +316,20 @@ const SPECIES=[
 {id:'rotkappe',label:'Rotkappe',latin:'Leccinum aurantiacum',gbifName:'Leccinum aurantiacum',iNatName:'Leccinum aurantiacum',hosts:[['Birke','Betula spp.'],['Espe','Populus tremula'],['Pappel','Populus spp.']],treeWeights:{coniferous:3,broadleaved:18,mixed:15,unknown:7},micro:{moist:true,slope:[0,10]},precip:{lo:8,idealLo:25,idealHi:70,hi:130,pts:20},temp:{lo:8,idealLo:13,idealHi:19,hi:26,pts:20},ph:{lo:4,idealLo:5,idealHi:6.5,hi:7.5,pts:12},months:[6,7,8,9,10],monthPts:8,monthOff:2,forest:{coniferous:3,broadleaved:12,mixed:10,unknown:5},info:{speisewert:'Guter Speisepilz',beschreibung:'Orange- bis ziegelhütige Raufüße der Rotkappen-Gruppe.',hut:'Orangerot bis ziegelrot.',stiel:'Kräftig, mit dunklen Schuppen.',fleisch:'Weiß, verfärbt sich stark.',geruch:'Mild.',habitat:'Birke, Pappel, Espe.',boden:'Feuchtere Wald- und Saumbereiche.',klima:'Mag beständige Feuchtigkeit.',besonderheit:'Starke Fleischverfärbung ist normal.',verwechslung:'Rotkappen-Arten können schwierig zu trennen sein.'}},
 {id:'krauseglucke',label:'Krause Glucke',latin:'Sparassis crispa',gbifName:'Sparassis crispa',iNatName:'Sparassis crispa',hosts:[['Kiefer','Pinus sylvestris'],['Fichte','Picea abies']],treeWeights:{coniferous:18,broadleaved:1,mixed:14,unknown:7},micro:{moist:false,slope:[0,18]},precip:{lo:3,idealLo:10,idealHi:40,hi:90,pts:20},temp:{lo:10,idealLo:15,idealHi:22,hi:28,pts:20},ph:{lo:3,idealLo:3.5,idealHi:5,hi:6,pts:12},months:[8,9,10],monthPts:8,monthOff:2,forest:{coniferous:12,broadleaved:2,mixed:8,unknown:5},info:{speisewert:'Guter Speisepilz',beschreibung:'Wächst typischerweise am Stammfuß älterer Kiefern.',hut:'Kraus und blumenkohlartig.',stiel:'Kurzer, verzweigter Ansatz.',fleisch:'Weißlich und elastisch.',geruch:'Angenehm nussig.',habitat:'Vor allem alte Kiefern.',boden:'Eher trockene, sandige Kiefernstandorte.',klima:'Wärme in Spätsommer/Herbst begünstigt.',besonderheit:'Fundstellen können über Jahre stabil bleiben.',verwechslung:'Durch die Wuchsform relativ auffällig.'}}
 ];
-const speciesConfig=Object.fromEntries(SPECIES.map(s=>[s.id,s]));let currentSpecies=SPECIES[0].id;
 
-function escapeHtml(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+const speciesConfig=Object.fromEntries(SPECIES.map(s=>[s.id,s]));
+let currentSpecies=SPECIES[0].id;
+
+function escapeHtml(v){
+  return String(v??'').replace(/[&<>'"]/g,c=>({
+    '&':'&#38;',
+    '<':'&#60;',
+    '>':'&#62;',
+    "'":'&#39;',
+    '"':'&#34;'
+  }[c]));
+}
+
 const SCORE_BANDS=[
   {min:0,max:10,color:'#7b4f52',label:'0–10'},
   {min:11,max:20,color:'#955a4d',label:'11–20'},
@@ -163,45 +342,269 @@ const SCORE_BANDS=[
   {min:81,max:90,color:'#417e65',label:'81–90'},
   {min:91,max:100,color:'#24685e',label:'91–100'}
 ];
-function scoreBand(score){const n=Math.max(0,Math.min(100,Math.round(Number(score)||0)));return SCORE_BANDS.find(b=>n>=b.min&&n<=b.max)||SCORE_BANDS[0]}
-function scoreColor(score){return scoreBand(score).color}
-function renderScoreLegend(){const el=document.getElementById('scoreLegend');if(!el)return;el.innerHTML=SCORE_BANDS.map(b=>`<div class="score-legend-cell" style="background:${b.color}" title="Score ${b.label}">${b.label}</div>`).join('')}
-function leafTypeLabel(t){return t==='coniferous'?'Nadelwald':t==='broadleaved'?'Laubwald':t==='mixed'?'Mischwald':'unbekannt'}
-function statusTagHtml(status){const labels={ideal:'ideal',ok:'okay',poor:'ungünstig'};return `<span class="status-tag status-${status}">${labels[status]}</span>`}
-function rangeStatus(v,cfg){if(v<=cfg.lo||v>=cfg.hi)return'poor';if(v>=cfg.idealLo&&v<=cfg.idealHi)return'ideal';return'ok'}
-function phStatusLabel(ph){if(ph<4.5)return'stark sauer';if(ph<5.5)return'sauer';if(ph<6.5)return'leicht sauer';if(ph<7.2)return'neutral';return'alkalisch'}
-function triScore(v,cfg){if(v<=cfg.lo||v>=cfg.hi)return 0;if(v>=cfg.idealLo&&v<=cfg.idealHi)return cfg.pts;if(v<cfg.idealLo)return cfg.pts*(v-cfg.lo)/(cfg.idealLo-cfg.lo);return cfg.pts*(cfg.hi-v)/(cfg.hi-cfg.idealHi)}
-function areaDeg2(coords){let a=0;for(let i=0;i<coords.length-1;i++)a+=coords[i][1]*coords[i+1][0]-coords[i+1][1]*coords[i][0];return Math.abs(a/2)}
-function centroid(coords){let lat=0,lon=0;for(const p of coords){lat+=p[0];lon+=p[1]}return[lat/coords.length,lon/coords.length]}
-function areaHectares(a,lat){return Math.round(a*111.32*111.32*Math.cos(lat*Math.PI/180)*1000)/10}
 
-function renderSpeciesSelect(){const el=document.getElementById('speciesSelect');el.innerHTML=SPECIES.map(s=>`<option value="${s.id}">${s.label}</option>`).join('');el.value=currentSpecies}
+function scoreBand(score){
+  const n=Math.max(0,Math.min(100,Math.round(Number(score)||0)));
+  return SCORE_BANDS.find(b=>n>=b.min&&n<=b.max)||SCORE_BANDS[0];
+}
+
+function scoreColor(score){
+  return scoreBand(score).color;
+}
+
+function renderScoreLegend(){
+  const el=document.getElementById('scoreLegend');
+  if(!el)return;
+
+  el.innerHTML=SCORE_BANDS.map(b=>`
+    <div class="score-legend-cell" style="background:${b.color}" title="Score ${b.label}">
+      ${b.label}
+    </div>
+  `).join('');
+}
+
+function leafTypeLabel(t){
+  return t==='coniferous'
+    ? 'Nadelwald'
+    : t==='broadleaved'
+      ? 'Laubwald'
+      : t==='mixed'
+        ? 'Mischwald'
+        : 'unbekannt';
+}
+
+function statusTagHtml(status){
+  const labels={
+    ideal:'ideal',
+    ok:'okay',
+    poor:'ungünstig'
+  };
+
+  return `<span class="status-tag status-${status}">${labels[status]}</span>`;
+}
+
+function rangeStatus(v,cfg){
+  if(v<=cfg.lo||v>=cfg.hi)return'poor';
+  if(v>=cfg.idealLo&&v<=cfg.idealHi)return'ideal';
+  return'ok';
+}
+
+function phStatusLabel(ph){
+  if(ph<4.5)return'stark sauer';
+  if(ph<5.5)return'sauer';
+  if(ph<6.5)return'leicht sauer';
+  if(ph<7.2)return'neutral';
+  return'alkalisch';
+}
+
+function triScore(v,cfg){
+  if(v<=cfg.lo||v>=cfg.hi)return 0;
+  if(v>=cfg.idealLo&&v<=cfg.idealHi)return cfg.pts;
+  if(v<cfg.idealLo)return cfg.pts*(v-cfg.lo)/(cfg.idealLo-cfg.lo);
+  return cfg.pts*(cfg.hi-v)/(cfg.hi-cfg.idealHi);
+}
+
+function areaDeg2(coords){
+  let a=0;
+
+  for(let i=0;i<coords.length-1;i++){
+    a+=coords[i][1]*coords[i+1][0]-coords[i+1][1]*coords[i][0];
+  }
+
+  return Math.abs(a/2);
+}
+
+function centroid(coords){
+  let lat=0;
+  let lon=0;
+
+  for(const p of coords){
+    lat+=p[0];
+    lon+=p[1];
+  }
+
+  return [
+    lat/coords.length,
+    lon/coords.length
+  ];
+}
+
+function areaHectares(a,lat){
+  return Math.round(
+    a*111.32*111.32*Math.cos(lat*Math.PI/180)*1000
+  )/10;
+}
+
+function renderSpeciesSelect(){
+  const el=document.getElementById('speciesSelect');
+
+  el.innerHTML=SPECIES.map(s=>`
+    <option value="${s.id}">${s.label}</option>
+  `).join('');
+
+  el.value=currentSpecies;
+}
+
 renderSpeciesSelect();
 
-document.getElementById('speciesSelect').addEventListener('change',e=>{currentSpecies=e.target.value;if(forestResults.length){forestResults=forestResults.map(r=>({...r,score:computeScore(currentSpecies,r.data,r.micro)})).sort((a,b)=>b.score.total-a.score.total);renderForestRanking();if(activeForest){const same=forestResults.find(r=>r.forest.osmId===activeForest.forest.osmId);if(same)openForestDetail(same)}}});
+const state={};
+let forestResults=[];
+let activeForest=null;
+let selectedPolygons=[];
 
-const state={};let forestResults=[],activeForest=null,selectedPolygons=[];
-const rankView=document.getElementById('rankingView'),detailView=document.getElementById('detailView');
-const rankingBody=document.getElementById('rankingBody'),rankingToggleBtn=document.getElementById('rankingToggleBtn');
-let rankingCollapsed=false;
+const rankView=document.getElementById('rankingView');
+const detailView=document.getElementById('detailView');
+const detailPanel=document.getElementById('detailPanel');
+
 let detailPanelCollapsed=false;
-function setRankingCollapsed(collapsed){rankingCollapsed=!!collapsed;rankingBody.classList.toggle('collapsed',rankingCollapsed);rankingToggleBtn.setAttribute('aria-expanded',String(!rankingCollapsed));rankingToggleBtn.textContent=rankingCollapsed?'⌄ Liste aufklappen':'⌃ Liste einklappen';}
-rankingToggleBtn.addEventListener('click',()=>setRankingCollapsed(!rankingCollapsed));
-function setDetailPanelCollapsed(collapsed){detailPanelCollapsed=!!collapsed;detailPanel.classList.toggle('panel-collapsed',detailPanelCollapsed);const btn=document.getElementById('panelCollapseBtn');btn.textContent=detailPanelCollapsed?'＋':'−';btn.title=detailPanelCollapsed?'Fenster aufklappen':'Fenster zuklappen';btn.setAttribute('aria-label',detailPanelCollapsed?'Waldgebiet-Fenster aufklappen':'Waldgebiet-Fenster zuklappen')}
-document.getElementById('panelCollapseBtn').addEventListener('click',()=>setDetailPanelCollapsed(!detailPanelCollapsed));
-function showForestRanking(){activeForest=null;rankView.style.display='block';detailView.style.display='none';selectedLayer.clearLayers();if(detailPanelCollapsed)setDetailPanelCollapsed(false);setRankingCollapsed(false)}
-document.getElementById('closeDetail').addEventListener('click',showForestRanking);
+
+function setDetailPanelCollapsed(collapsed){
+  detailPanelCollapsed=!!collapsed;
+
+  detailPanel.classList.toggle(
+    'panel-collapsed',
+    detailPanelCollapsed
+  );
+
+  const btn=document.getElementById('panelCollapseBtn');
+
+  btn.textContent=detailPanelCollapsed?'＋':'−';
+
+  btn.title=detailPanelCollapsed
+    ? 'Fenster aufklappen'
+    : 'Fenster zuklappen';
+
+  btn.setAttribute(
+    'aria-label',
+    detailPanelCollapsed
+      ? 'Waldgebiet-Fenster aufklappen'
+      : 'Waldgebiet-Fenster zuklappen'
+  );
+}
+
+document
+  .getElementById('panelCollapseBtn')
+  .addEventListener(
+    'click',
+    ()=>setDetailPanelCollapsed(!detailPanelCollapsed)
+  );
+
+function showForestRanking(){
+  activeForest=null;
+
+  rankView.style.display='block';
+  detailView.style.display='none';
+
+  selectedLayer.clearLayers();
+
+  if(detailPanelCollapsed){
+    setDetailPanelCollapsed(false);
+  }
+}
 
 /* ---------- Vector tiles / Waldsuche ---------- */
-function forestFromFeature(f){const g=f.geometry,p=f.properties||{};if(!g||!['Polygon','MultiPolygon'].includes(g.type))return[];const polys=g.type==='Polygon'?[g.coordinates]:g.coordinates;return polys.map(poly=>poly?.[0]).filter(r=>r&&r.length>=4).map(r=>{const coords=r.map(x=>[x[1],x[0]]);return{coords,area:areaDeg2(coords),centroid:centroid(coords),leafType:'unknown',tags:{...p,'sourceLayer':f.sourceLayer||''},osmId:f.id||`${coords[0][0]}-${coords[0][1]}-${coords.length}`}})}
-function dedupeForests(fs){const seen=new Set;return fs.filter(f=>{const k=`${f.osmId}|${f.coords[0][0].toFixed(5)}|${f.coords[0][1].toFixed(5)}|${f.coords.length}`;if(seen.has(k))return false;seen.add(k);return true})}
-function getVisibleForests(){if(!mapLibreLayer)return[];let gl=null;try{gl=mapLibreLayer.getMaplibreMap()}catch(_){return[]}if(!gl)return[];let feats=[];try{feats=gl.queryRenderedFeatures({layers:[FOREST_LAYER]})}catch(_){try{feats=gl.queryRenderedFeatures().filter(f=>f.sourceLayer==='landcover'&&String(f.properties?.class||'').toLowerCase()==='wood')}catch(__){return[]}}return dedupeForests(feats.flatMap(forestFromFeature))}
+
+function forestFromFeature(f){
+  const g=f.geometry;
+  const p=f.properties||{};
+
+  if(!g||!['Polygon','MultiPolygon'].includes(g.type)){
+    return[];
+  }
+
+  const polys=g.type==='Polygon'
+    ? [g.coordinates]
+    : g.coordinates;
+
+  return polys
+    .map(poly=>poly?.[0])
+    .filter(r=>r&&r.length>=4)
+    .map(r=>{
+      const coords=r.map(x=>[x[1],x[0]]);
+
+      return{
+        coords,
+        area:areaDeg2(coords),
+        centroid:centroid(coords),
+        leafType:'unknown',
+        tags:{
+          ...p,
+          sourceLayer:f.sourceLayer||''
+        },
+        osmId:f.id||`${coords[0][0]}-${coords[0][1]}-${coords.length}`
+      };
+    });
+}
+
+function dedupeForests(fs){
+  const seen=new Set;
+
+  return fs.filter(f=>{
+    const k=`${f.osmId}|${f.coords[0][0].toFixed(5)}|${f.coords[0][1].toFixed(5)}|${f.coords.length}`;
+
+    if(seen.has(k)){
+      return false;
+    }
+
+    seen.add(k);
+    return true;
+  });
+}
+
+function getVisibleForests(){
+  if(!mapLibreLayer){
+    return[];
+  }
+
+  let gl=null;
+
+  try{
+    gl=mapLibreLayer.getMaplibreMap();
+  }catch(_){
+    return[];
+  }
+
+  if(!gl){
+    return[];
+  }
+
+  let feats=[];
+
+  try{
+    feats=gl.queryRenderedFeatures({
+      layers:[FOREST_LAYER]
+    });
+  }catch(_){
+    try{
+      feats=gl
+        .queryRenderedFeatures()
+        .filter(
+          f=>
+            f.sourceLayer==='landcover' &&
+            String(f.properties?.class||'').toLowerCase()==='wood'
+        );
+    }catch(__){
+      return[];
+    }
+  }
+
+  return dedupeForests(
+    feats.flatMap(forestFromFeature)
+  );
+}
+
 function mergeTouchingForests(fs){
-  if(!window.turf || fs.length<2) return fs;
+  if(!window.turf||fs.length<2){
+    return fs;
+  }
 
   const indexed=fs.map((f,i)=>{
-    const ft=turf.polygon([f.coords.map(p=>[p[1],p[0]])]);
+    const ft=turf.polygon([
+      f.coords.map(p=>[p[1],p[0]])
+    ]);
+
     ft.properties={i};
+
     return ft;
   });
 
@@ -209,31 +612,45 @@ function mergeTouchingForests(fs){
   const used=new Set();
 
   for(let i=0;i<fs.length;i++){
-    if(used.has(i)) continue;
+    if(used.has(i)){
+      continue;
+    }
 
     const members=[i];
+
     used.add(i);
+
     let changed=true;
 
     while(changed){
       changed=false;
 
       for(let j=0;j<fs.length;j++){
-        if(used.has(j)) continue;
+        if(used.has(j)){
+          continue;
+        }
 
         for(const k of members){
           try{
-            const intersects=turf.booleanIntersects(indexed[k],indexed[j]);
-            const touches=typeof turf.booleanTouches==='function' && turf.booleanTouches(indexed[k],indexed[j]);
+            const intersects=turf.booleanIntersects(
+              indexed[k],
+              indexed[j]
+            );
 
-            if(intersects || touches){
+            const touches=
+              typeof turf.booleanTouches==='function' &&
+              turf.booleanTouches(
+                indexed[k],
+                indexed[j]
+              );
+
+            if(intersects||touches){
               members.push(j);
               used.add(j);
               changed=true;
               break;
             }
           }catch(_){
-            /* Ungültige Randgeometrien nicht als Merge-Kriterium verwenden. */
           }
         }
       }
@@ -254,13 +671,22 @@ function mergeTouchingForests(fs){
       let combined=indexed[members[0]];
 
       for(let i=1;i<members.length;i++){
-        combined=turf.union(turf.featureCollection([combined,indexed[members[i]]])) || combined;
+        combined=
+          turf.union(
+            turf.featureCollection([
+              combined,
+              indexed[members[i]]
+            ])
+          )||combined;
       }
 
       const flattened=turf.flatten(combined);
 
       for(const ft of flattened.features){
-        const ring=ft.geometry.coordinates[0].map(p=>[p[1],p[0]]);
+        const ring=
+          ft.geometry.coordinates[0]
+            .map(p=>[p[1],p[0]]);
+
         const source=fs[members[0]];
 
         out.push({
@@ -269,9 +695,13 @@ function mergeTouchingForests(fs){
           area:areaDeg2(ring),
           centroid:centroid(ring),
           osmId:`merged-${members.join('-')}`,
-          tags:{...source.tags,mergedCount:members.length}
+          tags:{
+            ...source.tags,
+            mergedCount:members.length
+          }
         });
       }
+
     }catch(_){
       out.push(fs[members[0]]);
     }
@@ -279,71 +709,2976 @@ function mergeTouchingForests(fs){
 
   return out;
 }
-/* ---------- Copernicus DLT optional ---------- */
-function getCopConfig(){return{clientId:String(COPERNICUS_CLIENT_ID||'').trim(),clientSecret:String(COPERNICUS_CLIENT_SECRET||'').trim()}}
+
+/* ---------- Copernicus DLT ---------- */
+
+function getCopConfig(){
+  return{
+    clientId:String(COPERNICUS_CLIENT_ID||'').trim(),
+    clientSecret:String(COPERNICUS_CLIENT_SECRET||'').trim()
+  };
+}
+
 let copToken=null;
-async function getCopToken(){const c=getCopConfig();if(!c.clientId||!c.clientSecret)return null;if(copToken&&copToken.exp>Date.now()+60000)return copToken.value;const body=new URLSearchParams({grant_type:'client_credentials',client_id:c.clientId,client_secret:c.clientSecret});const r=await fetch(COP_TOKEN_URL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});if(!r.ok)throw new Error('Copernicus OAuth '+r.status);const j=await r.json();copToken={value:j.access_token,exp:Date.now()+Number(j.expires_in||3600)*1000};return copToken.value}
-function buildCopEvalscript(){return`//VERSION=3\nfunction setup(){return{input:["DLT"],output:{bands:4,sampleType:SampleType.UINT8}}}\nfunction evaluatePixel(s){var v=s.DLT||0;return[v===1?127:v===2?254:0,0,0,255]}`}
-async function fetchCopRaster(bbox){const token=await getCopToken();if(!token)return null;const midLat=(bbox[1]+bbox[3])/2;const w=Math.max(64,Math.min(900,Math.round(Math.abs(bbox[2]-bbox[0])*111320*Math.cos(midLat*Math.PI/180)/20)));const h=Math.max(64,Math.min(900,Math.round(Math.abs(bbox[3]-bbox[1])*111320/20)));const body={input:{bounds:{properties:{crs:'http://www.opengis.net/def/crs/OGC/1.3/CRS84'},bbox},data:[{type:COP_DLT_COLLECTION,dataFilter:{timeRange:{from:`${COP_DLT_YEAR}-01-01T00:00:00Z`,to:`${COP_DLT_YEAR}-12-31T23:59:59Z`}}}]},output:{width:w,height:h,responses:[{identifier:'default',format:{type:'image/png'}}]},evalscript:buildCopEvalscript()};const r=await fetch(COP_PROCESS_URL,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw new Error('Copernicus Process API '+r.status);const b=await r.blob(),bmp=await createImageBitmap(b),canvas=document.createElement('canvas');canvas.width=bmp.width;canvas.height=bmp.height;const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(bmp,0,0);return{ctx,width:bmp.width,height:bmp.height,bbox}}
-function copClassAt(r,lat,lon){if(!r)return null;const [w,s,e,n]=r.bbox;const x=Math.max(0,Math.min(r.width-1,Math.round((lon-w)/(e-w)*r.width))),y=Math.max(0,Math.min(r.height-1,Math.round((n-lat)/(n-s)*r.height)));let broad=0,con=0;for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){const px=Math.max(0,Math.min(r.width-1,x+ox)),py=Math.max(0,Math.min(r.height-1,y+oy));const d=r.ctx.getImageData(px,py,1,1).data;if(d[0]>=200)con++;else if(d[0]>=60)broad++}if(!broad&&!con)return null;return{type:con>broad?'coniferous':'broadleaved',confidence:Math.max(broad,con)/(broad+con)}}
+
+function setCopStatus(text,kind='info'){
+  const el=document.getElementById('copStatus');
+
+  if(!el){
+    return;
+  }
+
+  el.textContent=text;
+
+  el.style.borderLeftColor=
+    kind==='success'
+      ? '#5b7052'
+      : kind==='error'
+        ? '#b5691a'
+        : '#5b7052';
+
+  el.style.background=
+    kind==='success'
+      ? 'rgba(91,112,82,.12)'
+      : kind==='error'
+        ? 'rgba(217,138,31,.12)'
+        : 'rgba(91,112,82,.08)';
+}
+
+async function getCopToken(){
+  const c=getCopConfig();
+
+  if(!c.clientId||!c.clientSecret){
+    setCopStatus(
+      'Keine Copernicus-Zugangsdaten erkannt. Der Baumtyp-Fallback bleibt aktiv.',
+      'error'
+    );
+
+    return null;
+  }
+
+  if(
+    copToken&&
+    copToken.exp>Date.now()+60000
+  ){
+    return copToken.value;
+  }
+
+  const body=new URLSearchParams({
+    grant_type:'client_credentials',
+    client_id:c.clientId,
+    client_secret:c.clientSecret
+  });
+
+  const r=await fetch(
+    COP_TOKEN_URL,
+    {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/x-www-form-urlencoded'
+      },
+      body
+    }
+  );
+
+  if(!r.ok){
+    let detail='';
+
+    try{
+      detail=await r.text();
+    }catch(_){
+    }
+
+    throw new Error(
+      `Copernicus OAuth ${r.status}${detail?`: ${detail.slice(0,300)}`:''}`
+    );
+  }
+
+  const j=await r.json();
+
+  if(!j.access_token){
+    throw new Error('Copernicus OAuth: Kein Access Token erhalten.');
+  }
+
+  copToken={
+    value:j.access_token,
+    exp:Date.now()+Number(j.expires_in||3600)*1000
+  };
+
+  setCopStatus(
+    'Copernicus-Verbindung erfolgreich authentifiziert.',
+    'success'
+  );
+
+  return copToken.value;
+}
+
+/*
+  DLT:
+  0 = nicht baumbestanden / sonstige Fläche
+  1 = Laubbäume
+  2 = Nadelbäume
+
+  Wir geben die DLT-Rohklassifikation direkt als UINT8 aus.
+  Dadurch wird nicht mehr mit künstlichen RGB-Werten gearbeitet.
+*/
+function buildCopEvalscript(){
+  return `//VERSION=3
+
+function setup(){
+  return{
+    input:[
+      "DLT",
+      "dataMask"
+    ],
+    output:{
+      bands:2,
+      sampleType:SampleType.UINT8
+    }
+  }
+}
+
+function evaluatePixel(sample){
+  return[
+    sample.DLT || 0,
+    sample.dataMask || 0
+  ]
+}`;
+}
+
+function getCopTimeRange(){
+  return{
+    from:COP_DLT_START,
+    to:new Date().toISOString()
+  };
+}
+
+async function fetchCopRaster(bbox){
+  const token=await getCopToken();
+
+  if(!token){
+    return null;
+  }
+
+  const midLat=(bbox[1]+bbox[3])/2;
+
+  /*
+    Maximal 900x900 Pixel.
+    Die Anfrage arbeitet damit auf einer moderaten Auflösung,
+    während der zugrunde liegende DLT-Datensatz 10 m besitzt.
+  */
+  const w=Math.max(
+    64,
+    Math.min(
+      900,
+      Math.round(
+        Math.abs(bbox[2]-bbox[0])*
+        111320*
+        Math.cos(midLat*Math.PI/180)/
+        20
+      )
+    )
+  );
+
+  const h=Math.max(
+    64,
+    Math.min(
+      900,
+      Math.round(
+        Math.abs(bbox[3]-bbox[1])*
+        111320/
+        20
+      )
+    )
+  );
+
+  const timeRange=getCopTimeRange();
+
+  const body={
+    input:{
+      bounds:{
+        properties:{
+          crs:'http://www.opengis.net/def/crs/OGC/1.3/CRS84'
+        },
+        bbox
+      },
+      data:[
+        {
+          type:COP_DLT_DATA_TYPE,
+          dataFilter:{
+            timeRange,
+            mosaickingOrder:'mostRecent'
+          }
+        }
+      ]
+    },
+
+    output:{
+      width:w,
+      height:h,
+      responses:[
+        {
+          identifier:'default',
+          format:{
+            type:'image/png'
+          }
+        }
+      ]
+    },
+
+    evalscript:buildCopEvalscript()
+  };
+
+  const r=await fetch(
+    COP_PROCESS_URL,
+    {
+      method:'POST',
+      headers:{
+        Authorization:`Bearer ${token}`,
+        'Content-Type':'application/json'
+      },
+      body:JSON.stringify(body)
+    }
+  );
+
+  if(!r.ok){
+    let detail='';
+
+    try{
+      detail=await r.text();
+    }catch(_){
+    }
+
+    throw new Error(
+      `Copernicus Process API ${r.status}${detail?`: ${detail.slice(0,400)}`:''}`
+    );
+  }
+
+  const b=await r.blob();
+  const bmp=await createImageBitmap(b);
+
+  const canvas=document.createElement('canvas');
+
+  canvas.width=bmp.width;
+  canvas.height=bmp.height;
+
+  const ctx=canvas.getContext(
+    '2d',
+    {
+      willReadFrequently:true
+    }
+  );
+
+  ctx.drawImage(bmp,0,0);
+
+  setCopStatus(
+    `Copernicus DLT erfolgreich geladen (${bmp.width} × ${bmp.height} Pixel).`,
+    'success'
+  );
+
+  return{
+    ctx,
+    width:bmp.width,
+    height:bmp.height,
+    bbox
+  };
+}
+
+function copClassAt(r,lat,lon){
+  if(!r){
+    return null;
+  }
+
+  const[
+    w,
+    s,
+    e,
+    n
+  ]=r.bbox;
+
+  if(
+    !Number.isFinite(w)||
+    !Number.isFinite(s)||
+    !Number.isFinite(e)||
+    !Number.isFinite(n)||
+    e===w||
+    n===s
+  ){
+    return null;
+  }
+
+  const x=Math.max(
+    0,
+    Math.min(
+      r.width-1,
+      Math.round(
+        (lon-w)/(e-w)*r.width
+      )
+    )
+  );
+
+  const y=Math.max(
+    0,
+    Math.min(
+      r.height-1,
+      Math.round(
+        (n-lat)/(n-s)*r.height
+      )
+    )
+  );
+
+  let broad=0;
+  let con=0;
+
+  for(let oy=-1;oy<=1;oy++){
+    for(let ox=-1;ox<=1;ox++){
+
+      const px=Math.max(
+        0,
+        Math.min(
+          r.width-1,
+          x+ox
+        )
+      );
+
+      const py=Math.max(
+        0,
+        Math.min(
+          r.height-1,
+          y+oy
+        )
+      );
+
+      const d=
+        r.ctx.getImageData(
+          px,
+          py,
+          1,
+          1
+        ).data;
+
+      /*
+        Da wir die Klassen direkt als UINT8 ausgeben,
+        sollte der Rotkanal die Klassenwerte 0/1/2
+        enthalten.
+      */
+      const value=d[0];
+
+      /*
+        1 = broadleaved
+        2 = coniferous
+      */
+      if(value===2){
+        con++;
+      }else if(value===1){
+        broad++;
+      }
+    }
+  }
+
+  if(!broad&&!con){
+    return null;
+  }
+
+  const total=broad+con;
+
+  return{
+    type:con>broad
+      ? 'coniferous'
+      : 'broadleaved',
+    confidence:Math.max(
+      broad,
+      con
+    )/total
+  };
+}
 
 /* ---------- Wetter / Boden ---------- */
-async function fetchElevations(points){const out=[];for(let i=0;i<points.length;i+=50){const b=points.slice(i,i+50),la=b.map(x=>x.centroid[0]).join(','),lo=b.map(x=>x.centroid[1]).join(','),r=await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${la}&longitude=${lo}`);if(!r.ok)throw new Error('Open-Meteo Höhe '+r.status);out.push(...((await r.json()).elevation||[]))}return out}
-async function fetchWeather(points){const out=[];for(let i=0;i<points.length;i+=30){const b=points.slice(i,i+30),la=b.map(x=>x.centroid[0]).join(','),lo=b.map(x=>x.centroid[1]).join(','),r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=precipitation_sum,temperature_2m_mean&past_days=16&forecast_days=1&timezone=auto`);if(!r.ok)throw new Error('Open-Meteo Wetter '+r.status);const parsed=await r.json();const json=Array.isArray(parsed)?parsed:[parsed];out.push(...json.map(x=>{const p=x.daily?.precipitation_sum||[],t=x.daily?.temperature_2m_mean||[],p14=p.slice(-15,-1).reduce((a,v)=>a+(v||0),0),ts=t.slice(-11,-1).filter(v=>v!=null),ta=ts.length?ts.reduce((a,v)=>a+v,0)/ts.length:12;return{precip14:Math.round(p14*10)/10,tempAvg10:Math.round(ta*10)/10}}))}return out}
-async function fetchSoilPh(points){const out=[];for(let i=0;i<points.length;i+=20){const part=await Promise.allSettled(points.slice(i,i+20).map(p=>fetch(`https://rest.isric.org/soilgrids/v2.0/properties/query?lon=${p.centroid[1]}&lat=${p.centroid[0]}&property=phh2o&depth=0-5cm&value=mean`).then(r=>r.ok?r.json():Promise.reject(r.status))));out.push(...part.map(r=>{if(r.status!=='fulfilled')return null;try{const l=r.value.properties.layers.find(x=>x.name==='phh2o'),d=l.depths.find(x=>x.label==='0-5cm');return d.values.mean==null?null:Math.round((d.values.mean/10)*10)/10}catch(_){return null}}))}return out}
+
+async function fetchElevations(points){
+  const out=[];
+
+  for(let i=0;i<points.length;i+=50){
+    const b=points.slice(i,i+50);
+
+    const la=b.map(
+      x=>x.centroid[0]
+    ).join(',');
+
+    const lo=b.map(
+      x=>x.centroid[1]
+    ).join(',');
+
+    const r=await fetch(
+      `https://api.open-meteo.com/v1/elevation?latitude=${la}&longitude=${lo}`
+    );
+
+    if(!r.ok){
+      throw new Error(
+        'Open-Meteo Höhe '+r.status
+      );
+    }
+
+    out.push(
+      ...(await r.json()).elevation||[]
+    );
+  }
+
+  return out;
+}
+
+async function fetchWeather(points){
+  const out=[];
+
+  for(let i=0;i<points.length;i+=30){
+    const b=points.slice(i,i+30);
+
+    const la=b.map(
+      x=>x.centroid[0]
+    ).join(',');
+
+    const lo=b.map(
+      x=>x.centroid[1]
+    ).join(',');
+
+    const r=await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&daily=precipitation_sum,temperature_2m_mean&past_days=16&forecast_days=1&timezone=auto`
+    );
+
+    if(!r.ok){
+      throw new Error(
+        'Open-Meteo Wetter '+r.status
+      );
+    }
+
+    const parsed=await r.json();
+    const json=Array.isArray(parsed)
+      ? parsed
+      : [parsed];
+
+    out.push(
+      ...json.map(x=>{
+        const p=x.daily?.precipitation_sum||[];
+        const t=x.daily?.temperature_2m_mean||[];
+
+        const p14=p
+          .slice(-15,-1)
+          .reduce(
+            (a,v)=>a+(v||0),
+            0
+          );
+
+        const ts=t
+          .slice(-11,-1)
+          .filter(
+            v=>v!=null
+          );
+
+        const ta=ts.length
+          ? ts.reduce(
+              (a,v)=>a+v,
+              0
+            )/ts.length
+          : 12;
+
+        return{
+          precip14:Math.round(
+            p14*10
+          )/10,
+          tempAvg10:Math.round(
+            ta*10
+          )/10
+        };
+      })
+    );
+  }
+
+  return out;
+}
+
+async function fetchSoilPh(points){
+  const out=[];
+
+  for(let i=0;i<points.length;i+=20){
+    const part=
+      await Promise.allSettled(
+        points
+          .slice(i,i+20)
+          .map(
+            p=>
+              fetch(
+                `https://rest.isric.org/soilgrids/v2.0/properties/query?lon=${p.centroid[1]}&lat=${p.centroid[0]}&property=phh2o&depth=0-5cm&value=mean`
+              )
+              .then(
+                r=>
+                  r.ok
+                    ? r.json()
+                    : Promise.reject(r.status)
+              )
+          )
+      );
+
+    out.push(
+      ...part.map(r=>{
+        if(r.status!=='fulfilled'){
+          return null;
+        }
+
+        try{
+          const l=
+            r.value.properties.layers.find(
+              x=>x.name==='phh2o'
+            );
+
+          const d=
+            l.depths.find(
+              x=>x.label==='0-5cm'
+            );
+
+          return d.values.mean==null
+            ? null
+            : Math.round(
+                (d.values.mean/10)*10
+              )/10;
+        }catch(_){
+          return null;
+        }
+      })
+    );
+  }
+
+  return out;
+}
 
 /* ---------- Mikroklima ---------- */
-async function fetchMicro(f){const lat=f.centroid[0],lon=f.centroid[1],d=.012,pts=[[lat,lon],[lat+d,lon],[lat-d,lon],[lat,lon+d],[lat,lon-d]],r=await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${pts.map(p=>p[0]).join(',')}&longitude=${pts.map(p=>p[1]).join(',')}`);if(!r.ok)throw new Error('Relief '+r.status);const e=(await r.json()).elevation||[];if(e.length<5)throw new Error('Relief unvollständig');const[c,n,s,o,w]=e,ns=2*d*111320,ew=2*d*111320*Math.cos(lat*Math.PI/180),gn=(n-s)/ns,ge=(o-w)/ew,slope=Math.atan(Math.sqrt(gn*gn+ge*ge))*180/Math.PI,aspect=(Math.atan2(-ge,-gn)*180/Math.PI+360)%360,dirs=['N','NO','O','SO','S','SW','W','NW'];return{elevation:c,slope,dir:dirs[Math.round(aspect/45)%8]};}
-function microScore(species,m){if(!m)return{points:5,label:'neutral'};const c=speciesConfig[species],range=c.micro.slope||[0,12],inSlope=m.slope>=range[0]&&m.slope<=range[1],cool=['N','NO','NW'].includes(m.dir),warm=['S','SO','SW'].includes(m.dir);let p=5;if(inSlope)p+=3;if(c.micro.moist){if(cool)p+=2;if(warm)p-=2}else if(warm)p+=2;return{points:Math.max(0,Math.min(10,p)),label:p>=8?'sehr günstig':p>=6?'günstig':p>=4?'mittel':'ungünstig'}}
+
+async function fetchMicro(f){
+  const lat=f.centroid[0];
+  const lon=f.centroid[1];
+  const d=.012;
+
+  const pts=[
+    [lat,lon],
+    [lat+d,lon],
+    [lat-d,lon],
+    [lat,lon+d],
+    [lat,lon-d]
+  ];
+
+  const r=await fetch(
+    `https://api.open-meteo.com/v1/elevation?latitude=${pts.map(p=>p[0]).join(',')}&longitude=${pts.map(p=>p[1]).join(',')}`
+  );
+
+  if(!r.ok){
+    throw new Error(
+      'Relief '+r.status
+    );
+  }
+
+  const e=(await r.json()).elevation||[];
+
+  if(e.length<5){
+    throw new Error(
+      'Relief unvollständig'
+    );
+  }
+
+  const[
+    c,
+    n,
+    s,
+    o,
+    w
+  ]=e;
+
+  const ns=2*d*111320;
+
+  const ew=
+    2*d*
+    111320*
+    Math.cos(
+      lat*Math.PI/180
+    );
+
+  const gn=(n-s)/ns;
+  const ge=(o-w)/ew;
+
+  const slope=
+    Math.atan(
+      Math.sqrt(
+        gn*gn+ge*ge
+      )
+    )*
+    180/
+    Math.PI;
+
+  const aspect=
+    (
+      Math.atan2(
+        -ge,
+        -gn
+      )*
+      180/
+      Math.PI+
+      360
+    )%360;
+
+  const dirs=[
+    'N',
+    'NO',
+    'O',
+    'SO',
+    'S',
+    'SW',
+    'W',
+    'NW'
+  ];
+
+  return{
+    elevation:c,
+    slope,
+    dir:dirs[
+      Math.round(aspect/45)%8
+    ]
+  };
+}
+
+function microScore(species,m){
+  if(!m){
+    return{
+      points:5,
+      label:'neutral'
+    };
+  }
+
+  const c=speciesConfig[species];
+
+  const range=
+    c.micro.slope||[
+      0,
+      12
+    ];
+
+  const inSlope=
+    m.slope>=range[0]&&
+    m.slope<=range[1];
+
+  const cool=[
+    'N',
+    'NO',
+    'NW'
+  ].includes(m.dir);
+
+  const warm=[
+    'S',
+    'SO',
+    'SW'
+  ].includes(m.dir);
+
+  let p=5;
+
+  if(inSlope){
+    p+=3;
+  }
+
+  if(c.micro.moist){
+    if(cool){
+      p+=2;
+    }
+
+    if(warm){
+      p-=2;
+    }
+  }else if(warm){
+    p+=2;
+  }
+
+  return{
+    points:Math.max(
+      0,
+      Math.min(
+        10,
+        p
+      )
+    ),
+    label:
+      p>=8
+        ? 'sehr günstig'
+        : p>=6
+          ? 'günstig'
+          : p>=4
+            ? 'mittel'
+            : 'ungünstig'
+  };
+}
 
 /* ---------- Score ---------- */
-function treeTypeScore(species,type){const w=speciesConfig[species].treeWeights;return{points:w[type]??w.unknown,label:leafTypeLabel(type)}}
-function computeScore(species,data,micro){const s=speciesConfig[species],month=new Date().getMonth()+1,t1=triScore(data.precip14,s.precip),t2=triScore(data.tempAvg10,s.temp),t3=data.ph==null?s.ph.pts*.5:triScore(data.ph,s.ph),t4=s.months.includes(month)?s.monthPts:s.monthOff,t5=(s.forest[data.leafType]??s.forest.unknown),tree=treeTypeScore(species,data.treeType||data.leafType||'unknown'),ms=microScore(species,micro),raw=t1+t2+t3+t4+t5+tree.points+ms.points;return{total:Math.max(0,Math.min(100,Math.round(raw))),precipPts:Math.round(t1),tempPts:Math.round(t2),phPts:Math.round(t3),monthPts:t4,forestPts:Math.round(t5),treePts:Math.round(tree.points),microPts:Math.round(ms.points),treeLabel:tree.label,microLabel:ms.label}}
+
+function treeTypeScore(species,type){
+  const w=
+    speciesConfig[species]
+      .treeWeights;
+
+  return{
+    points:w[type]??w.unknown,
+    label:leafTypeLabel(type)
+  };
+}
+
+function computeScore(species,data,micro){
+  const s=speciesConfig[species];
+
+  const month=
+    new Date().getMonth()+1;
+
+  const t1=
+    triScore(
+      data.precip14,
+      s.precip
+    );
+
+  const t2=
+    triScore(
+      data.tempAvg10,
+      s.temp
+    );
+
+  const t3=
+    data.ph==null
+      ? s.ph.pts*.5
+      : triScore(
+          data.ph,
+          s.ph
+        );
+
+  const t4=
+    s.months.includes(month)
+      ? s.monthPts
+      : s.monthOff;
+
+  const t5=
+    s.forest[data.leafType]??
+    s.forest.unknown;
+
+  const tree=
+    treeTypeScore(
+      species,
+      data.treeType||
+      data.leafType||
+      'unknown'
+    );
+
+  const ms=
+    microScore(
+      species,
+      micro
+    );
+
+  const raw=
+    t1+
+    t2+
+    t3+
+    t4+
+    t5+
+    tree.points+
+    ms.points;
+
+  return{
+    total:Math.max(
+      0,
+      Math.min(
+        100,
+        Math.round(raw)
+      )
+    ),
+    precipPts:Math.round(t1),
+    tempPts:Math.round(t2),
+    phPts:Math.round(t3),
+    monthPts:t4,
+    forestPts:Math.round(t5),
+    treePts:Math.round(tree.points),
+    microPts:Math.round(ms.points),
+    treeLabel:tree.label,
+    microLabel:ms.label
+  };
+}
 
 /* ---------- GBIF / iNat / Index Fungorum ---------- */
-const caches={taxon:{},inatImg:{},gbifImg:{},if:{}};
-async function inatTaxon(name){if(caches.taxon[name])return caches.taxon[name];const r=await fetch(`https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(name)}&rank=species&per_page=10`);if(!r.ok)throw new Error('iNaturalist '+r.status);const j=await r.json(),x=(j.results||[]).find(t=>(t.name||'').toLowerCase()===name.toLowerCase())||j.results?.[0];if(!x?.id)throw new Error('Taxon nicht gefunden');return(caches.taxon[name]=x.id)}
-async function inatImages(name,limit=12){const k=name+':'+limit;if(caches.inatImg[k])return caches.inatImg[k];const id=await inatTaxon(name),r=await fetch(`https://api.inaturalist.org/v1/observations?taxon_id=${id}&photos=true&quality_grade=research&per_page=30&order_by=votes&order=desc`);if(!r.ok)throw new Error('iNaturalist '+r.status);const j=await r.json(),out=[],seen=new Set;for(const o of j.results||[])for(const p of o.photos||[]){const u=p.url||p.original_url;if(!u||seen.has(u))continue;seen.add(u);out.push({url:u.replace('/square.','/medium.'),original:p.original_url||u,credit:o.user?.name||o.user?.login||'iNaturalist',source:'iNaturalist'});if(out.length>=limit)break;if(out.length>=limit)break}return(caches.inatImg[k]=out)}
-async function gbifImages(name,limit=12){const k=name+':'+limit;if(caches.gbifImg[k])return caches.gbifImg[k];const r=await fetch(`https://api.gbif.org/v1/occurrence/search?scientificName=${encodeURIComponent(name)}&mediaType=StillImage&limit=50`);if(!r.ok)throw new Error('GBIF '+r.status);const j=await r.json(),out=[],seen=new Set;for(const o of j.results||[])for(const m of o.media||[]){if(m.type!=='StillImage'||!m.identifier||seen.has(m.identifier))continue;seen.add(m.identifier);out.push({url:m.identifier,original:m.identifier,credit:m.rightsHolder||m.creator||'GBIF',source:'GBIF'});if(out.length>=limit)break}return(caches.gbifImg[k]=out)}
-async function bestImages(name,limit=12){try{const a=await inatImages(name,limit);if(a.length)return a}catch(_){}return gbifImages(name,limit)}
-async function gbifOccurrences(name,b){const r=await fetch(`https://api.gbif.org/v1/occurrence/search?scientificName=${encodeURIComponent(name)}&decimalLatitude=${b.getSouth()},${b.getNorth()}&decimalLongitude=${b.getWest()},${b.getEast()}&hasCoordinate=true&limit=100`);if(!r.ok)throw new Error('GBIF '+r.status);return((await r.json()).results||[]).filter(x=>x.decimalLatitude!=null&&x.decimalLongitude!=null)}
-function parseIF(x){const d=new DOMParser().parseFromString(x,'text/xml'),t=d.querySelector('Table,table');if(!t)return null;const v={};[...t.children].forEach(e=>v[e.localName||e.nodeName]=e.textContent.trim());const pick=(...ns)=>{const k=Object.keys(v).find(k=>ns.some(n=>k.toLowerCase().includes(n.toLowerCase())));return k?v[k]:''};return{name:pick('Name'),author:pick('Author'),status:pick('Status'),current:pick('Current')}}
-async function fetchIF(name){if(caches.if[name])return caches.if[name];const r=await fetch(`https://www.indexfungorum.org/IXFWebService/Fungus.asmx/NameSearchDs?SearchText=${encodeURIComponent(name)}&AnywhereInText=false&MaxNumber=5`);if(!r.ok)throw new Error('Index Fungorum '+r.status);return(caches.if[name]=parseIF(await r.text()))}
 
-/* ---------- DWD: nur bei geöffnetem Gebiet; bei Fehler unsichtbar ---------- */
-let dwdStations=null;const dwdCache={};const DWD_BASE='https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/kl/recent/';
-async function fetchDwdStations(){if(dwdStations)return dwdStations;const r=await fetch(DWD_BASE+'KL_Tageswerte_Beschreibung_Stationen.txt');if(!r.ok)throw new Error();dwdStations=(await r.text()).split(/\r?\n/).map(x=>x.trim()).filter(x=>/^\d{5}\s/.test(x)).map(x=>{const p=x.split(/\s+/);return{id:p[0].replace(/^0+/,'')||'0',lat:Number(p[4]),lon:Number(p[5]),name:p.slice(6).join(' ')}}).filter(x=>Number.isFinite(x.lat)&&Number.isFinite(x.lon));return dwdStations}
-function nearestStation(stations,lat,lon){let best=null,bd=Infinity;for(const s of stations){const a=(s.lat-lat)*111.32,b=(s.lon-lon)*111.32*Math.cos(lat*Math.PI/180),d=a*a+b*b;if(d<bd){bd=d;best=s}}return best?{...best,distanceKm:Math.sqrt(bd)}:null}
-async function dwdPoint(f){try{const st=nearestStation(await fetchDwdStations(),f.centroid[0],f.centroid[1]);if(!st)return null;if(dwdCache[st.id])return dwdCache[st.id];const id=String(st.id).padStart(5,'0'),r=await fetch(`${DWD_BASE}tageswerte_KL_${id}_akt.zip`);if(!r.ok)throw new Error();const zip=await JSZip.loadAsync(await r.arrayBuffer()),fn=Object.keys(zip.files).find(n=>/produkt_klima_tag_.*\.txt$/i.test(n));if(!fn)throw new Error();const lines=(await zip.files[fn].async('string')).split(/\r?\n/).filter(Boolean),h=lines[0].split(';').map(x=>x.trim()),rows=lines.slice(1).map(l=>l.split(';')).map(c=>Object.fromEntries(h.map((x,i)=>[x,c[i]]))),clean=v=>{const n=Number(String(v??'').replace(',','.'));return Number.isFinite(n)&&n>-999?n:null},recent=rows.slice(-20),ps=recent.slice(-15,-1).map(x=>clean(x.RSK)).filter(v=>v!=null),ts=recent.slice(-11,-1).map(x=>clean(x.TMK)).filter(v=>v!=null);return(dwdCache[st.id]={precip14:ps.length?Math.round(ps.reduce((a,b)=>a+b,0)*10)/10:null,tempAvg10:ts.length?Math.round(ts.reduce((a,b)=>a+b,0)/ts.length*10)/10:null,station:st})}catch(_){return null}}
+const caches={
+  taxon:{},
+  inatImg:{},
+  gbifImg:{},
+  if:{}
+};
+
+async function inatTaxon(name){
+  if(caches.taxon[name]){
+    return caches.taxon[name];
+  }
+
+  const r=await fetch(
+    `https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(name)}&rank=species&per_page=10`
+  );
+
+  if(!r.ok){
+    throw new Error(
+      'iNaturalist '+r.status
+    );
+  }
+
+  const j=await r.json();
+
+  const x=
+    (j.results||[]).find(
+      t=>
+        (t.name||'').toLowerCase()===
+        name.toLowerCase()
+    )||
+    j.results?.[0];
+
+  if(!x?.id){
+    throw new Error(
+      'Taxon nicht gefunden'
+    );
+  }
+
+  return(
+    caches.taxon[name]=x.id
+  );
+}
+
+async function inatImages(name,limit=12){
+  const k=name+':'+limit;
+
+  if(caches.inatImg[k]){
+    return caches.inatImg[k];
+  }
+
+  const id=await inatTaxon(name);
+
+  const r=await fetch(
+    `https://api.inaturalist.org/v1/observations?taxon_id=${id}&photos=true&quality_grade=research&per_page=30&order_by=votes&order=desc`
+  );
+
+  if(!r.ok){
+    throw new Error(
+      'iNaturalist '+r.status
+    );
+  }
+
+  const j=await r.json();
+  const out=[];
+  const seen=new Set;
+
+  for(const o of j.results||[]){
+    for(const p of o.photos||[]){
+      const u=
+        p.url||
+        p.original_url;
+
+      if(
+        !u||
+        seen.has(u)
+      ){
+        continue;
+      }
+
+      seen.add(u);
+
+      out.push({
+        url:u.replace(
+          '/square.',
+          '/medium.'
+        ),
+        original:p.original_url||u,
+        credit:
+          o.user?.name||
+          o.user?.login||
+          'iNaturalist',
+        source:'iNaturalist'
+      });
+
+      if(out.length>=limit){
+        break;
+      }
+    }
+
+    if(out.length>=limit){
+      break;
+    }
+  }
+
+  return(
+    caches.inatImg[k]=out
+  );
+}
+
+async function gbifImages(name,limit=12){
+  const k=name+':'+limit;
+
+  if(caches.gbifImg[k]){
+    return caches.gbifImg[k];
+  }
+
+  const r=await fetch(
+    `https://api.gbif.org/v1/occurrence/search?scientificName=${encodeURIComponent(name)}&mediaType=StillImage&limit=50`
+  );
+
+  if(!r.ok){
+    throw new Error(
+      'GBIF '+r.status
+    );
+  }
+
+  const j=await r.json();
+
+  const out=[];
+  const seen=new Set;
+
+  for(const o of j.results||[]){
+    for(const m of o.media||[]){
+      if(
+        m.type!=='StillImage'||
+        !m.identifier||
+        seen.has(m.identifier)
+      ){
+        continue;
+      }
+
+      seen.add(
+        m.identifier
+      );
+
+      out.push({
+        url:m.identifier,
+        original:m.identifier,
+        credit:
+          m.rightsHolder||
+          m.creator||
+          'GBIF',
+        source:'GBIF'
+      });
+
+      if(out.length>=limit){
+        break;
+      }
+    }
+  }
+
+  return(
+    caches.gbifImg[k]=out
+  );
+}
+
+async function bestImages(name,limit=12){
+  try{
+    const a=
+      await inatImages(
+        name,
+        limit
+      );
+
+    if(a.length){
+      return a;
+    }
+  }catch(_){
+  }
+
+  return gbifImages(
+    name,
+    limit
+  );
+}
+
+async function gbifOccurrences(name,b){
+  const r=await fetch(
+    `https://api.gbif.org/v1/occurrence/search?scientificName=${encodeURIComponent(name)}&decimalLatitude=${b.getSouth()},${b.getNorth()}&decimalLongitude=${b.getWest()},${b.getEast()}&hasCoordinate=true&limit=100`
+  );
+
+  if(!r.ok){
+    throw new Error(
+      'GBIF '+r.status
+    );
+  }
+
+  return(
+    (await r.json()).results||[]
+  ).filter(
+    x=>
+      x.decimalLatitude!=null&&
+      x.decimalLongitude!=null
+  );
+}
+
+function parseIF(x){
+  const d=
+    new DOMParser()
+      .parseFromString(
+        x,
+        'text/xml'
+      );
+
+  const t=
+    d.querySelector(
+      'Table,table'
+    );
+
+  if(!t){
+    return null;
+  }
+
+  const v={};
+
+  [...t.children].forEach(
+    e=>{
+      v[
+        e.localName||
+        e.nodeName
+      ]=
+        e.textContent.trim();
+    }
+  );
+
+  const pick=(...ns)=>{
+    const k=
+      Object.keys(v).find(
+        k=>
+          ns.some(
+            n=>
+              k
+                .toLowerCase()
+                .includes(
+                  n.toLowerCase()
+                )
+          )
+      );
+
+    return k
+      ? v[k]
+      : '';
+  };
+
+  return{
+    name:pick('Name'),
+    author:pick('Author'),
+    status:pick('Status'),
+    current:pick('Current')
+  };
+}
+
+async function fetchIF(name){
+  if(caches.if[name]){
+    return caches.if[name];
+  }
+
+  const r=await fetch(
+    `https://www.indexfungorum.org/IXFWebService/Fungus.asmx/NameSearchDs?SearchText=${encodeURIComponent(name)}&AnywhereInText=false&MaxNumber=5`
+  );
+
+  if(!r.ok){
+    throw new Error(
+      'Index Fungorum '+r.status
+    );
+  }
+
+  return(
+    caches.if[name]=
+      parseIF(
+        await r.text()
+      )
+  );
+}
+
+/* ---------- DWD ---------- */
+
+let dwdStations=null;
+
+const dwdCache={};
+
+const DWD_BASE=
+  'https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/kl/recent/';
+
+async function fetchDwdStations(){
+  if(dwdStations){
+    return dwdStations;
+  }
+
+  const r=await fetch(
+    DWD_BASE+
+    'KL_Tageswerte_Beschreibung_Stationen.txt'
+  );
+
+  if(!r.ok){
+    throw new Error();
+  }
+
+  dwdStations=
+    (await r.text())
+      .split(/\r?\n/)
+      .map(x=>x.trim())
+      .filter(
+        x=>/^\d{5}\s/.test(x)
+      )
+      .map(x=>{
+        const p=x.split(/\s+/);
+
+        return{
+          id:p[0].replace(
+            /^0+/,
+            ''
+          )||'0',
+          lat:Number(p[4]),
+          lon:Number(p[5]),
+          name:p.slice(6).join(' ')
+        };
+      })
+      .filter(
+        x=>
+          Number.isFinite(x.lat)&&
+          Number.isFinite(x.lon)
+      );
+
+  return dwdStations;
+}
+
+function nearestStation(
+  stations,
+  lat,
+  lon
+){
+  let best=null;
+  let bd=Infinity;
+
+  for(const s of stations){
+    const a=
+      (s.lat-lat)*
+      111.32;
+
+    const b=
+      (s.lon-lon)*
+      111.32*
+      Math.cos(
+        lat*Math.PI/180
+      );
+
+    const d=
+      a*a+b*b;
+
+    if(d<bd){
+      bd=d;
+      best=s;
+    }
+  }
+
+  return best
+    ? {
+        ...best,
+        distanceKm:Math.sqrt(bd)
+      }
+    : null;
+}
+
+async function dwdPoint(f){
+  try{
+    const st=
+      nearestStation(
+        await fetchDwdStations(),
+        f.centroid[0],
+        f.centroid[1]
+      );
+
+    if(!st){
+      return null;
+    }
+
+    if(dwdCache[st.id]){
+      return dwdCache[st.id];
+    }
+
+    const id=
+      String(st.id)
+        .padStart(
+          5,
+          '0'
+        );
+
+    const r=await fetch(
+      `${DWD_BASE}tageswerte_KL_${id}_akt.zip`
+    );
+
+    if(!r.ok){
+      throw new Error();
+    }
+
+    const zip=
+      await JSZip.loadAsync(
+        await r.arrayBuffer()
+      );
+
+    const fn=
+      Object.keys(zip.files)
+        .find(
+          n=>
+            /produkt_klima_tag_.*\.txt$/i
+              .test(n)
+        );
+
+    if(!fn){
+      throw new Error();
+    }
+
+    const lines=
+      (await zip.files[fn].async('string'))
+        .split(/\r?\n/)
+        .filter(Boolean);
+
+    const h=
+      lines[0]
+        .split(';')
+        .map(
+          x=>x.trim()
+        );
+
+    const rows=
+      lines
+        .slice(1)
+        .map(
+          l=>l.split(';')
+        )
+        .map(
+          c=>
+            Object.fromEntries(
+              h.map(
+                (x,i)=>[
+                  x,
+                  c[i]
+                ]
+              )
+            )
+        );
+
+    const clean=v=>{
+      const n=
+        Number(
+          String(v??'')
+            .replace(',','.')
+        );
+
+      return Number.isFinite(n)&&n>-999
+        ? n
+        : null;
+    };
+
+    const recent=
+      rows.slice(-20);
+
+    const ps=
+      recent
+        .slice(-15,-1)
+        .map(
+          x=>clean(x.RSK)
+        )
+        .filter(
+          v=>v!=null
+        );
+
+    const ts=
+      recent
+        .slice(-11,-1)
+        .map(
+          x=>clean(x.TMK)
+        )
+        .filter(
+          v=>v!=null
+        );
+
+    return(
+      dwdCache[st.id]={
+        precip14:
+          ps.length
+            ? Math.round(
+                ps.reduce(
+                  (a,b)=>a+b,
+                  0
+                )*10
+              )/10
+            : null,
+        tempAvg10:
+          ts.length
+            ? Math.round(
+                ts.reduce(
+                  (a,b)=>a+b,
+                  0
+                )/ts.length*
+                10
+              )/10
+            : null,
+        station:st
+      }
+    );
+
+  }catch(_){
+    return null;
+  }
+}
 
 /* ---------- Ranking ---------- */
-function renderForestRanking(){const el=document.getElementById('forestRankList');if(!forestResults.length){el.innerHTML='<div class="source-note">Noch keine Suche durchgeführt.</div>';return}el.innerHTML=forestResults.slice(0,20).map((r,i)=>{const f=r.forest;return`<div class="rank-item" data-i="${i}"><div class="rank-num">${i+1}</div><div class="rank-name"><b>${escapeHtml(f.tags.name||`Waldgebiet ${i+1}`)}</b><span>${leafTypeLabel(r.data.leafType)} · ${areaHectares(f.area,f.centroid[0])} ha</span><span>${escapeHtml(r.score.treeLabel)} · Mikroklima ${escapeHtml(r.score.microLabel)}</span></div><div class="rank-score" style="color:${scoreColor(r.score.total)}">${r.score.total}</div></div>`}).join('');el.querySelectorAll('[data-i]').forEach(x=>x.onclick=()=>openForestDetail(forestResults[Number(x.dataset.i)]))}
 
-async function openForestDetail(r){activeForest=r;setDetailPanelCollapsed(false);rankView.style.display='none';detailView.style.display='block';selectedLayer.clearLayers();L.polygon(r.forest.coords,{pane:'selectedForestPane',color:'#2b2b2b',weight:3,fillColor:scoreColor(r.score.total),fillOpacity:.2}).addTo(selectedLayer);const f=r.forest,d=r.data,s=speciesConfig[currentSpecies];document.getElementById('detailTitle').textContent=f.tags.name||`${s.label}-Waldfläche`;document.getElementById('detailScoreNum').textContent=r.score.total;document.getElementById('detailScoreNum').style.color=scoreColor(r.score.total);document.getElementById('detailScoreBar').style.width=r.score.total+'%';document.getElementById('detailScoreBar').style.background=scoreColor(r.score.total);document.getElementById('detailScoreLabel').textContent=`Trefferwahrscheinlichkeit für ${s.label}`;document.getElementById('detailWaldtyp').textContent=leafTypeLabel(d.leafType);document.getElementById('detailTreeType').textContent=r.score.treeLabel;document.getElementById('detailArea').textContent=areaHectares(f.area,f.centroid[0])+' ha';document.getElementById('detailElevation').textContent=Math.round(d.elevation)+' m';document.getElementById('detailCoords').textContent=`${f.centroid[0].toFixed(4)}, ${f.centroid[1].toFixed(4)}`;document.getElementById('detailPrecip').innerHTML=`${d.precip14} mm ${statusTagHtml(rangeStatus(d.precip14,s.precip))}`;document.getElementById('detailTemp').innerHTML=`${d.tempAvg10} °C ${statusTagHtml(rangeStatus(d.tempAvg10,s.temp))}`;document.getElementById('detailPh').innerHTML=d.ph!=null?`${d.ph} · ${phStatusLabel(d.ph)} ${statusTagHtml(rangeStatus(d.ph,s.ph))}`:'nicht verfügbar';document.getElementById('detailPtsPrecip').textContent=`${r.score.precipPts} / 20`;document.getElementById('detailPtsTemp').textContent=`${r.score.tempPts} / 20`;document.getElementById('detailPtsPh').textContent=`${r.score.phPts} / 12`;document.getElementById('detailPtsMonth').textContent=`${r.score.monthPts} / 8`;document.getElementById('detailPtsForest').textContent=`${r.score.forestPts} / 12`;document.getElementById('detailPtsTrees').textContent=`${r.score.treePts} / 18`;document.getElementById('detailPtsMicro').textContent=`${r.score.microPts} / 10`;document.getElementById('detailMicroclimate').innerHTML=renderMicro(r.micro);document.getElementById('detailTreeSources').innerHTML=`<span class="source-pill">JRC European Atlas</span><p>Relevante Partner: ${(s.hosts||[]).map(x=>`${escapeHtml(x[0])} (<i>${escapeHtml(x[1])}</i>)`).join(', ')}.</p><p><a href="${JRC_ATLAS_URL}" target="_blank" rel="noopener">JRC European Atlas öffnen</a></p>${d.treeSource==='copernicus'?'<p><span class="source-pill">Copernicus</span> Dominanter Blatttyp aus dem Copernicus-Datensatz.</p>':'<p><span class="source-pill">Fallback</span> Copernicus-Baumtyp ist aktuell nicht aktiv.</p>'}`;document.getElementById('detailActions').innerHTML='<button id="addTourBtn">🥾 Zur Tour hinzufügen</button><button id="backRankBtn">← Bestenliste</button>';document.getElementById('addTourBtn').onclick=()=>addTourForest(f,d,r.score.total);document.getElementById('backRankBtn').onclick=showForestRanking;const dwd=document.getElementById('detailDwd');dwd.innerHTML='<span class="dwd-confirm">DWD wird geladen…</span>';dwd.style.display='block';fetchDwdForOpen(r);}
-async function fetchDwdForOpen(r){const box=document.getElementById('detailDwd'),f=r.forest,d=r.data;const x=await dwdPoint(f);if(!x){box.innerHTML='';box.style.display='none';return}const pd=Math.abs(d.precip14-x.precip14),td=Math.abs(d.tempAvg10-x.tempAvg10),rel=Math.abs(x.precip14)<1?pd:pd/Math.max(x.precip14,1),txt=rel<=.3&&td<=2?'✓ DWD bestätigt die Größenordnung der Wetterdaten.':'⚠ DWD weicht von Open-Meteo ab.';box.innerHTML=`<span class="dwd-confirm">${txt}</span><br>DWD: ${x.precip14} mm / ${x.tempAvg10} °C · ${escapeHtml(x.station.name)} · ${x.station.distanceKm.toFixed(1)} km entfernt`}
-function renderMicro(m){if(!m)return'<div class="micro-card">Keine Reliefdaten verfügbar.</div>';return`<div class="micro-card"><b>${m.elevation.toFixed(0)} m</b>Höhe</div><div class="micro-card"><b>${m.slope.toFixed(1)}°</b>Hangneigung</div><div class="micro-card"><b>${m.dir}</b>Exposition</div><div class="micro-card"><b>${['N','NO','NW'].includes(m.dir)?'eher kühl / feucht':['S','SO','SW'].includes(m.dir)?'eher sonnig / trocken':'ausgeglichen'}</b>Relieftrend</div>`}
+function renderForestRanking(){
+  const el=
+    document.getElementById(
+      'forestRankList'
+    );
+
+  if(!forestResults.length){
+    el.innerHTML=
+      '<div class="source-note">Noch keine Suche durchgeführt.</div>';
+
+    return;
+  }
+
+  el.innerHTML=
+    forestResults
+      .slice(
+        0,
+        20
+      )
+      .map(
+        (r,i)=>{
+          const f=r.forest;
+
+          return`
+            <div class="rank-item" data-i="${i}">
+              <div class="rank-num">${i+1}</div>
+
+              <div class="rank-name">
+                <b>${escapeHtml(f.tags.name||`Waldgebiet ${i+1}`)}</b>
+                <span>${leafTypeLabel(r.data.leafType)} · ${areaHectares(f.area,f.centroid[0])} ha</span>
+                <span>${escapeHtml(r.score.treeLabel)} · Mikroklima ${escapeHtml(r.score.microLabel)}</span>
+              </div>
+
+              <div class="rank-score" style="color:${scoreColor(r.score.total)}">
+                ${r.score.total}
+              </div>
+            </div>
+          `;
+        }
+      )
+      .join('');
+
+  el
+    .querySelectorAll('[data-i]')
+    .forEach(
+      x=>
+        x.onclick=
+          ()=>openForestDetail(
+            forestResults[
+              Number(
+                x.dataset.i
+              )
+            ]
+          )
+    );
+}
+
+async function openForestDetail(r){
+  activeForest=r;
+
+  setDetailPanelCollapsed(false);
+
+  rankView.style.display='none';
+  detailView.style.display='block';
+
+  selectedLayer.clearLayers();
+
+  L.polygon(
+    r.forest.coords,
+    {
+      pane:'selectedForestPane',
+      color:'#2b2b2b',
+      weight:3,
+      fillColor:scoreColor(
+        r.score.total
+      ),
+      fillOpacity:.2
+    }
+  ).addTo(selectedLayer);
+
+  const f=r.forest;
+  const d=r.data;
+  const s=speciesConfig[currentSpecies];
+
+  document.getElementById(
+    'detailTitle'
+  ).textContent=
+    f.tags.name||
+    `${s.label}-Waldfläche`;
+
+  document.getElementById(
+    'detailScoreNum'
+  ).textContent=
+    r.score.total;
+
+  document.getElementById(
+    'detailScoreNum'
+  ).style.color=
+    scoreColor(
+      r.score.total
+    );
+
+  document.getElementById(
+    'detailScoreBar'
+  ).style.width=
+    r.score.total+'%';
+
+  document.getElementById(
+    'detailScoreBar'
+  ).style.background=
+    scoreColor(
+      r.score.total
+    );
+
+  document.getElementById(
+    'detailScoreLabel'
+  ).textContent=
+    `Trefferwahrscheinlichkeit für ${s.label}`;
+
+  document.getElementById(
+    'detailWaldtyp'
+  ).textContent=
+    leafTypeLabel(
+      d.leafType
+    );
+
+  document.getElementById(
+    'detailTreeType'
+  ).textContent=
+    r.score.treeLabel;
+
+  document.getElementById(
+    'detailArea'
+  ).textContent=
+    areaHectares(
+      f.area,
+      f.centroid[0]
+    )+' ha';
+
+  document.getElementById(
+    'detailElevation'
+  ).textContent=
+    Math.round(
+      d.elevation
+    )+' m';
+
+  document.getElementById(
+    'detailCoords'
+  ).textContent=
+    `${f.centroid[0].toFixed(4)}, ${f.centroid[1].toFixed(4)}`;
+
+  document.getElementById(
+    'detailPrecip'
+  ).innerHTML=
+    `${d.precip14} mm ${statusTagHtml(rangeStatus(d.precip14,s.precip))}`;
+
+  document.getElementById(
+    'detailTemp'
+  ).innerHTML=
+    `${d.tempAvg10} °C ${statusTagHtml(rangeStatus(d.tempAvg10,s.temp))}`;
+
+  document.getElementById(
+    'detailPh'
+  ).innerHTML=
+    d.ph!=null
+      ? `${d.ph} · ${phStatusLabel(d.ph)} ${statusTagHtml(rangeStatus(d.ph,s.ph))}`
+      : 'nicht verfügbar';
+
+  document.getElementById(
+    'detailPtsPrecip'
+  ).textContent=
+    `${r.score.precipPts} / 20`;
+
+  document.getElementById(
+    'detailPtsTemp'
+  ).textContent=
+    `${r.score.tempPts} / 20`;
+
+  document.getElementById(
+    'detailPtsPh'
+  ).textContent=
+    `${r.score.phPts} / 12`;
+
+  document.getElementById(
+    'detailPtsMonth'
+  ).textContent=
+    `${r.score.monthPts} / 8`;
+
+  document.getElementById(
+    'detailPtsForest'
+  ).textContent=
+    `${r.score.forestPts} / 12`;
+
+  document.getElementById(
+    'detailPtsTrees'
+  ).textContent=
+    `${r.score.treePts} / 18`;
+
+  document.getElementById(
+    'detailPtsMicro'
+  ).textContent=
+    `${r.score.microPts} / 10`;
+
+  document.getElementById(
+    'detailMicroclimate'
+  ).innerHTML=
+    renderMicro(
+      r.micro
+    );
+
+  const treeSourceHtml=
+    d.treeSource==='copernicus'
+      ? `
+        <span class="source-pill">Copernicus DLT</span>
+        <p>
+          Dominanter Blatttyp aus der offiziellen
+          Copernicus-Land-Monitoring-Service-DLT-Schicht.
+        </p>
+        <p>
+          Klassifikation:
+          <b>${escapeHtml(r.score.treeLabel)}</b>
+          · Messpunkt-Vertrauen:
+          ${d.treeConfidence!=null
+            ? Math.round(d.treeConfidence*100)+'%'
+            : '–'}
+        </p>
+        <span class="source-pill">JRC European Atlas</span>
+        <p>
+          Relevante Partner:
+          ${(s.hosts||[])
+            .map(
+              x=>
+                `${escapeHtml(x[0])} (<i>${escapeHtml(x[1])}</i>)`
+            )
+            .join(', ')}.
+        </p>
+        <p>
+          <a href="${JRC_ATLAS_URL}" target="_blank" rel="noopener">
+            JRC European Atlas öffnen
+          </a>
+        </p>
+      `
+      : `
+        <span class="source-pill">JRC European Atlas</span>
+        <p>
+          Relevante Partner:
+          ${(s.hosts||[])
+            .map(
+              x=>
+                `${escapeHtml(x[0])} (<i>${escapeHtml(x[1])}</i>)`
+            )
+            .join(', ')}.
+        </p>
+        <p>
+          <a href="${JRC_ATLAS_URL}" target="_blank" rel="noopener">
+            JRC European Atlas öffnen
+          </a>
+        </p>
+        <p>
+          <span class="source-pill">Fallback</span>
+          Copernicus-DLT konnte für diesen Punkt keine
+          verwertbare Klassifikation liefern.
+        </p>
+      `;
+
+  document.getElementById(
+    'detailTreeSources'
+  ).innerHTML=
+    treeSourceHtml;
+
+  document.getElementById(
+    'detailActions'
+  ).innerHTML=`
+    <button id="addTourBtn">🥾 Zur Tour hinzufügen</button>
+    <button id="backRankBtn">← Bestenliste</button>
+  `;
+
+  document.getElementById(
+    'addTourBtn'
+  ).onclick=
+    ()=>addTourForest(
+      f,
+      d,
+      r.score.total
+    );
+
+  document.getElementById(
+    'backRankBtn'
+  ).onclick=
+    showForestRanking;
+
+  const dwd=
+    document.getElementById(
+      'detailDwd'
+    );
+
+  dwd.innerHTML=
+    '<span class="dwd-confirm">DWD wird geladen…</span>';
+
+  dwd.style.display='block';
+
+  fetchDwdForOpen(r);
+}
+
+async function fetchDwdForOpen(r){
+  const box=
+    document.getElementById(
+      'detailDwd'
+    );
+
+  const f=r.forest;
+  const d=r.data;
+
+  const x=
+    await dwdPoint(
+      f
+    );
+
+  if(!x){
+    box.innerHTML='';
+    box.style.display='none';
+
+    return;
+  }
+
+  const pd=
+    Math.abs(
+      d.precip14-x.precip14
+    );
+
+  const td=
+    Math.abs(
+      d.tempAvg10-x.tempAvg10
+    );
+
+  const rel=
+    Math.abs(x.precip14)<1
+      ? pd
+      : pd/
+        Math.max(
+          x.precip14,
+          1
+        );
+
+  const txt=
+    rel<=.3&&td<=2
+      ? '✓ DWD bestätigt die Größenordnung der Wetterdaten.'
+      : '⚠ DWD weicht von Open-Meteo ab.';
+
+  box.innerHTML=`
+    <span class="dwd-confirm">${txt}</span>
+    <br>
+    DWD:
+    ${x.precip14} mm /
+    ${x.tempAvg10} °C ·
+    ${escapeHtml(x.station.name)} ·
+    ${x.station.distanceKm.toFixed(1)} km entfernt
+  `;
+}
+
+function renderMicro(m){
+  if(!m){
+    return`
+      <div class="micro-card">
+        Keine Reliefdaten verfügbar.
+      </div>
+    `;
+  }
+
+  return`
+    <div class="micro-card">
+      <b>${m.elevation.toFixed(0)} m</b>
+      Höhe
+    </div>
+
+    <div class="micro-card">
+      <b>${m.slope.toFixed(1)}°</b>
+      Hangneigung
+    </div>
+
+    <div class="micro-card">
+      <b>${m.dir}</b>
+      Exposition
+    </div>
+
+    <div class="micro-card">
+      <b>
+        ${
+          ['N','NO','NW'].includes(m.dir)
+            ? 'eher kühl / feucht'
+            : ['S','SO','SW'].includes(m.dir)
+              ? 'eher sonnig / trocken'
+              : 'ausgeglichen'
+        }
+      </b>
+      Relieftrend
+    </div>
+  `;
+}
 
 /* ---------- Tour ---------- */
-const TOUR={items:[],start:map.getCenter(),routeLayer:L.layerGroup().addTo(map),selecting:false};
-function renderTour(){const el=document.getElementById('tourList');el.innerHTML=TOUR.items.length?TOUR.items.map((x,i)=>`<div class="tour-item"><span>${i+1}. ${escapeHtml(x.name)} · Score ${x.score}</span><button data-r="${i}">✕</button></div>`).join(''):'Noch keine Waldflächen ausgewählt.';el.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{TOUR.items.splice(Number(b.dataset.r),1);renderTour()});document.getElementById('tourStartText').textContent=`Startpunkt: ${TOUR.start.lat.toFixed(4)}, ${TOUR.start.lng.toFixed(4)}`}
-function addTourForest(f,data,score){const k=f.osmId||`${f.centroid[0]}-${f.centroid[1]}`;if(!TOUR.items.some(x=>x.key===k))TOUR.items.push({key:k,f,data,score,name:f.tags.name||'Waldgebiet'});renderTour();document.getElementById('tourPanel').classList.add('open')}
-map.on('click',e=>{if(TOUR.selecting){TOUR.start=e.latlng;TOUR.selecting=false;renderTour()}});document.getElementById('tourToggleBtn').onclick=()=>{document.getElementById('tourPanel').classList.toggle('open');renderTour()};document.getElementById('tourStartBtn').onclick=()=>{TOUR.selecting=true;document.getElementById('tourStartText').textContent='Startpunkt wählen: auf die Karte klicken…'};document.getElementById('tourClearBtn').onclick=()=>{TOUR.items=[];TOUR.routeLayer.clearLayers();renderTour();document.getElementById('tourSummary').textContent=''};
-document.getElementById('tourRouteBtn').onclick=async()=>{if(!TOUR.items.length){document.getElementById('tourSummary').textContent='Bitte zuerst Waldflächen hinzufügen.';return}TOUR.routeLayer.clearLayers();const coords=[`${TOUR.start.lng},${TOUR.start.lat}`,...TOUR.items.map(x=>`${x.f.centroid[1]},${x.f.centroid[0]}`),`${TOUR.start.lng},${TOUR.start.lat}`];try{const r=await fetch(`https://router.project-osrm.org/route/v1/foot/${coords.join(';')}?overview=full&geometries=geojson`);const j=await r.json();if(j.code!=='Ok')throw new Error('Keine Route');L.geoJSON(j.routes[0].geometry,{style:{color:'#d98a1f',weight:5,opacity:.85}}).addTo(TOUR.routeLayer);document.getElementById('tourSummary').innerHTML=`<b>Gesamt:</b> ${(Math.round(j.routes[0].distance/100)/10)} km · ca. ${Math.round(j.routes[0].duration/60)} min zu Fuß` }catch(e){document.getElementById('tourSummary').textContent='Route konnte nicht berechnet werden: '+e.message}}
+
+const TOUR={
+  items:[],
+  start:map.getCenter(),
+  routeLayer:L.layerGroup().addTo(map),
+  selecting:false
+};
+
+function renderTour(){
+  const el=
+    document.getElementById(
+      'tourList'
+    );
+
+  el.innerHTML=
+    TOUR.items.length
+      ? TOUR.items
+          .map(
+            (x,i)=>`
+              <div class="tour-item">
+                <span>
+                  ${i+1}.
+                  ${escapeHtml(x.name)}
+                  · Score ${x.score}
+                </span>
+                <button data-r="${i}">✕</button>
+              </div>
+            `
+          )
+          .join('')
+      : 'Noch keine Waldflächen ausgewählt.';
+
+  el
+    .querySelectorAll('[data-r]')
+    .forEach(
+      b=>
+        b.onclick=()=>{
+          TOUR.items.splice(
+            Number(
+              b.dataset.r
+            ),
+            1
+          );
+
+          renderTour();
+        }
+    );
+
+  document.getElementById(
+    'tourStartText'
+  ).textContent=
+    `Startpunkt: ${TOUR.start.lat.toFixed(4)}, ${TOUR.start.lng.toFixed(4)}`;
+}
+
+function addTourForest(
+  f,
+  data,
+  score
+){
+  const k=
+    f.osmId||
+    `${f.centroid[0]}-${f.centroid[1]}`;
+
+  if(
+    !TOUR.items.some(
+      x=>x.key===k
+    )
+  ){
+    TOUR.items.push({
+      key:k,
+      f,
+      data,
+      score,
+      name:
+        f.tags.name||
+        'Waldgebiet'
+    });
+  }
+
+  renderTour();
+
+  document.getElementById(
+    'tourPanel'
+  ).classList.add('open');
+}
+
+map.on(
+  'click',
+  e=>{
+    if(TOUR.selecting){
+      TOUR.start=e.latlng;
+      TOUR.selecting=false;
+      renderTour();
+    }
+  }
+);
+
+document.getElementById(
+  'tourToggleBtn'
+).onclick=()=>{
+  document.getElementById(
+    'tourPanel'
+  ).classList.toggle('open');
+
+  renderTour();
+};
+
+document.getElementById(
+  'tourStartBtn'
+).onclick=()=>{
+  TOUR.selecting=true;
+
+  document.getElementById(
+    'tourStartText'
+  ).textContent=
+    'Startpunkt wählen: auf die Karte klicken…';
+};
+
+document.getElementById(
+  'tourClearBtn'
+).onclick=()=>{
+  TOUR.items=[];
+  TOUR.routeLayer.clearLayers();
+
+  renderTour();
+
+  document.getElementById(
+    'tourSummary'
+  ).textContent='';
+};
+
+document.getElementById(
+  'tourRouteBtn'
+).onclick=
+  async()=>{
+    if(!TOUR.items.length){
+      document.getElementById(
+        'tourSummary'
+      ).textContent=
+        'Bitte zuerst Waldflächen hinzufügen.';
+
+      return;
+    }
+
+    TOUR.routeLayer.clearLayers();
+
+    const coords=[
+      `${TOUR.start.lng},${TOUR.start.lat}`,
+      ...TOUR.items.map(
+        x=>
+          `${x.f.centroid[1]},${x.f.centroid[0]}`
+      ),
+      `${TOUR.start.lng},${TOUR.start.lat}`
+    ];
+
+    try{
+      const r=await fetch(
+        `https://router.project-osrm.org/route/v1/foot/${coords.join(';')}?overview=full&geometries=geojson`
+      );
+
+      const j=await r.json();
+
+      if(j.code!=='Ok'){
+        throw new Error(
+          'Keine Route'
+        );
+      }
+
+      L.geoJSON(
+        j.routes[0].geometry,
+        {
+          style:{
+            color:'#d98a1f',
+            weight:5,
+            opacity:.85
+          }
+        }
+      ).addTo(
+        TOUR.routeLayer
+      );
+
+      document.getElementById(
+        'tourSummary'
+      ).innerHTML=`
+        <b>Gesamt:</b>
+        ${Math.round(
+          j.routes[0].distance/100
+        )/10}
+        km · ca.
+        ${Math.round(
+          j.routes[0].duration/60
+        )}
+        min zu Fuß
+      `;
+
+    }catch(e){
+      document.getElementById(
+        'tourSummary'
+      ).textContent=
+        'Route konnte nicht berechnet werden: '+
+        e.message;
+    }
+  };
 
 /* ---------- Pilzmodal ---------- */
-function renderSpeciesModal(id){const s=speciesConfig[id];document.getElementById('modalName').textContent=s.label;document.getElementById('modalLatin').textContent=s.latin;document.getElementById('modalSpeisewert').textContent=s.info.speisewert;document.getElementById('modalBeschreibung').textContent=s.info.beschreibung;document.getElementById('modalHut').textContent=s.info.hut;document.getElementById('modalStiel').textContent=s.info.stiel;document.getElementById('modalFleisch').textContent=s.info.fleisch;document.getElementById('modalGeruch').textContent=s.info.geruch;document.getElementById('modalHabitat').textContent=s.info.habitat;document.getElementById('modalBoden').textContent=s.info.boden;document.getElementById('modalKlima').textContent=s.info.klima;document.getElementById('modalBesonderheit').textContent=s.info.besonderheit;document.getElementById('modalVerwechslung').textContent='⚠ '+s.info.verwechslung;document.getElementById('modalMonthBar').innerHTML=['J','F','M','A','M','J','J','A','S','O','N','D'].map((x,i)=>`<div class="month-cell${s.months.includes(i+1)?' active':''}">${x}</div>`).join('');document.getElementById('modalHabitatTrees').textContent=s.info.habitat;document.getElementById('modalHabitatSoil').textContent=s.info.boden;document.getElementById('modalHabitatClimate').textContent=s.info.klima;document.getElementById('modalSeasonBar').innerHTML=document.getElementById('modalMonthBar').innerHTML;document.getElementById('modalSeasonText').textContent=s.months.includes(new Date().getMonth()+1)?`Jetzt ist Saison für ${s.label}.`:`Außerhalb der Kern-Saison von ${s.label}.`;document.getElementById('modalSeasonWeather').innerHTML=['Regen','Temperatur','Boden','Saison','Wald','Relief'].map((x,i)=>`<div class="${i<3?'good':'best'}">${x}</div>`).join('');document.getElementById('modalLookalikes').innerHTML=`<div class="observation-card">${escapeHtml(s.info.verwechslung)}</div>`;document.getElementById('modalImages').innerHTML='<span class="source-note">Lade Bilder…</span>';document.getElementById('recognitionList').innerHTML='<span class="source-note">Lade Vergleichsbilder…</span>';document.getElementById('modalObservations').innerHTML='<span class="source-note">Lade Beobachtungen…</span>';document.getElementById('indexFungorumContent').textContent='Index Fungorum wird geladen…';document.getElementById('taxonomyHistory').innerHTML='';document.getElementById('speciesSources').innerHTML=`<span class="source-pill">iNaturalist</span><span class="source-pill">GBIF</span><span class="source-pill">Index Fungorum</span><span class="source-pill">Copernicus</span><span class="source-pill">JRC Atlas</span><p><a href="${JRC_ATLAS_URL}" target="_blank" rel="noopener">JRC European Atlas öffnen</a></p>`;document.getElementById('modalMicroclimate').innerHTML=activeForest?renderMicro(activeForest.micro):'<div class="micro-card">Wird beim Öffnen eines Waldgebietes berechnet.</div>';document.querySelectorAll('.species-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab==='general'));document.querySelectorAll('.species-tab-panel').forEach(p=>p.classList.toggle('active',p.dataset.panel==='general'));document.getElementById('speciesModal').classList.add('open');bestImages(s.iNatName,12).then(imgs=>document.getElementById('modalImages').innerHTML=imgs.map(x=>`<figure><a href="${x.original}" target="_blank" rel="noopener"><img src="${x.url}" loading="lazy" alt="Pilzfoto"></a><figcaption>Foto: ${escapeHtml(x.credit)} · ${x.source}</figcaption></figure>`).join('')||'<span class="source-note">Keine Bilder gefunden.</span>').catch(()=>{});fetchINatObservations(s.iNatName);fetchIF(s.latin).then(d=>{document.getElementById('indexFungorumContent').innerHTML=`<span class="source-pill">Index Fungorum</span><div class="detail-row"><span class="label">Name</span><span class="value">${escapeHtml(d?.name||s.latin)}</span></div><div class="detail-row"><span class="label">Autor</span><span class="value">${escapeHtml(d?.author||'–')}</span></div><div class="detail-row"><span class="label">Status</span><span class="value">${escapeHtml(d?.status||'–')}</span></div><div class="detail-row"><span class="label">Aktueller Name</span><span class="value">${escapeHtml(d?.current||'–')}</span></div>`;document.getElementById('taxonomyHistory').innerHTML=`<div class="taxonomy-item">${escapeHtml(d?.name||s.latin)}</div>`}).catch(()=>{});}
-async function fetchINatObservations(name){try{const id=await inatTaxon(name),r=await fetch(`https://api.inaturalist.org/v1/observations?taxon_id=${id}&photos=true&per_page=6&order_by=observed_on&order=desc`),j=await r.json();document.getElementById('modalObservations').innerHTML=(j.results||[]).map(o=>`<div class="observation-card"><b>${escapeHtml(o.observed_on||o.created_at||'Datum unbekannt')}</b><div>${escapeHtml(o.place_guess||'Ort nicht angegeben')}</div><a href="https://www.inaturalist.org/observations/${o.id}" target="_blank" rel="noopener">Beobachtung öffnen</a></div>`).join('')||'<span class="source-note">Keine Beobachtungen gefunden.</span>'}catch(_){document.getElementById('modalObservations').innerHTML='<span class="source-note">Aktuelle Beobachtungen momentan nicht verfügbar.</span>'}}
 
-document.getElementById('speciesInfoBtn').onclick=()=>renderSpeciesModal(currentSpecies);document.getElementById('closeSpeciesModal').onclick=()=>document.getElementById('speciesModal').classList.remove('open');document.getElementById('speciesModal').onclick=e=>{if(e.target.id==='speciesModal')e.currentTarget.classList.remove('open')};document.querySelectorAll('.species-tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.species-tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.species-tab-panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelector(`.species-tab-panel[data-panel="${b.dataset.tab}"]`).classList.add('active')});
+function renderSpeciesModal(id){
+  const s=speciesConfig[id];
+
+  document.getElementById(
+    'modalName'
+  ).textContent=s.label;
+
+  document.getElementById(
+    'modalLatin'
+  ).textContent=s.latin;
+
+  document.getElementById(
+    'modalSpeisewert'
+  ).textContent=
+    s.info.speisewert;
+
+  document.getElementById(
+    'modalBeschreibung'
+  ).textContent=
+    s.info.beschreibung;
+
+  document.getElementById(
+    'modalHut'
+  ).textContent=
+    s.info.hut;
+
+  document.getElementById(
+    'modalStiel'
+  ).textContent=
+    s.info.stiel;
+
+  document.getElementById(
+    'modalFleisch'
+  ).textContent=
+    s.info.fleisch;
+
+  document.getElementById(
+    'modalGeruch'
+  ).textContent=
+    s.info.geruch;
+
+  document.getElementById(
+    'modalHabitat'
+  ).textContent=
+    s.info.habitat;
+
+  document.getElementById(
+    'modalBoden'
+  ).textContent=
+    s.info.boden;
+
+  document.getElementById(
+    'modalKlima'
+  ).textContent=
+    s.info.klima;
+
+  document.getElementById(
+    'modalBesonderheit'
+  ).textContent=
+    s.info.besonderheit;
+
+  document.getElementById(
+    'modalVerwechslung'
+  ).textContent=
+    '⚠ '+
+    s.info.verwechslung;
+
+  document.getElementById(
+    'modalMonthBar'
+  ).innerHTML=
+    [
+      'J','F','M','A','M','J',
+      'J','A','S','O','N','D'
+    ]
+      .map(
+        (x,i)=>
+          `<div class="month-cell${s.months.includes(i+1)?' active':''}">${x}</div>`
+      )
+      .join('');
+
+  document.getElementById(
+    'modalHabitatTrees'
+  ).textContent=
+    s.info.habitat;
+
+  document.getElementById(
+    'modalHabitatSoil'
+  ).textContent=
+    s.info.boden;
+
+  document.getElementById(
+    'modalHabitatClimate'
+  ).textContent=
+    s.info.klima;
+
+  document.getElementById(
+    'modalSeasonBar'
+  ).innerHTML=
+    document.getElementById(
+      'modalMonthBar'
+    ).innerHTML;
+
+  document.getElementById(
+    'modalSeasonText'
+  ).textContent=
+    s.months.includes(
+      new Date().getMonth()+1
+    )
+      ? `Jetzt ist Saison für ${s.label}.`
+      : `Außerhalb der Kern-Saison von ${s.label}.`;
+
+  document.getElementById(
+    'modalSeasonWeather'
+  ).innerHTML=
+    [
+      'Regen',
+      'Temperatur',
+      'Boden',
+      'Saison',
+      'Wald',
+      'Relief'
+    ]
+      .map(
+        (x,i)=>
+          `<div class="${i<3?'good':'best'}">${x}</div>`
+      )
+      .join('');
+
+  document.getElementById(
+    'modalLookalikes'
+  ).innerHTML=
+    `<div class="observation-card">${escapeHtml(s.info.verwechslung)}</div>`;
+
+  document.getElementById(
+    'modalImages'
+  ).innerHTML=
+    '<span class="source-note">Lade Bilder…</span>';
+
+  document.getElementById(
+    'recognitionList'
+  ).innerHTML=
+    '<span class="source-note">Lade Vergleichsbilder…</span>';
+
+  document.getElementById(
+    'modalObservations'
+  ).innerHTML=
+    '<span class="source-note">Lade Beobachtungen…</span>';
+
+  document.getElementById(
+    'indexFungorumContent'
+  ).textContent=
+    'Index Fungorum wird geladen…';
+
+  document.getElementById(
+    'taxonomyHistory'
+  ).innerHTML='';
+
+  document.getElementById(
+    'speciesSources'
+  ).innerHTML=`
+    <span class="source-pill">iNaturalist</span>
+    <span class="source-pill">GBIF</span>
+    <span class="source-pill">Index Fungorum</span>
+    <span class="source-pill">Copernicus DLT</span>
+    <span class="source-pill">JRC Atlas</span>
+    <p>
+      <a href="${JRC_ATLAS_URL}" target="_blank" rel="noopener">
+        JRC European Atlas öffnen
+      </a>
+    </p>
+  `;
+
+  document.getElementById(
+    'modalMicroclimate'
+  ).innerHTML=
+    activeForest
+      ? renderMicro(
+          activeForest.micro
+        )
+      : '<div class="micro-card">Wird beim Öffnen eines Waldgebietes berechnet.</div>';
+
+  document
+    .querySelectorAll(
+      '.species-tab'
+    )
+    .forEach(
+      b=>
+        b.classList.toggle(
+          'active',
+          b.dataset.tab==='general'
+        )
+    );
+
+  document
+    .querySelectorAll(
+      '.species-tab-panel'
+    )
+    .forEach(
+      p=>
+        p.classList.toggle(
+          'active',
+          p.dataset.panel==='general'
+        )
+    );
+
+  document.getElementById(
+    'speciesModal'
+  ).classList.add('open');
+
+  bestImages(
+    s.iNatName,
+    12
+  )
+    .then(
+      imgs=>
+        document.getElementById(
+          'modalImages'
+        ).innerHTML=
+          imgs
+            .map(
+              x=>`
+                <figure>
+                  <a href="${x.original}" target="_blank" rel="noopener">
+                    <img src="${x.url}" loading="lazy" alt="Pilzfoto">
+                  </a>
+                  <figcaption>
+                    Foto:
+                    ${escapeHtml(x.credit)}
+                    ·
+                    ${x.source}
+                  </figcaption>
+                </figure>
+              `
+            )
+            .join('')||
+            '<span class="source-note">Keine Bilder gefunden.</span>'
+    )
+    .catch(()=>{});
+
+  fetchINatObservations(
+    s.iNatName
+  );
+
+  fetchIF(
+    s.latin
+  )
+    .then(
+      d=>{
+        document.getElementById(
+          'indexFungorumContent'
+        ).innerHTML=`
+          <span class="source-pill">
+            Index Fungorum
+          </span>
+
+          <div class="detail-row">
+            <span class="label">Name</span>
+            <span class="value">
+              ${escapeHtml(d?.name||s.latin)}
+            </span>
+          </div>
+
+          <div class="detail-row">
+            <span class="label">Autor</span>
+            <span class="value">
+              ${escapeHtml(d?.author||'–')}
+            </span>
+          </div>
+
+          <div class="detail-row">
+            <span class="label">Status</span>
+            <span class="value">
+              ${escapeHtml(d?.status||'–')}
+            </span>
+          </div>
+
+          <div class="detail-row">
+            <span class="label">Aktueller Name</span>
+            <span class="value">
+              ${escapeHtml(d?.current||'–')}
+            </span>
+          </div>
+        `;
+
+        document.getElementById(
+          'taxonomyHistory'
+        ).innerHTML=`
+          <div class="taxonomy-item">
+            ${escapeHtml(
+              d?.name||
+              s.latin
+            )}
+          </div>
+        `;
+      }
+    )
+    .catch(()=>{});
+}
+
+async function fetchINatObservations(name){
+  try{
+    const id=
+      await inatTaxon(
+        name
+      );
+
+    const r=await fetch(
+      `https://api.inaturalist.org/v1/observations?taxon_id=${id}&photos=true&per_page=6&order_by=observed_on&order=desc`
+    );
+
+    const j=
+      await r.json();
+
+    document.getElementById(
+      'modalObservations'
+    ).innerHTML=
+      (j.results||[])
+        .map(
+          o=>`
+            <div class="observation-card">
+              <b>
+                ${escapeHtml(
+                  o.observed_on||
+                  o.created_at||
+                  'Datum unbekannt'
+                )}
+              </b>
+
+              <div>
+                ${escapeHtml(
+                  o.place_guess||
+                  'Ort nicht angegeben'
+                )}
+              </div>
+
+              <a href="https://www.inaturalist.org/observations/${o.id}" target="_blank" rel="noopener">
+                Beobachtung öffnen
+              </a>
+            </div>
+          `
+        )
+        .join('')||
+        '<span class="source-note">Keine Beobachtungen gefunden.</span>';
+
+  }catch(_){
+    document.getElementById(
+      'modalObservations'
+    ).innerHTML=
+      '<span class="source-note">Aktuelle Beobachtungen momentan nicht verfügbar.</span>';
+  }
+}
+
+document.getElementById(
+  'speciesSelect'
+).addEventListener(
+  'change',
+  e=>{
+    currentSpecies=e.target.value;
+
+    if(forestResults.length){
+      forestResults=
+        forestResults
+          .map(
+            r=>({
+              ...r,
+              score:
+                computeScore(
+                  currentSpecies,
+                  r.data,
+                  r.micro
+                )
+            })
+          )
+          .sort(
+            (a,b)=>
+              b.score.total-
+              a.score.total
+          );
+
+      renderForestRanking();
+
+      if(activeForest){
+        const same=
+          forestResults.find(
+            r=>
+              r.forest.osmId===
+              activeForest.forest.osmId
+          );
+
+        if(same){
+          openForestDetail(
+            same
+          );
+        }
+      }
+    }
+  }
+);
+
+document.getElementById(
+  'speciesInfoBtn'
+).onclick=
+  ()=>renderSpeciesModal(
+    currentSpecies
+  );
+
+document.getElementById(
+  'closeSpeciesModal'
+).onclick=
+  ()=>document.getElementById(
+    'speciesModal'
+  ).classList.remove('open');
+
+document.getElementById(
+  'speciesModal'
+).onclick=
+  e=>{
+    if(
+      e.target.id===
+      'speciesModal'
+    ){
+      e.currentTarget.classList.remove(
+        'open'
+      );
+    }
+  };
+
+document
+  .querySelectorAll(
+    '.species-tab'
+  )
+  .forEach(
+    b=>
+      b.onclick=()=>{
+        document
+          .querySelectorAll(
+            '.species-tab'
+          )
+          .forEach(
+            x=>
+              x.classList.remove(
+                'active'
+              )
+          );
+
+        document
+          .querySelectorAll(
+            '.species-tab-panel'
+          )
+          .forEach(
+            x=>
+              x.classList.remove(
+                'active'
+              )
+          );
+
+        b.classList.add(
+          'active'
+        );
+
+        document
+          .querySelector(
+            `.species-tab-panel[data-panel="${b.dataset.tab}"]`
+          )
+          .classList.add(
+            'active'
+          );
+      }
+  );
 
 /* ---------- Hauptsuche ---------- */
-document.getElementById('searchBtn').onclick=async()=>{resultLayer.clearLayers();gbifLayer.clearLayers();selectedLayer.clearLayers();forestResults=[];activeForest=null;rankView.style.display='block';detailView.style.display='none';document.getElementById('forestRankList').innerHTML='<div class="source-note">Suche Waldflächen…</div>';setRankingCollapsed(false);const btn=document.getElementById('searchBtn');btn.disabled=true;try{if(map.getZoom()<MIN_FOREST_ZOOM){document.getElementById('status').textContent=`Bitte mindestens auf Zoom ${MIN_FOREST_ZOOM} hineinzoomen.`;return}document.getElementById('status').textContent='Lese Waldflächen aus den geladenen Vektorkacheln…';await new Promise(r=>setTimeout(r,300));let forests=getVisibleForests();if(!forests.length){await new Promise(r=>setTimeout(r,500));forests=getVisibleForests()}if(!forests.length){document.getElementById('status').textContent='Keine Waldflächen in den aktuell geladenen Vektorkacheln erkannt. Etwas hineinzoomen oder Kartenausschnitt verschieben.';return}forests=mergeTouchingForests(forests).sort((a,b)=>b.area-a.area).slice(0,MAX_FORESTS);document.getElementById('status').textContent=`${forests.length} Waldflächen gefunden. Lade Standortdaten…`;const [elev,weather,soil]=await Promise.all([fetchElevations(forests),fetchWeather(forests),fetchSoilPh(forests)]);let cop=null;try{if(getCopConfig().clientId&&getCopConfig().clientSecret){const b=map.getBounds();cop=await fetchCopRaster([b.getWest(),b.getSouth(),b.getEast(),b.getNorth()])}}catch(e){console.warn(e)}let occ=[];try{occ=await gbifOccurrences(speciesConfig[currentSpecies].gbifName,map.getBounds())}catch(_){}occ.forEach(o=>L.circleMarker([o.decimalLatitude,o.decimalLongitude],{pane:'gbifPane',radius:6,color:'#2b2b2b',weight:1.5,fillColor:'#f4f1e6',fillOpacity:.95}).bindPopup(`<b>GBIF-Fundmeldung</b><br>${escapeHtml(speciesConfig[currentSpecies].label)}<br><a href="https://www.gbif.org/occurrence/${o.key}" target="_blank" rel="noopener">Zum Datensatz</a>`).addTo(gbifLayer));forestResults=forests.map((f,i)=>{let treeType='unknown',treeSource='fallback';const c=copClassAt(cop,f.centroid[0],f.centroid[1]);if(c){treeType=c.type;treeSource='copernicus'}const data={elevation:elev[i]??0,precip14:weather[i]?.precip14??0,tempAvg10:weather[i]?.tempAvg10??12,ph:soil[i],leafType:treeType,treeType,treeSource};const score=computeScore(currentSpecies,data,null);return{forest:f,data,score,micro:null}});const top=forestResults.slice().sort((a,b)=>b.score.total-a.score.total).slice(0,25);await Promise.allSettled(top.map(async r=>{r.micro=await fetchMicro(r.forest);r.score=computeScore(currentSpecies,r.data,r.micro)}));forestResults.sort((a,b)=>b.score.total-a.score.total);forestResults.forEach(r=>L.polygon(r.forest.coords,{pane:'forestPane',color:'#3a2c1a',weight:1.5,opacity:.9,fillColor:scoreColor(r.score.total),fillOpacity:.62}).on('click',()=>openForestDetail(r)).on('mouseover',e=>e.target.setStyle({weight:3})).on('mouseout',e=>e.target.setStyle({weight:1.5})).addTo(resultLayer));renderForestRanking();document.getElementById('status').textContent=`Fertig. ${forestResults.length} Waldflächen angezeigt und nach Score geordnet.${occ.length?` ${occ.length} GBIF-Fundmeldung(en).`:''}`;showForestRanking();}catch(e){console.error(e);document.getElementById('status').textContent='Fehler bei der Waldflächensuche: '+(e.message||e)}finally{btn.disabled=false}};
+
+document.getElementById(
+  'searchBtn'
+).onclick=
+  async()=>{
+    resultLayer.clearLayers();
+    gbifLayer.clearLayers();
+    selectedLayer.clearLayers();
+
+    forestResults=[];
+    activeForest=null;
+
+    rankView.style.display='block';
+    detailView.style.display='none';
+
+    document.getElementById(
+      'forestRankList'
+    ).innerHTML=
+      '<div class="source-note">Suche Waldflächen…</div>';
+
+    const btn=
+      document.getElementById(
+        'searchBtn'
+      );
+
+    btn.disabled=true;
+
+    try{
+      if(
+        map.getZoom()<
+        MIN_FOREST_ZOOM
+      ){
+        document.getElementById(
+          'status'
+        ).textContent=
+          `Bitte mindestens auf Zoom ${MIN_FOREST_ZOOM} hineinzoomen.`;
+
+        return;
+      }
+
+      document.getElementById(
+        'status'
+      ).textContent=
+        'Lese Waldflächen aus den geladenen Vektorkacheln…';
+
+      await new Promise(
+        r=>setTimeout(
+          r,
+          300
+        )
+      );
+
+      let forests=
+        getVisibleForests();
+
+      if(!forests.length){
+        await new Promise(
+          r=>setTimeout(
+            r,
+            500
+          )
+        );
+
+        forests=
+          getVisibleForests();
+      }
+
+      if(!forests.length){
+        document.getElementById(
+          'status'
+        ).textContent=
+          'Keine Waldflächen in den aktuell geladenen Vektorkacheln erkannt. Etwas hineinzoomen oder Kartenausschnitt verschieben.';
+
+        return;
+      }
+
+      forests=
+        mergeTouchingForests(
+          forests
+        )
+          .sort(
+            (a,b)=>
+              b.area-a.area
+          )
+          .slice(
+            0,
+            MAX_FORESTS
+          );
+
+      document.getElementById(
+        'status'
+      ).textContent=
+        `${forests.length} Waldflächen gefunden. Lade Standortdaten…`;
+
+      const[
+        elev,
+        weather,
+        soil
+      ]=
+        await Promise.all([
+          fetchElevations(
+            forests
+          ),
+          fetchWeather(
+            forests
+          ),
+          fetchSoilPh(
+            forests
+          )
+        ]);
+
+      let cop=null;
+
+      try{
+        const copConfig=
+          getCopConfig();
+
+        if(
+          copConfig.clientId&&
+          copConfig.clientSecret
+        ){
+          document.getElementById(
+            'status'
+          ).textContent=
+            `${forests.length} Waldflächen gefunden. Lade Standortdaten und Copernicus-Baumtypen…`;
+
+          const b=
+            map.getBounds();
+
+          cop=
+            await fetchCopRaster([
+              b.getWest(),
+              b.getSouth(),
+              b.getEast(),
+              b.getNorth()
+            ]);
+
+        }else{
+          setCopStatus(
+            'Keine vollständigen Copernicus-Zugangsdaten vorhanden – Fallback aktiv.',
+            'error'
+          );
+        }
+
+      }catch(e){
+        console.warn(
+          'Copernicus DLT konnte nicht geladen werden:',
+          e
+        );
+
+        setCopStatus(
+          `Copernicus konnte nicht verwendet werden: ${e.message||e}. Für die betroffenen Flächen wird der Fallback genutzt.`,
+          'error'
+        );
+
+        cop=null;
+      }
+
+      let occ=[];
+
+      try{
+        occ=
+          await gbifOccurrences(
+            speciesConfig[
+              currentSpecies
+            ].gbifName,
+            map.getBounds()
+          );
+      }catch(_){
+      }
+
+      occ.forEach(
+        o=>
+          L.circleMarker(
+            [
+              o.decimalLatitude,
+              o.decimalLongitude
+            ],
+            {
+              pane:'gbifPane',
+              radius:6,
+              color:'#2b2b2b',
+              weight:1.5,
+              fillColor:'#f4f1e6',
+              fillOpacity:.95
+            }
+          )
+          .bindPopup(`
+            <b>GBIF-Fundmeldung</b>
+            <br>
+            ${escapeHtml(
+              speciesConfig[
+                currentSpecies
+              ].label
+            )}
+            <br>
+            <a href="https://www.gbif.org/occurrence/${o.key}" target="_blank" rel="noopener">
+              Zum Datensatz
+            </a>
+          `)
+          .addTo(
+            gbifLayer
+          )
+      );
+
+      forestResults=
+        forests.map(
+          (f,i)=>{
+            let treeType='unknown';
+            let treeSource='fallback';
+            let treeConfidence=null;
+
+            const c=
+              copClassAt(
+                cop,
+                f.centroid[0],
+                f.centroid[1]
+              );
+
+            if(c){
+              treeType=c.type;
+              treeSource='copernicus';
+              treeConfidence=
+                c.confidence;
+            }
+
+            const data={
+              elevation:
+                elev[i]??0,
+
+              precip14:
+                weather[i]?.precip14??0,
+
+              tempAvg10:
+                weather[i]?.tempAvg10??12,
+
+              ph:
+                soil[i],
+
+              leafType:
+                treeType,
+
+              treeType,
+
+              treeSource,
+
+              treeConfidence
+            };
+
+            const score=
+              computeScore(
+                currentSpecies,
+                data,
+                null
+              );
+
+            return{
+              forest:f,
+              data,
+              score,
+              micro:null
+            };
+          }
+        );
+
+      const top=
+        forestResults
+          .slice()
+          .sort(
+            (a,b)=>
+              b.score.total-
+              a.score.total
+          )
+          .slice(
+            0,
+            25
+          );
+
+      await Promise.allSettled(
+        top.map(
+          async r=>{
+            r.micro=
+              await fetchMicro(
+                r.forest
+              );
+
+            r.score=
+              computeScore(
+                currentSpecies,
+                r.data,
+                r.micro
+              );
+          }
+        )
+      );
+
+      forestResults.sort(
+        (a,b)=>
+          b.score.total-
+          a.score.total
+      );
+
+      forestResults.forEach(
+        r=>{
+          L.polygon(
+            r.forest.coords,
+            {
+              pane:'forestPane',
+              color:'#3a2c1a',
+              weight:1.5,
+              opacity:.9,
+              fillColor:
+                scoreColor(
+                  r.score.total
+                ),
+              fillOpacity:.62
+            }
+          )
+          .on(
+            'click',
+            ()=>openForestDetail(r)
+          )
+          .on(
+            'mouseover',
+            e=>
+              e.target.setStyle({
+                weight:3
+              })
+          )
+          .on(
+            'mouseout',
+            e=>
+              e.target.setStyle({
+                weight:1.5
+              })
+          )
+          .addTo(
+            resultLayer
+          );
+        }
+      );
+
+      renderForestRanking();
+
+      const copCount=
+        forestResults.filter(
+          r=>
+            r.data.treeSource===
+            'copernicus'
+        ).length;
+
+      document.getElementById(
+        'status'
+      ).textContent=
+        `Fertig. ${forestResults.length} Waldflächen angezeigt und nach Score geordnet.`+
+        (
+          copCount
+            ? ` Copernicus-DLT für ${copCount} Fläche(n) aktiv.`
+            : ''
+        )+
+        (
+          occ.length
+            ? ` ${occ.length} GBIF-Fundmeldung(en).`
+            : ''
+        );
+
+      showForestRanking();
+
+    }catch(e){
+      console.error(e);
+
+      document.getElementById(
+        'status'
+      ).textContent=
+        'Fehler bei der Waldflächensuche: '+
+        (e.message||e);
+
+    }finally{
+      btn.disabled=false;
+    }
+  };
 
 /* ---------- Foto-KI ---------- */
-let aiData=null,aiPromise=null;document.getElementById('photoIdentifyBtn').onclick=()=>document.getElementById('aiModal').classList.add('open');document.getElementById('closeAiModal').onclick=()=>document.getElementById('aiModal').classList.remove('open');document.getElementById('aiChooseBtn').onclick=()=>document.getElementById('photoInput').click();document.getElementById('photoInput').onchange=e=>{const f=e.target.files?.[0];if(!f)return;document.getElementById('aiPreview').src=URL.createObjectURL(f);document.getElementById('aiPreview').style.display='block';const rd=new FileReader();rd.onload=()=>{aiData=rd.result;document.getElementById('aiAnalyzeBtn').disabled=false;document.getElementById('aiStatus').textContent='Foto bereit.'};rd.readAsDataURL(f)};async function getVision(){if(!aiPromise)aiPromise=import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0').then(({pipeline})=>pipeline('zero-shot-image-classification','Xenova/mobileclip_s0',{dtype:'q8',device:navigator.gpu?'webgpu':'wasm'}));return aiPromise}document.getElementById('aiAnalyzeBtn').onclick=async()=>{const st=document.getElementById('aiStatus'),out=document.getElementById('aiResult');st.textContent='Lade KI-Modell…';try{const c=await getVision(),r=(await c(aiData,SPECIES.map(s=>`${s.label} (${s.latin})`))).sort((a,b)=>b.score-a.score).slice(0,5);out.innerHTML=r.map((x,i)=>{const p=Math.round(x.score*100);return`<div class="ai-candidate"><strong>${i+1}. ${escapeHtml(x.label)}</strong><div>${p}% Modellscore</div><div class="ai-meter"><span style="width:${p}%"></span></div></div>`}).join('');st.textContent='Analyse abgeschlossen.'}catch(e){st.textContent='Browser-KI konnte nicht geladen werden.';out.innerHTML=`<p class="source-note">${escapeHtml(e.message||e)}</p>`}};
+
+let aiData=null;
+let aiPromise=null;
+
+document.getElementById(
+  'photoIdentifyBtn'
+).onclick=
+  ()=>document.getElementById(
+    'aiModal'
+  ).classList.add('open');
+
+document.getElementById(
+  'closeAiModal'
+).onclick=
+  ()=>document.getElementById(
+    'aiModal'
+  ).classList.remove('open');
+
+document.getElementById(
+  'aiChooseBtn'
+).onclick=
+  ()=>document.getElementById(
+    'photoInput'
+  ).click();
+
+document.getElementById(
+  'photoInput'
+).onchange=
+  e=>{
+    const f=
+      e.target.files?.[0];
+
+    if(!f){
+      return;
+    }
+
+    document.getElementById(
+      'aiPreview'
+    ).src=
+      URL.createObjectURL(f);
+
+    document.getElementById(
+      'aiPreview'
+    ).style.display='block';
+
+    const rd=
+      new FileReader();
+
+    rd.onload=()=>{
+      aiData=
+        rd.result;
+
+      document.getElementById(
+        'aiAnalyzeBtn'
+      ).disabled=false;
+
+      document.getElementById(
+        'aiStatus'
+      ).textContent=
+        'Foto bereit.';
+    };
+
+    rd.readAsDataURL(f);
+  };
+
+async function getVision(){
+  if(!aiPromise){
+    aiPromise=
+      import(
+        'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0'
+      )
+      .then(
+        ({pipeline})=>
+          pipeline(
+            'zero-shot-image-classification',
+            'Xenova/mobileclip_s0',
+            {
+              dtype:'q8',
+              device:
+                navigator.gpu
+                  ? 'webgpu'
+                  : 'wasm'
+            }
+          )
+      );
+  }
+
+  return aiPromise;
+}
+
+document.getElementById(
+  'aiAnalyzeBtn'
+).onclick=
+  async()=>{
+    const st=
+      document.getElementById(
+        'aiStatus'
+      );
+
+    const out=
+      document.getElementById(
+        'aiResult'
+      );
+
+    st.textContent=
+      'Lade KI-Modell…';
+
+    try{
+      const c=
+        await getVision();
+
+      const r=
+        (
+          await c(
+            aiData,
+            SPECIES.map(
+              s=>
+                `${s.label} (${s.latin})`
+            )
+          )
+        )
+          .sort(
+            (a,b)=>
+              b.score-a.score
+          )
+          .slice(
+            0,
+            5
+          );
+
+      out.innerHTML=
+        r.map(
+          (x,i)=>{
+            const p=
+              Math.round(
+                x.score*100
+              );
+
+            return`
+              <div class="ai-candidate">
+                <strong>
+                  ${i+1}.
+                  ${escapeHtml(x.label)}
+                </strong>
+
+                <div>
+                  ${p}%
+                  Modellscore
+                </div>
+
+                <div class="ai-meter">
+                  <span style="width:${p}%"></span>
+                </div>
+              </div>
+            `;
+          }
+        ).join('');
+
+      st.textContent=
+        'Analyse abgeschlossen.';
+
+    }catch(e){
+      st.textContent=
+        'Browser-KI konnte nicht geladen werden.';
+
+      out.innerHTML=
+        `<p class="source-note">${escapeHtml(e.message||e)}</p>`;
+    }
+  };
 
 /* ---------- Initialisierung ---------- */
-renderScoreLegend();document.getElementById('detailDwd').style.display='none';document.getElementById('status').textContent='Karte auf ein Waldgebiet ausrichten und suchen.';
+
+renderScoreLegend();
+
+document.getElementById(
+  'detailDwd'
+).style.display='none';
+
+document.getElementById(
+  'status'
+).textContent=
+  'Karte auf ein Waldgebiet ausrichten und suchen.';
+
+setCopStatus(
+  getCopConfig().clientId&&
+  getCopConfig().clientSecret
+    ? 'Copernicus-Zugangsdaten erkannt. DLT wird bei der nächsten Waldsuche geladen.'
+    : 'Copernicus-Zugangsdaten fehlen oder sind unvollständig. Fallback aktiv.',
+  getCopConfig().clientId&&
+  getCopConfig().clientSecret
+    ? 'success'
+    : 'error'
+);
 </script>
 </body>
 </html>
