@@ -274,12 +274,317 @@ button{min-height:36px;}
     .species-tab,.tour-actions button,.detail-actions button{min-height:42px;}
 }
 
+
+/* ============================================================
+   RESPONSIVE PANEL REDESIGN — MOBILE / TABLET
+   Keeps all existing panel IDs and interactions intact.
+   ============================================================ */
+.controlPanel{} /* intentionally empty: preserves legacy selector compatibility */
+.mobile-panel-toggle{display:none}
+
+/* Desktop: modern floating cards without changing layout semantics. */
+@media(min-width:901px){
+    .panel,
+    .detail-panel{
+        border-radius:18px;
+        overflow:hidden;
+        backdrop-filter:blur(8px);
+        -webkit-backdrop-filter:blur(8px);
+    }
+    .panel{
+        box-shadow:0 14px 34px rgba(30,20,10,.22),0 2px 7px rgba(30,20,10,.10);
+        overflow-y:auto;
+        overflow-x:hidden;
+    }
+    .detail-panel{
+        box-shadow:0 14px 34px rgba(30,20,10,.22),0 2px 7px rgba(30,20,10,.10);
+        overflow-y:auto;
+        overflow-x:hidden;
+    }
+    .panel > .mobile-panel-toggle{display:none}
+}
+
+/* Tablet / mobile base: panels become independent floating sheets. */
+@media(max-width:900px){
+    .panel,
+    .detail-panel{
+        border-radius:18px;
+        box-shadow:0 12px 30px rgba(30,20,10,.26),0 2px 8px rgba(30,20,10,.10);
+        backdrop-filter:blur(10px);
+        -webkit-backdrop-filter:blur(10px);
+    }
+
+    /* Left controls: compact top sheet, expandable without leaving the map. */
+    .panel{
+        top:calc(58px + env(safe-area-inset-top));
+        left:max(10px, env(safe-area-inset-left));
+        right:max(10px, env(safe-area-inset-right));
+        width:auto;
+        max-width:none;
+        max-height:min(42dvh, 440px);
+        overflow-y:auto;
+        overflow-x:hidden;
+        padding:0;
+        border-left:0;
+        border-top:4px solid var(--moss);
+        background:rgba(239,233,216,.96);
+    }
+    .panel .mobile-panel-toggle{
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        position:sticky;
+        top:0;
+        z-index:6;
+        gap:8px;
+        width:100%;
+        min-height:44px;
+        padding:8px 14px;
+        border:0;
+        border-bottom:1px solid rgba(74,56,38,.14);
+        background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.10));
+        color:var(--bark);
+        font:700 12px var(--font-body);
+        letter-spacing:.02em;
+        cursor:pointer;
+    }
+    .panel .mobile-panel-toggle span{opacity:.82}
+    .panel .mobile-panel-toggle:active{transform:translateY(1px)}
+    .panel > h2,
+    .panel > .species-select-row,
+    .panel > .search-btn,
+    .panel > .tool-btn,
+    .panel > #photoInput,
+    .panel > .status,
+    .panel > .legend,
+    .panel > .progress-box{
+        margin-left:14px;
+        margin-right:14px;
+    }
+    .panel > h2{margin-top:12px}
+    .panel > .progress-box{margin-bottom:14px}
+
+    .panel.mobile-collapsed{
+        max-height:54px;
+        height:54px;
+        overflow:hidden;
+        border-top-width:3px;
+    }
+    .panel.mobile-collapsed .mobile-panel-toggle{
+        min-height:51px;
+        height:51px;
+        border-bottom:0;
+        font-size:11px;
+    }
+    .panel.mobile-collapsed > h2,
+    .panel.mobile-collapsed > .species-select-row,
+    .panel.mobile-collapsed > .search-btn,
+    .panel.mobile-collapsed > .tool-btn,
+    .panel.mobile-collapsed > #photoInput,
+    .panel.mobile-collapsed > .status,
+    .panel.mobile-collapsed > .legend,
+    .panel.mobile-collapsed > .progress-box{display:none}
+
+    /* Ranking/detail sheet: always anchored to the same bottom-right geometry. */
+    .detail-panel{
+        top:auto !important;
+        right:max(10px, env(safe-area-inset-right));
+        bottom:max(10px, env(safe-area-inset-bottom));
+        left:auto;
+        width:min(420px, calc(100vw - 20px));
+        max-width:none;
+        max-height:min(54dvh, 560px);
+        height:auto;
+        padding:0;
+        border-right:0;
+        border-left:4px solid var(--chanterelle);
+        overflow:hidden;
+        background:rgba(239,233,216,.975);
+        display:flex;
+        flex-direction:column;
+    }
+    .detail-panel #detailPanelContent{
+        min-height:0;
+        overflow-y:auto;
+        overflow-x:hidden;
+        padding:14px 14px 16px;
+        -webkit-overflow-scrolling:touch;
+        overscroll-behavior:contain;
+    }
+    .panel-collapse-btn{
+        top:8px;
+        right:8px;
+        width:38px;
+        height:38px;
+        min-height:38px;
+        border-radius:12px;
+        background:rgba(239,233,216,.94);
+        box-shadow:0 3px 8px rgba(30,20,10,.12);
+    }
+    .ranking-header{
+        position:sticky;
+        top:0;
+        z-index:4;
+        padding:2px 48px 10px 0;
+        margin:0 -2px 8px;
+        background:linear-gradient(180deg,rgba(239,233,216,.99) 80%,rgba(239,233,216,0));
+    }
+    .ranking-header h2{font-size:18px}
+    .detail-panel h2{padding-right:44px}
+    .forest-detail-close{
+        top:8px;
+        right:8px;
+        width:38px;
+        height:38px;
+        min-height:38px;
+        border-radius:12px;
+        background:rgba(239,233,216,.94);
+        box-shadow:0 3px 8px rgba(30,20,10,.12);
+    }
+
+    /* Collapsed forest panel is a real fixed launcher, never a mysteriously displaced box. */
+    .detail-panel.panel-collapsed{
+        top:auto !important;
+        right:max(10px, env(safe-area-inset-right));
+        bottom:max(10px, env(safe-area-inset-bottom));
+        left:auto;
+        width:126px;
+        height:50px;
+        max-height:50px;
+        min-height:50px;
+        padding:0;
+        border-radius:16px;
+        border-left:4px solid var(--chanterelle);
+        overflow:hidden;
+        display:block;
+        background:rgba(239,233,216,.97);
+        box-shadow:0 12px 30px rgba(30,20,10,.28),0 2px 8px rgba(30,20,10,.12);
+    }
+    .detail-panel.panel-collapsed #detailPanelContent{display:none}
+    .detail-panel.panel-collapsed #panelCollapseBtn{
+        position:relative;
+        top:0;
+        right:auto;
+        width:100%;
+        height:100%;
+        min-height:50px;
+        border:0;
+        border-radius:0;
+        background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.08));
+        box-shadow:none;
+        color:var(--bark);
+        font-size:0;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        gap:7px;
+    }
+    .detail-panel.panel-collapsed #panelCollapseBtn::before{
+        content:'＋';
+        font-size:17px;
+        line-height:1;
+    }
+    .detail-panel.panel-collapsed #panelCollapseBtn::after{
+        content:'Waldgebiete';
+        font:700 11px var(--font-body);
+        color:var(--bark);
+    }
+
+    /* Don't allow the tour to sit on top of the forest launcher/sheet. */
+    .tour-panel{
+        max-height:42dvh;
+        overflow:auto;
+        border-radius:16px;
+        padding-bottom:calc(12px + env(safe-area-inset-bottom));
+    }
+}
+
+@media(max-width:600px){
+    .panel{
+        top:calc(54px + env(safe-area-inset-top));
+        max-height:min(39dvh, 360px);
+    }
+    .detail-panel{
+        width:calc(100vw - 16px);
+        right:8px;
+        bottom:max(8px, env(safe-area-inset-bottom));
+        max-height:min(52dvh, 520px);
+        border-radius:18px;
+    }
+    .detail-panel #detailPanelContent{padding:12px 12px 14px}
+    .ranking-header h2{font-size:17px}
+}
+
+@media(max-width:430px){
+    .panel{
+        left:7px;
+        right:7px;
+        top:calc(52px + env(safe-area-inset-top));
+    }
+    .panel > h2,
+    .panel > .species-select-row,
+    .panel > .search-btn,
+    .panel > .tool-btn,
+    .panel > #photoInput,
+    .panel > .status,
+    .panel > .legend,
+    .panel > .progress-box{margin-left:11px;margin-right:11px}
+
+    .panel.mobile-collapsed{left:9px;right:auto;width:150px;max-width:calc(100vw - 18px)}
+    .panel.mobile-collapsed .mobile-panel-toggle{border-radius:13px}
+
+    .detail-panel{
+        left:8px;
+        right:8px;
+        width:auto;
+        max-height:54dvh;
+    }
+    .detail-panel.panel-collapsed{
+        left:auto;
+        right:10px;
+        width:132px;
+        height:50px;
+        max-height:50px;
+    }
+}
+
+@media(orientation:landscape) and (max-height:620px) and (max-width:900px){
+    .panel{
+        top:calc(52px + env(safe-area-inset-top));
+        left:8px;
+        right:auto;
+        width:350px;
+        max-width:calc(100vw - 390px);
+        max-height:calc(100dvh - 64px);
+    }
+    .detail-panel{
+        top:calc(52px + env(safe-area-inset-top)) !important;
+        bottom:max(8px, env(safe-area-inset-bottom));
+        right:8px;
+        left:auto;
+        width:350px;
+        max-width:calc(100vw - 390px);
+        max-height:none;
+        height:auto;
+    }
+    .detail-panel.panel-collapsed{
+        top:auto !important;
+        right:10px;
+        left:auto;
+        bottom:10px;
+        width:132px;
+        height:50px;
+        max-width:none;
+    }
+}
+
 </style>
 </head>
 <body>
 <header><h1>Pilzkompass</h1><span>Waldflächen · Baumarten · Mikroklima · Wetter · Boden · Fundmeldungen</span></header>
 <div id="map"></div>
-<div class="panel">
+<div class="panel" id="controlPanel">
+<button class="mobile-panel-toggle" id="controlPanelToggle" type="button" aria-expanded="true" aria-controls="controlPanel" title="Pilzauswahl einklappen">⌃ <span>Pilzart &amp; Analyse</span></button>
 <h2>Pilzart</h2>
 <div class="species-select-row"><select class="species-select" id="speciesSelect"></select><button aria-label="Pilzinfos anzeigen" class="info-btn" id="speciesInfoBtn">ⓘ</button></div>
 <button class="search-btn" id="searchBtn">Diesen Bereich durchsuchen</button>
@@ -974,7 +1279,27 @@ function renderSpeciesModal(id){const s=speciesConfig[id],p=s?.site;if(!s||!p)re
 const speciesSelect=document.getElementById('speciesSelect');speciesSelect.innerHTML=SPECIES.map(s=>`<option value="${s.id}">${s.label}</option>`).join('');speciesSelect.value=currentSpecies;document.getElementById('speciesInfoBtn').onclick=()=>renderSpeciesModal(currentSpecies);document.getElementById('closeSpeciesModal').onclick=()=>document.getElementById('speciesModal').classList.remove('open');document.getElementById('speciesModal').onclick=e=>{if(e.target.id==='speciesModal')e.currentTarget.classList.remove('open')};document.querySelectorAll('.species-tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.species-tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.species-tab-panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelector(`.species-tab-panel[data-panel="${b.dataset.tab}"]`).classList.add('active')});speciesSelect.onchange=e=>{currentSpecies=e.target.value;if(!analysisSnapshot.cells||!analysisSnapshot.shared)return;const previousId=activeForest?.forest?.osmId||null;const evidence=speciesEvidenceCache[currentSpecies]||{};const shared={...analysisSnapshot.shared,treeSources:evidence.treeSources||[],mushroomOccurrences:evidence.mushroomOccurrences||[],treeLoaded:!!evidence.treeSources?.length||analysisSnapshot.shared.dlrByIndex?.some(v=>v?.available)||false};forestResults=analysisSnapshot.cells.map((cell,i)=>buildResult(cell,i,shared)).sort((a,b)=>b.score.total-a.score.total);renderAnalysisLayer();const same=previousId?forestResults.find(x=>x.forest.osmId===previousId):null;if(same)openForestDetail(same,{skipDwd:true});document.getElementById('status').textContent=`${speciesConfig[currentSpecies].label} ausgewählt · vorhandene Standortdaten wiederverwendet · keine neuen Standort-API-Abfragen.`};
 let aiData=null,aiPromise=null;document.getElementById('photoIdentifyBtn').onclick=()=>document.getElementById('aiModal').classList.add('open');document.getElementById('closeAiModal').onclick=()=>document.getElementById('aiModal').classList.remove('open');document.getElementById('aiChooseBtn').onclick=()=>document.getElementById('photoInput').click();document.getElementById('photoInput').onchange=e=>{const f=e.target.files?.[0];if(!f)return;document.getElementById('aiPreview').src=URL.createObjectURL(f);document.getElementById('aiPreview').style.display='block';const rd=new FileReader();rd.onload=()=>{aiData=rd.result;document.getElementById('aiAnalyzeBtn').disabled=false;document.getElementById('aiStatus').textContent='Foto bereit.'};rd.readAsDataURL(f)};async function getVision(){if(!aiPromise)aiPromise=import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0').then(({pipeline})=>pipeline('zero-shot-image-classification','Xenova/mobileclip_s0',{dtype:'q8',device:navigator.gpu?'webgpu':'wasm'}));return aiPromise}document.getElementById('aiAnalyzeBtn').onclick=async()=>{try{const c=await getVision(),r=(await c(aiData,SPECIES.map(s=>`${s.label} (${s.latin})`))).sort((a,b)=>b.score-a.score).slice(0,5);document.getElementById('aiResult').innerHTML=r.map((x,i)=>{const p=Math.round(x.score*100);return`<div class="ai-candidate"><strong>${i+1}. ${escapeHtml(x.label)}</strong><div>${p}% Modellscore</div><div class="ai-meter"><span style="width:${p}%"></span></div></div>`}).join('');document.getElementById('aiStatus').textContent='Analyse abgeschlossen.'}catch(e){document.getElementById('aiStatus').textContent='Browser-KI konnte nicht geladen werden.'}};
 const TOUR={items:[],start:map.getCenter(),routeLayer:L.layerGroup().addTo(map),selecting:false};function renderTour(){const el=document.getElementById('tourList');el.innerHTML=TOUR.items.length?TOUR.items.map((x,i)=>`<div class="tour-item"><span>${i+1}. ${escapeHtml(x.name)} · Score ${x.score}</span><button data-r="${i}">✕</button></div>`).join(''):'Noch keine Waldflächen ausgewählt.';el.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{TOUR.items.splice(Number(b.dataset.r),1);renderTour()});document.getElementById('tourStartText').textContent=`Startpunkt: ${TOUR.start.lat.toFixed(4)}, ${TOUR.start.lng.toFixed(4)}`}function addTourForest(f,data,score){const k=f.osmId;if(!TOUR.items.some(x=>x.key===k))TOUR.items.push({key:k,f,data,score,name:f.tags.name||'Waldgebiet'});renderTour();document.getElementById('tourPanel').classList.add('open')}map.on('click',e=>{if(TOUR.selecting){TOUR.start=e.latlng;TOUR.selecting=false;renderTour()}});document.getElementById('tourToggleBtn').onclick=()=>{document.getElementById('tourPanel').classList.toggle('open');renderTour()};document.getElementById('tourStartBtn').onclick=()=>{TOUR.selecting=true;document.getElementById('tourStartText').textContent='Startpunkt wählen: auf die Karte klicken…'};document.getElementById('tourClearBtn').onclick=()=>{TOUR.items=[];TOUR.routeLayer.clearLayers();renderTour();document.getElementById('tourSummary').textContent=''};document.getElementById('tourRouteBtn').onclick=async()=>{if(!TOUR.items.length){document.getElementById('tourSummary').textContent='Bitte zuerst Waldflächen hinzufügen.';return}const coords=[`${TOUR.start.lng},${TOUR.start.lat}`,...TOUR.items.map(x=>`${x.f.centroid[1]},${x.f.centroid[0]}`),`${TOUR.start.lng},${TOUR.start.lat}`];try{const j=await(await fetch(`https://router.project-osrm.org/route/v1/foot/${coords.join(';')}?overview=full&geometries=geojson`)).json();if(j.code!=='Ok')throw new Error('Keine Route');TOUR.routeLayer.clearLayers();L.geoJSON(j.routes[0].geometry,{style:{color:'#d98a1f',weight:5,opacity:.85}}).addTo(TOUR.routeLayer);document.getElementById('tourSummary').innerHTML=`<b>Gesamt:</b> ${Math.round(j.routes[0].distance/100)/10} km · ca. ${Math.round(j.routes[0].duration/60)} min zu Fuß`}catch(e){document.getElementById('tourSummary').textContent='Route konnte nicht berechnet werden: '+e.message}};
+
+const controlPanel=document.getElementById('controlPanel');
+const controlPanelToggle=document.getElementById('controlPanelToggle');
+let controlPanelCollapsed=false;
+function updateControlPanelState(){
+    if(!controlPanel||!controlPanelToggle)return;
+    controlPanel.classList.toggle('mobile-collapsed',controlPanelCollapsed);
+    controlPanelToggle.setAttribute('aria-expanded',String(!controlPanelCollapsed));
+    controlPanelToggle.title=controlPanelCollapsed?'Pilzauswahl öffnen':'Pilzauswahl einklappen';
+    controlPanelToggle.innerHTML=controlPanelCollapsed?'＋ <span>Pilzart</span>':'⌃ <span>Pilzart &amp; Analyse</span>';
+}
+if(controlPanelToggle){
+    controlPanelToggle.addEventListener('click',()=>{
+        controlPanelCollapsed=!controlPanelCollapsed;
+        updateControlPanelState();
+    });
+    updateControlPanelState();
+}
+
 renderScoreLegend();document.getElementById('detailDwd').style.display='none';document.getElementById('status').textContent='Karte auf ein Waldgebiet ausrichten und suchen.';
 </script></div></body></html>
+
 
 
