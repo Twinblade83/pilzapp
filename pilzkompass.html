@@ -118,6 +118,162 @@ header{position:absolute;top:0;left:0;right:0;z-index:1000;background:var(--cano
 .lookalike-summary-card b{display:block;font-size:9.5px;color:var(--bark)}
 .lookalike-summary-card span{display:block;margin-top:3px;font-size:9px;line-height:1.4;color:var(--bark);opacity:.78}
 @media(max-width:800px){.lookalike-grid{grid-template-columns:1fr}.lookalike-column+.lookalike-column{border-left:0;border-top:1px solid rgba(74,56,38,.13)}.lookalike-step-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.lookalike-matrix-row{grid-template-columns:1fr}.lookalike-matrix-label{margin-bottom:-2px}.lookalike-summary{grid-template-columns:1fr}.lookalike-compare-head{grid-template-columns:1fr}}
+
+/* ============================================================
+   RESPONSIVE / MOBILE OPTIMIZATION
+   ============================================================ */
+html,body{width:100%;min-width:0;overflow:hidden;-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+button,select,input{font:inherit;touch-action:manipulation;}
+button{min-height:36px;}
+.panel,.detail-panel,.tour-panel,.modal-card{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
+.modal-overlay{overflow:auto;overscroll-behavior:contain;}
+.species-modal-card{max-height:calc(100dvh - 48px);overflow:hidden;display:flex;flex-direction:column;}
+.species-modal-card .species-profile{min-height:0;overflow:hidden;display:flex;flex-direction:column;}
+.species-modal-card .species-tabs{flex:0 0 auto;}
+.species-modal-card .species-content{min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+.species-modal-card .species-tab-panel{min-width:0;}
+.species-hero-copy,.species-hero-score,.species-section,.species-info-card,.species-profile-card,.species-fact,.species-metric,.recognition-workspace,.lookalike-compare-list{min-width:0;}
+.species-hero h2,.species-lead,.species-data-value,.species-fact-value,.species-profile-card p,.recognition-copy,.recognition-checks,.lookalike-copy,.lookalike-difference,.lookalike-warning{overflow-wrap:anywhere;}
+@media(max-width:900px){
+    header{padding:12px 16px;gap:8px;align-items:center;}
+    header h1{font-size:20px;}
+    header span{font-size:11px;}
+    .panel{width:360px;max-width:calc(100vw - 16px);left:8px;top:64px;max-height:calc(100dvh - 80px);}
+    .detail-panel{right:8px;bottom:8px;max-width:calc(100vw - 16px);width:380px;}
+    .tour-panel{left:8px;bottom:8px;width:360px;max-width:calc(100vw - 16px);}
+    .species-modal-card{max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);}
+    .species-hero{grid-template-columns:minmax(0,1fr) 210px;gap:14px;padding:24px 24px 22px;}
+    .species-hero h2{font-size:30px;}
+    .species-content{padding-bottom:18px;}
+}
+@media(max-width:700px){
+    html,body{height:100%;}
+    header{padding:10px 12px;border-bottom-width:2px;}
+    header h1{font-size:18px;}
+    header span{display:none;}
+    .panel{top:58px;left:8px;width:calc(100vw - 16px);max-width:none;max-height:38dvh;padding:13px 14px 14px;border-left-width:4px;}
+    .panel h2{font-size:14px;margin-bottom:8px;}
+    .species-select-row{gap:7px;margin-bottom:10px;}
+    .species-select{min-width:0;height:42px;font-size:13px;padding:8px 9px;}
+    .info-btn{min-width:44px;padding:0 10px;font-size:17px;}
+    .search-btn{height:44px;font-size:13px;margin-bottom:7px;}
+    .tool-btn{min-height:40px;font-size:11.5px;}
+    .status{font-size:11px;}
+    .legend{margin-top:9px;padding-top:9px;}
+    .score-legend{grid-template-columns:repeat(5,1fr);gap:3px;}
+    .score-legend-cell{padding:5px 1px;font-size:8px;}
+    .legend-note{font-size:8.5px;}
+    .progress-box{margin-top:8px;padding:8px;}
+    .detail-panel{top:auto;left:8px;right:8px;bottom:8px;width:auto;max-width:none;max-height:50dvh;padding:14px 14px 16px;border-right-width:4px;}
+    .detail-panel h2{font-size:16px;}
+    .detail-score{font-size:30px;}
+    .detail-row{font-size:12px;}
+    .detail-row .value{max-width:58%;overflow-wrap:anywhere;}
+    .micro-grid,.weather-stat-grid,.weather-detail-values{grid-template-columns:1fr 1fr;}
+    .weather-chart{height:145px;}
+    .detail-actions{grid-template-columns:1fr;}
+    .panel-collapse-btn{top:8px;right:8px;width:36px;height:36px;}
+    .forest-detail-close{top:8px;right:8px;}
+    .tour-panel{left:8px;right:8px;bottom:8px;width:auto;max-width:none;padding:12px 13px;}
+    .tour-actions{grid-template-columns:1fr 1fr;}
+    .tour-actions button,.tour-panel .tool-btn{min-height:40px;}
+
+    /* Artenprofil als echte Mobile-Ansicht */
+    .modal-overlay{padding:8px;align-items:stretch;justify-content:stretch;}
+    .species-modal-card{width:100%;max-width:none;max-height:calc(100dvh - 16px);border-left:0;box-shadow:0 8px 28px rgba(0,0,0,.32);border-radius:12px;}
+    .species-hero{display:flex;flex-direction:column;gap:14px;padding:22px 18px 18px;}
+    .species-hero h2{font-size:27px;line-height:1.06;padding-right:34px;}
+    .species-hero .modal-latin{font-size:13px;margin:5px 0 9px;}
+    .species-lead{font-size:12px;line-height:1.55;}
+    .species-badges{gap:5px;margin-bottom:8px;}
+    .species-badge{font-size:8.5px;min-height:22px;padding:4px 7px;}
+    .species-hero-score{padding:12px 13px;border:1px solid rgba(239,233,216,.14);background:rgba(0,0,0,.12);border-radius:10px;}
+    .species-score-main{font-size:25px;}
+    .species-tabs{margin:0;border-bottom:1px solid var(--parchment-dim);padding:6px 8px;background:rgba(239,233,216,.96);display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:4px;scrollbar-width:none;position:sticky;top:0;z-index:10;}
+    .species-tabs::-webkit-scrollbar{display:none;}
+    .species-tab{flex:0 0 auto;min-height:40px;padding:8px 11px;font-size:11px;white-space:nowrap;border-bottom-width:2px;border-radius:7px 7px 0 0;}
+    .species-content{padding:0 0 18px;}
+    .species-section{padding:14px 14px 0;}
+    .species-section-head{gap:8px;flex-direction:column;align-items:flex-start;}
+    .species-section-title{font-size:14px;}
+    .species-section-sub{font-size:9.5px;line-height:1.4;}
+    .species-facts-grid{grid-template-columns:1fr 1fr;gap:6px;padding:12px 14px 0;}
+    .species-fact{padding:9px;}
+    .species-fact-value{font-size:12px;}
+    .species-two-col{grid-template-columns:1fr;gap:8px;}
+    .species-profile-grid{grid-template-columns:1fr 1fr;gap:7px;}
+    .species-metric-grid{grid-template-columns:1fr 1fr;gap:7px;}
+    .species-profile-card,.species-info-card{padding:10px;}
+    .species-profile-card h4,.species-info-card h4{font-size:10px;}
+    .species-profile-card p,.species-data-value,.species-data-label{font-size:10.5px;line-height:1.4;}
+    .species-data-row{grid-template-columns:minmax(72px,38%) 1fr;gap:7px;}
+    .species-season-card{padding:11px;}
+    .month-bar,.season-months{gap:2px;}
+    .month-cell{font-size:8.5px;padding:6px 0;}
+    .season-hero{grid-template-columns:1fr auto;gap:10px;padding:12px;}
+    .season-hero-ring{width:74px;height:74px;}
+    .season-hero-ring span{font-size:20px;}
+    .season-hero-copy strong{font-size:19px;}
+    .season-hero-copy p{font-size:10.5px;line-height:1.45;}
+    .season-timeline{grid-template-columns:repeat(2,1fr);gap:6px;}
+    .recognition-workspace{grid-template-columns:1fr;}
+    .recognition-pair{grid-template-columns:1fr;gap:9px;padding:9px;}
+    .recognition-side img{aspect-ratio:16/10;}
+    .recognition-side h4{font-size:11px;}
+    .recognition-side p{font-size:10.5px;}
+    .lookalike-compare-list{gap:12px;}
+    .lookalike-card{padding:10px;}
+    .lookalike-header{flex-direction:column;align-items:flex-start;gap:6px;}
+    .lookalike-images{grid-template-columns:1fr 1fr;gap:6px;}
+    .lookalike-image-card:last-child{grid-column:1 / -1;max-width:none;}
+    .lookalike-image-card img{aspect-ratio:4/3;}
+    .lookalike-compare-grid{grid-template-columns:1fr;gap:7px;}
+    .lookalike-compare-row{grid-template-columns:86px 1fr;gap:6px;}
+    .lookalike-compare-label{font-size:8.5px;}
+    .lookalike-copy,.lookalike-difference,.lookalike-warning{font-size:10px;}
+    .image-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;}
+    .image-grid figure{padding:4px;}
+    .image-grid figcaption{font-size:8.5px;}
+    .caution-box{font-size:11px;}
+    .species-note-strip{grid-template-columns:28px 1fr;gap:8px;padding:9px;}
+    .species-note-strip p{font-size:10px;}
+    .close-btn{min-width:40px;min-height:40px;}
+}
+@media(max-width:420px){
+    .panel{max-height:36dvh;}
+    .detail-panel{max-height:52dvh;}
+    .score-legend-cell{font-size:7.5px;}
+    .species-profile-grid,.species-metric-grid,.species-facts-grid{grid-template-columns:1fr 1fr;}
+    .species-hero{padding:19px 15px 15px;gap:11px;}
+    .species-hero h2{font-size:24px;}
+    .species-hero-score{padding:10px 11px;}
+    .species-section{padding-left:11px;padding-right:11px;}
+    .species-facts-grid{padding-left:11px;padding-right:11px;}
+    .species-tab{padding:7px 9px;font-size:10px;}
+    .lookalike-images{grid-template-columns:1fr;}
+    .lookalike-image-card:last-child{grid-column:auto;}
+    .image-grid{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:360px){
+    .panel{max-height:34dvh;}
+    .detail-panel{max-height:54dvh;}
+    .species-facts-grid,.species-profile-grid,.species-metric-grid{grid-template-columns:1fr;}
+    .species-hero h2{font-size:22px;}
+    .species-tab{padding-left:8px;padding-right:8px;}
+}
+@media(orientation:landscape) and (max-height:600px){
+    .panel{top:58px;max-height:calc(100dvh - 68px);width:320px;}
+    .detail-panel{top:58px;bottom:8px;right:8px;left:auto;width:360px;max-height:none;}
+    .species-modal-card{max-height:calc(100dvh - 12px);}
+    .species-hero{display:grid;grid-template-columns:minmax(0,1fr) 220px;padding:16px 20px;gap:12px;}
+    .species-hero h2{font-size:24px;}
+    .species-section{padding-top:11px;}
+}
+@media(pointer:coarse){
+    .species-tab,.species-modal-card button,.panel button,.detail-panel button,.tour-panel button{touch-action:manipulation;}
+    .species-tab,.tour-actions button,.detail-actions button{min-height:42px;}
+}
+
 </style>
 </head>
 <body>
@@ -820,4 +976,5 @@ let aiData=null,aiPromise=null;document.getElementById('photoIdentifyBtn').oncli
 const TOUR={items:[],start:map.getCenter(),routeLayer:L.layerGroup().addTo(map),selecting:false};function renderTour(){const el=document.getElementById('tourList');el.innerHTML=TOUR.items.length?TOUR.items.map((x,i)=>`<div class="tour-item"><span>${i+1}. ${escapeHtml(x.name)} · Score ${x.score}</span><button data-r="${i}">✕</button></div>`).join(''):'Noch keine Waldflächen ausgewählt.';el.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{TOUR.items.splice(Number(b.dataset.r),1);renderTour()});document.getElementById('tourStartText').textContent=`Startpunkt: ${TOUR.start.lat.toFixed(4)}, ${TOUR.start.lng.toFixed(4)}`}function addTourForest(f,data,score){const k=f.osmId;if(!TOUR.items.some(x=>x.key===k))TOUR.items.push({key:k,f,data,score,name:f.tags.name||'Waldgebiet'});renderTour();document.getElementById('tourPanel').classList.add('open')}map.on('click',e=>{if(TOUR.selecting){TOUR.start=e.latlng;TOUR.selecting=false;renderTour()}});document.getElementById('tourToggleBtn').onclick=()=>{document.getElementById('tourPanel').classList.toggle('open');renderTour()};document.getElementById('tourStartBtn').onclick=()=>{TOUR.selecting=true;document.getElementById('tourStartText').textContent='Startpunkt wählen: auf die Karte klicken…'};document.getElementById('tourClearBtn').onclick=()=>{TOUR.items=[];TOUR.routeLayer.clearLayers();renderTour();document.getElementById('tourSummary').textContent=''};document.getElementById('tourRouteBtn').onclick=async()=>{if(!TOUR.items.length){document.getElementById('tourSummary').textContent='Bitte zuerst Waldflächen hinzufügen.';return}const coords=[`${TOUR.start.lng},${TOUR.start.lat}`,...TOUR.items.map(x=>`${x.f.centroid[1]},${x.f.centroid[0]}`),`${TOUR.start.lng},${TOUR.start.lat}`];try{const j=await(await fetch(`https://router.project-osrm.org/route/v1/foot/${coords.join(';')}?overview=full&geometries=geojson`)).json();if(j.code!=='Ok')throw new Error('Keine Route');TOUR.routeLayer.clearLayers();L.geoJSON(j.routes[0].geometry,{style:{color:'#d98a1f',weight:5,opacity:.85}}).addTo(TOUR.routeLayer);document.getElementById('tourSummary').innerHTML=`<b>Gesamt:</b> ${Math.round(j.routes[0].distance/100)/10} km · ca. ${Math.round(j.routes[0].duration/60)} min zu Fuß`}catch(e){document.getElementById('tourSummary').textContent='Route konnte nicht berechnet werden: '+e.message}};
 renderScoreLegend();document.getElementById('detailDwd').style.display='none';document.getElementById('status').textContent='Karte auf ein Waldgebiet ausrichten und suchen.';
 </script></div></body></html>
+
 
