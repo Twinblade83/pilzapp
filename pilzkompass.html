@@ -628,8 +628,12 @@ button{min-height:36px;}
 
 
 /* GPS / mobile sheet fixes */
-.gps-status{display:flex;align-items:center;gap:7px;margin:9px 14px 0;padding:8px 9px;border:1px solid var(--parchment-dim);background:rgba(255,255,255,.24);font-size:10.5px;color:var(--bark);line-height:1.3}
+.gps-status{display:flex;align-items:center;gap:7px;margin:9px 14px 0;padding:8px 9px;border:1px solid var(--parchment-dim);background:rgba(255,255,255,.24);font-size:10.5px;color:var(--bark);line-height:1.3;flex-wrap:wrap}
+.gps-status-copy{min-width:0;flex:1 1 auto}
 .gps-status-dot{width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:#9a9686;box-shadow:0 0 0 3px rgba(154,150,134,.12)}
+.gps-permission-btn{flex:0 0 auto;padding:7px 9px;border:1px solid var(--moss);border-radius:9px;background:rgba(91,112,82,.12);color:var(--bark);font:700 10px var(--font-body);cursor:pointer;box-shadow:0 2px 5px rgba(30,20,10,.08)}
+.gps-permission-btn:hover{background:rgba(91,112,82,.18)}
+.gps-permission-btn:active{transform:translateY(1px)}
 .gps-status.active .gps-status-dot{background:#5b7052;box-shadow:0 0 0 3px rgba(91,112,82,.14)}
 .gps-status.error .gps-status-dot{background:#b5691a;box-shadow:0 0 0 3px rgba(181,105,26,.13)}
 .gps-status.loading .gps-status-dot{background:#d98a1f;box-shadow:0 0 0 3px rgba(217,138,31,.14);animation:gpsPulse 1.2s ease-in-out infinite}
@@ -685,7 +689,7 @@ button{min-height:36px;}
 <button class="tool-btn" id="photoIdentifyBtn">📸 Pilzfoto analysieren</button>
 <button class="tool-btn gps-save-btn" id="gpsSaveBtn">📍 GPS-Lokation speichern</button>
 <button class="tool-btn gps-list-btn" id="gpsListBtn">🗺️ Gespeicherte GPS-Lokationen</button>
-<div class="gps-status loading" id="gpsStatus"><span class="gps-status-dot"></span><span id="gpsStatusText">GPS wird vorbereitet…</span></div>
+<div class="gps-status loading" id="gpsStatus"><span class="gps-status-dot"></span><span class="gps-status-copy" id="gpsStatusText">GPS wird vorbereitet…</span><button class="gps-permission-btn" id="gpsPermissionBtn" type="button" hidden>📍 Standort aktivieren</button></div>
 <input accept="image/*" capture="environment" id="photoInput" style="display:none" type="file"/>
 <div class="status" id="status">Karte auf ein Waldgebiet ausrichten und suchen.</div>
 <div class="legend"><h3>Trefferwahrscheinlichkeit</h3><div class="score-legend" id="scoreLegend"></div><div class="legend-note"><span>0–10 sehr niedrig</span><span>91–100 sehr hoch</span></div><div class="note" style="margin-top:8px">⚪ Weiße Punkte = bestätigte GBIF-Fundmeldungen dieser Pilzart im Bereich.</div></div>
@@ -1433,9 +1437,10 @@ if(mobileDetailToggle)mobileDetailToggle.onclick=()=>{
 const GPS_STORAGE_KEY='pilzkompass_saved_gps_v1';
 const gpsState={watchId:null,position:null,accuracy:null,heading:null,headingSource:null,hasCentered:false,orientationStarted:false};
 let gpsMarker=null,gpsAccuracyCircle=null,gpsHeadingLine=null,gpsHeadingArrow=null;
-function setGpsStatus(text,state='loading'){
-    const box=document.getElementById('gpsStatus'),label=document.getElementById('gpsStatusText');if(!box||!label)return;
+function setGpsStatus(text,state='loading',showPermission=false,permissionLabel='📍 Standort aktivieren'){
+    const box=document.getElementById('gpsStatus'),label=document.getElementById('gpsStatusText'),btn=document.getElementById('gpsPermissionBtn');if(!box||!label)return;
     box.classList.remove('active','error','loading');box.classList.add(state);label.textContent=text;
+    if(btn){btn.hidden=!showPermission;btn.textContent=permissionLabel;}
 }
 function normalizeHeading(v){const n=Number(v);return Number.isFinite(n)?((n%360)+360)%360:null}
 function screenAngle(){try{return Number(window.screen?.orientation?.angle)||0}catch(_){return 0}}
@@ -1472,14 +1477,64 @@ function gpsPositionSuccess(pos){
     setGpsStatus(`Standort verfügbar${acc}${compass}`,gpsState.heading!=null?'active':'loading');
 }
 function gpsPositionError(err){
-    let msg='GPS konnte nicht bestimmt werden.';if(err?.code===1)msg='Standortzugriff wurde nicht erlaubt.';else if(err?.code===2)msg='Standort ist momentan nicht verfügbar.';else if(err?.code===3)msg='Standortbestimmung hat zu lange gedauert.';setGpsStatus(msg,'error');
+    let msg='GPS konnte nicht bestimmt werden.',needsPermission=false,permissionLabel='📍 Standort aktivieren';
+    if(err?.code===1){msg='Standortzugriff wurde blockiert oder noch nicht freigegeben.';needsPermission=true;}
+    else if(err?.code===2)msg='Standort ist momentan nicht verfügbar. Prüfe GPS und Standortdienste.';
+    else if(err?.code===3)msg='Standortbestimmung hat zu lange gedauert. Bitte erneut versuchen.';
+    setGpsStatus(msg,'error',needsPermission,permissionLabel);
 }
 function startGpsTracking(){
-    if(!('geolocation' in navigator)){setGpsStatus('Dieser Browser unterstützt keine Standortbestimmung.','error');return;}
+    if(!('geolocation' in navigator)){setGpsStatus('Dieser Browser unterstützt keine Standortbestimmung.','error',false);return;}
+    if(!window.isSecureContext){setGpsStatus('Standortzugriff benötigt HTTPS oder einen sicheren Browser-Kontext.','error',false);return;}
     if(gpsState.watchId!=null)return;
-    setGpsStatus('GPS wird angefordert…','loading');
-    try{gpsState.watchId=navigator.geolocation.watchPosition(gpsPositionSuccess,gpsPositionError,{enableHighAccuracy:true,maximumAge:10000,timeout:15000});}catch(_){setGpsStatus('GPS konnte nicht gestartet werden.','error')}
+    setGpsStatus('GPS wird aktiviert…','loading',false);
+    const opts={enableHighAccuracy:true,maximumAge:10000,timeout:15000};
+    const beginWatch=()=>{
+        if(gpsState.watchId!=null)return;
+        try{gpsState.watchId=navigator.geolocation.watchPosition(gpsPositionSuccess,gpsPositionError,opts);}catch(_){setGpsStatus('GPS konnte nicht gestartet werden.','error',false)}
+    };
+    try{
+        navigator.geolocation.getCurrentPosition(pos=>{gpsPositionSuccess(pos);beginWatch();},gpsPositionError,opts);
+    }catch(_){setGpsStatus('GPS konnte nicht gestartet werden.','error',false)}
 }
+async function getGpsPermissionState(){
+    if(!('geolocation' in navigator))return 'unsupported';
+    if(!window.isSecureContext)return 'insecure';
+    try{
+        if(!navigator.permissions?.query)return 'prompt';
+        const status=await navigator.permissions.query({name:'geolocation'});
+        return status?.state||'prompt';
+    }catch(_){return 'prompt';}
+}
+async function requestGpsPermission(){
+    const state=await getGpsPermissionState();
+    if(state==='unsupported'){setGpsStatus('Dieser Browser unterstützt keine Standortbestimmung.','error',false);return;}
+    if(state==='insecure'){setGpsStatus('Standortzugriff benötigt HTTPS oder einen sicheren Browser-Kontext.','error',false);return;}
+    if(state==='denied'){
+        setGpsStatus('Standort ist für diese Website blockiert. Erlaube ihn in den Browser-/Website-Einstellungen und versuche es danach erneut.','error',true,'↻ Erneut prüfen');
+        return;
+    }
+    await startCompass();
+    startGpsTracking();
+}
+async function initGpsLocation(){
+    const state=await getGpsPermissionState();
+    if(state==='unsupported'){setGpsStatus('Dieser Browser unterstützt keine Standortbestimmung.','error',false);return;}
+    if(state==='insecure'){setGpsStatus('Standortzugriff benötigt HTTPS oder einen sicheren Browser-Kontext.','error',false);return;}
+    if(state==='granted'){
+        startGpsTracking();
+        return;
+    }
+    setGpsStatus('Standort ist noch nicht freigegeben. Tippe auf „Standort aktivieren“.','loading',true,'📍 Standort aktivieren');
+    try{
+        const status=await navigator.permissions?.query?.({name:'geolocation'});
+        if(status?.addEventListener)status.addEventListener('change',()=>{
+            if(status.state==='granted')startGpsTracking();
+            else if(status.state==='denied')setGpsStatus('Standort ist für diese Website blockiert. Erlaube ihn in den Browser-Einstellungen.','error',true,'↻ Erneut prüfen');
+        });
+    }catch(_){ }
+}
+
 async function startCompass(){
     if(gpsState.orientationStarted)return;
     try{
@@ -1514,6 +1569,7 @@ function renderSavedGps(){
     el.querySelectorAll('[data-gps-show]').forEach(b=>b.onclick=()=>{const x=readSavedGps()[Number(b.dataset.gpsShow)];if(!x)return;const species=speciesConfig[x.speciesId];const speciesLabel=species?.label||x.speciesLabel||'Keine Pilzart zugeordnet';document.getElementById('gpsListModal').classList.remove('open');map.setView([x.lat,x.lon],Math.max(map.getZoom(),16),{animate:true});L.marker([x.lat,x.lon],{title:x.title||'Gespeicherte GPS-Lokation'}).addTo(selectedLayer).bindPopup(`<b>${escapeHtml(x.title||'Gespeicherter Standort')}</b><br>🍄 ${escapeHtml(speciesLabel)}<br>${Number(x.lat).toFixed(6)}, ${Number(x.lon).toFixed(6)}`).openPopup()});
     el.querySelectorAll('[data-gps-delete]').forEach(b=>b.onclick=()=>{const items=readSavedGps();items.splice(Number(b.dataset.gpsDelete),1);writeSavedGps(items);renderSavedGps()});
 }
+document.getElementById('gpsPermissionBtn')?.addEventListener('click',requestGpsPermission);
 document.getElementById('gpsSaveBtn').onclick=openGpsSaveModal;
 document.getElementById('gpsListBtn').onclick=()=>{renderSavedGps();document.getElementById('gpsListModal').classList.add('open')};
 document.getElementById('closeGpsSaveModal').onclick=()=>document.getElementById('gpsSaveModal').classList.remove('open');
@@ -1523,9 +1579,8 @@ document.getElementById('gpsLocationTitle').addEventListener('keydown',e=>{if(e.
 document.getElementById('gpsSaveModal').onclick=e=>{if(e.target.id==='gpsSaveModal')e.currentTarget.classList.remove('open')};
 document.getElementById('gpsListModal').onclick=e=>{if(e.target.id==='gpsListModal')e.currentTarget.classList.remove('open')};
 window.addEventListener('pointerdown',()=>startCompass(),{once:true,passive:true});
-startGpsTracking();
+initGpsLocation();
 updateMobileDetailHeader('Beste Waldgebiete',false);
 
 renderScoreLegend();document.getElementById('detailDwd').style.display='none';document.getElementById('status').textContent='Karte auf ein Waldgebiet ausrichten und suchen.';
 </script></div></body></html>
-
