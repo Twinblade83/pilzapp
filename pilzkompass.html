@@ -282,6 +282,8 @@ button{min-height:36px;}
 .controlPanel{} /* intentionally empty: preserves legacy selector compatibility */
 .mobile-panel-toggle{display:none}
 
+#mobileDetailSheetHeader{display:none}
+
 /* Desktop: modern floating cards without changing layout semantics. */
 @media(min-width:901px){
     .panel,
@@ -322,47 +324,82 @@ button{min-height:36px;}
         width:auto;
         max-width:none;
         max-height:min(42dvh, 440px);
-        overflow-y:auto;
+        height:auto;
+        overflow:hidden;
         overflow-x:hidden;
         padding:0;
         border-left:0;
         border-top:4px solid var(--moss);
         background:rgba(239,233,216,.96);
+        display:flex;
+        flex-direction:column;
     }
     .panel .mobile-panel-toggle{
         display:flex;
         align-items:center;
-        justify-content:center;
-        position:sticky;
-        top:0;
+        justify-content:flex-start;
+        flex:0 0 auto;
         z-index:6;
-        gap:8px;
+        gap:9px;
         width:100%;
-        min-height:44px;
-        padding:8px 14px;
+        min-height:54px;
+        height:54px;
+        padding:8px 13px 8px 14px;
         border:0;
-        border-bottom:1px solid rgba(74,56,38,.14);
-        background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.10));
+        border-bottom:1px solid rgba(74,56,38,.16);
+        background:linear-gradient(180deg,rgba(255,255,255,.34),rgba(255,255,255,.10));
         color:var(--bark);
         font:700 12px var(--font-body);
         letter-spacing:.02em;
         cursor:pointer;
+        box-shadow:0 3px 10px rgba(30,20,10,.08);
     }
-    .panel .mobile-panel-toggle span{opacity:.82}
     .panel .mobile-panel-toggle:active{transform:translateY(1px)}
-    .panel > h2,
-    .panel > .species-select-row,
-    .panel > .search-btn,
-    .panel > .tool-btn,
-    .panel > #photoInput,
-    .panel > .status,
-    .panel > .legend,
-    .panel > .progress-box{
+    .panel-toggle-icon{
+        width:30px;
+        height:30px;
+        flex:0 0 30px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        border-radius:10px;
+        background:rgba(91,112,82,.12);
+        border:1px solid rgba(91,112,82,.18);
+        font-size:15px;
+    }
+    .panel-toggle-title{font-size:12.5px;line-height:1.1;white-space:nowrap}
+    .panel-toggle-state{
+        margin-left:auto;
+        padding:5px 8px;
+        border-radius:999px;
+        border:1px solid rgba(74,56,38,.14);
+        background:rgba(255,255,255,.34);
+        font:700 9px var(--font-body);
+        color:var(--bark);
+        white-space:nowrap;
+    }
+    .panel-scroll-content{
+        flex:1 1 auto;
+        min-height:0;
+        overflow-y:auto;
+        overflow-x:hidden;
+        padding:1px 0 14px;
+        -webkit-overflow-scrolling:touch;
+        overscroll-behavior:contain;
+    }
+    .panel-scroll-content > h2,
+    .panel-scroll-content > .species-select-row,
+    .panel-scroll-content > .search-btn,
+    .panel-scroll-content > .tool-btn,
+    .panel-scroll-content > #photoInput,
+    .panel-scroll-content > .status,
+    .panel-scroll-content > .legend,
+    .panel-scroll-content > .progress-box{
         margin-left:14px;
         margin-right:14px;
     }
-    .panel > h2{margin-top:12px}
-    .panel > .progress-box{margin-bottom:14px}
+    .panel-scroll-content > h2{margin-top:12px}
+    .panel-scroll-content > .progress-box{margin-bottom:14px}
 
     .panel.mobile-collapsed{
         max-height:54px;
@@ -376,14 +413,7 @@ button{min-height:36px;}
         border-bottom:0;
         font-size:11px;
     }
-    .panel.mobile-collapsed > h2,
-    .panel.mobile-collapsed > .species-select-row,
-    .panel.mobile-collapsed > .search-btn,
-    .panel.mobile-collapsed > .tool-btn,
-    .panel.mobile-collapsed > #photoInput,
-    .panel.mobile-collapsed > .status,
-    .panel.mobile-collapsed > .legend,
-    .panel.mobile-collapsed > .progress-box{display:none}
+    .panel.mobile-collapsed .panel-scroll-content{display:none}
 
     /* Ranking/detail sheet: always anchored to the same bottom-right geometry. */
     .detail-panel{
@@ -407,9 +437,15 @@ button{min-height:36px;}
         min-height:0;
         overflow-y:auto;
         overflow-x:hidden;
-        padding:14px 14px 16px;
+        padding:12px 14px 16px;
         -webkit-overflow-scrolling:touch;
         overscroll-behavior:contain;
+    }
+    .detail-panel #panelCollapseBtn{display:none}
+    .detail-panel.panel-collapsed .mobile-detail-sheet-header{display:flex}
+    .detail-panel.panel-collapsed .mobile-detail-toggle{
+        background:rgba(91,112,82,.13);
+        border-color:rgba(91,112,82,.22);
     }
     .panel-collapse-btn{
         top:8px;
@@ -421,19 +457,50 @@ button{min-height:36px;}
         background:rgba(239,233,216,.94);
         box-shadow:0 3px 8px rgba(30,20,10,.12);
     }
+    .mobile-detail-sheet-header{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+        flex:0 0 auto;
+        min-height:54px;
+        padding:8px 10px 8px 14px;
+        border-bottom:1px solid rgba(74,56,38,.16);
+        background:linear-gradient(180deg,rgba(255,255,255,.34),rgba(255,255,255,.10));
+        box-shadow:0 3px 10px rgba(30,20,10,.08);
+        z-index:8;
+    }
+    .mobile-detail-sheet-title{
+        min-width:0;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+        color:var(--bark);
+        font:700 13px var(--font-body);
+    }
+    .mobile-detail-toggle{
+        width:34px;
+        height:34px;
+        min-width:34px;
+        border:1px solid rgba(74,56,38,.16);
+        border-radius:11px;
+        background:rgba(255,255,255,.38);
+        color:var(--bark);
+        font:800 17px var(--font-body);
+        line-height:1;
+        cursor:pointer;
+        box-shadow:0 2px 7px rgba(30,20,10,.10);
+    }
+    .mobile-detail-toggle:active{transform:translateY(1px)}
     .ranking-header{
-        position:sticky;
-        top:0;
-        z-index:4;
-        padding:2px 48px 10px 0;
-        margin:0 -2px 8px;
-        background:linear-gradient(180deg,rgba(239,233,216,.99) 80%,rgba(239,233,216,0));
+        display:none;
     }
     .ranking-header h2{font-size:18px}
     .detail-panel h2{padding-right:44px}
+    #detailTitle{display:none}
     .forest-detail-close{
-        top:8px;
-        right:8px;
+        top:68px;
+        right:10px;
         width:38px;
         height:38px;
         min-height:38px;
@@ -448,10 +515,10 @@ button{min-height:36px;}
         right:max(10px, env(safe-area-inset-right));
         bottom:max(10px, env(safe-area-inset-bottom));
         left:auto;
-        width:126px;
-        height:50px;
-        max-height:50px;
-        min-height:50px;
+        width:min(210px, calc(100vw - 20px));
+        height:52px;
+        max-height:52px;
+        min-height:52px;
         padding:0;
         border-radius:16px;
         border-left:4px solid var(--chanterelle);
@@ -461,34 +528,16 @@ button{min-height:36px;}
         box-shadow:0 12px 30px rgba(30,20,10,.28),0 2px 8px rgba(30,20,10,.12);
     }
     .detail-panel.panel-collapsed #detailPanelContent{display:none}
-    .detail-panel.panel-collapsed #panelCollapseBtn{
-        position:relative;
-        top:0;
-        right:auto;
-        width:100%;
-        height:100%;
-        min-height:50px;
-        border:0;
-        border-radius:0;
-        background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.08));
+    .detail-panel.panel-collapsed .mobile-detail-sheet-header{
+        min-height:52px;
+        height:52px;
+        border-bottom:0;
         box-shadow:none;
-        color:var(--bark);
-        font-size:0;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        gap:7px;
     }
-    .detail-panel.panel-collapsed #panelCollapseBtn::before{
-        content:'＋';
-        font-size:17px;
-        line-height:1;
-    }
-    .detail-panel.panel-collapsed #panelCollapseBtn::after{
-        content:'Waldgebiete';
-        font:700 11px var(--font-body);
-        color:var(--bark);
-    }
+    .detail-panel.panel-collapsed .mobile-detail-sheet-title::before{content:'＋';display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;margin-right:7px;border-radius:9px;background:rgba(91,112,82,.12);border:1px solid rgba(91,112,82,.18);font-size:16px;vertical-align:-8px}
+    .detail-panel.panel-collapsed .mobile-detail-toggle{font-size:0}
+    .detail-panel.panel-collapsed .mobile-detail-toggle::before{content:'＋';font-size:18px}
+
 
     /* Don't allow the tour to sit on top of the forest launcher/sheet. */
     .tour-panel{
@@ -511,7 +560,7 @@ button{min-height:36px;}
         max-height:min(52dvh, 520px);
         border-radius:18px;
     }
-    .detail-panel #detailPanelContent{padding:12px 12px 14px}
+    .detail-panel #detailPanelContent{padding:10px 12px 14px}
     .ranking-header h2{font-size:17px}
 }
 
@@ -521,17 +570,19 @@ button{min-height:36px;}
         right:7px;
         top:calc(52px + env(safe-area-inset-top));
     }
-    .panel > h2,
-    .panel > .species-select-row,
-    .panel > .search-btn,
-    .panel > .tool-btn,
-    .panel > #photoInput,
-    .panel > .status,
-    .panel > .legend,
-    .panel > .progress-box{margin-left:11px;margin-right:11px}
+    .panel-scroll-content > h2,
+    .panel-scroll-content > .species-select-row,
+    .panel-scroll-content > .search-btn,
+    .panel-scroll-content > .tool-btn,
+    .panel-scroll-content > #photoInput,
+    .panel-scroll-content > .status,
+    .panel-scroll-content > .legend,
+    .panel-scroll-content > .progress-box{margin-left:11px;margin-right:11px}
 
     .panel.mobile-collapsed{left:9px;right:auto;width:150px;max-width:calc(100vw - 18px)}
     .panel.mobile-collapsed .mobile-panel-toggle{border-radius:13px}
+    .panel-toggle-state{padding:4px 7px;font-size:8.5px}
+    .mobile-detail-sheet-title{font-size:12.5px}
 
     .detail-panel{
         left:8px;
@@ -584,7 +635,8 @@ button{min-height:36px;}
 <header><h1>Pilzkompass</h1><span>Waldflächen · Baumarten · Mikroklima · Wetter · Boden · Fundmeldungen</span></header>
 <div id="map"></div>
 <div class="panel" id="controlPanel">
-<button class="mobile-panel-toggle" id="controlPanelToggle" type="button" aria-expanded="true" aria-controls="controlPanel" title="Pilzauswahl einklappen">⌃ <span>Pilzart &amp; Analyse</span></button>
+<button class="mobile-panel-toggle" id="controlPanelToggle" type="button" aria-expanded="true" aria-controls="controlPanelContent" title="Pilzart &amp; Analyse einklappen"><span class="panel-toggle-icon">⌃</span><span class="panel-toggle-title">Pilzart &amp; Analyse</span><span class="panel-toggle-state">Einklappen</span></button>
+<div class="panel-scroll-content" id="controlPanelContent">
 <h2>Pilzart</h2>
 <div class="species-select-row"><select class="species-select" id="speciesSelect"></select><button aria-label="Pilzinfos anzeigen" class="info-btn" id="speciesInfoBtn">ⓘ</button></div>
 <button class="search-btn" id="searchBtn">Diesen Bereich durchsuchen</button>
@@ -595,7 +647,9 @@ button{min-height:36px;}
 <div class="legend"><h3>Trefferwahrscheinlichkeit</h3><div class="score-legend" id="scoreLegend"></div><div class="legend-note"><span>0–10 sehr niedrig</span><span>91–100 sehr hoch</span></div><div class="note" style="margin-top:8px">⚪ Weiße Punkte = bestätigte GBIF-Fundmeldungen dieser Pilzart im Bereich.</div></div>
 <div class="progress-box" id="searchProgress" style="display:none"><div class="progress-head"><strong id="progressTitle">Analyse wird vorbereitet…</strong><span id="progressPercent">0%</span></div><div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div><div class="progress-steps" id="progressSteps"></div></div>
 </div>
+</div>
 <div class="detail-panel" id="detailPanel">
+<div class="mobile-detail-sheet-header" id="mobileDetailSheetHeader"><div class="mobile-detail-sheet-title" id="mobileDetailSheetTitle">Beste Waldgebiete</div><button aria-label="Waldgebiete ein- oder ausklappen" class="mobile-detail-toggle" id="mobileDetailToggle" title="Waldgebiete einklappen" type="button">⌄</button></div>
 <button aria-label="Waldgebiet-Fenster zuklappen" class="panel-collapse-btn" id="panelCollapseBtn" title="Fenster zuklappen" type="button">−</button>
 <div id="detailPanelContent">
 <div id="rankingView"><div class="ranking-header"><h2>Beste Waldgebiete</h2></div><div class="ranking-body" id="rankingBody"><p class="source-note">Noch kein Waldgebiet ausgewählt. Hier kannst du ein Gebiet direkt nach Score auswählen.</p><div class="section-title">Nach Score geordnet</div><div class="rank-list" id="forestRankList"><div class="source-note">Noch keine Suche durchgeführt.</div></div></div></div>
@@ -833,13 +887,13 @@ function weightLevel(w){return w>=1.2?'hoch':w<=.8?'gering':'mittel'}
 function weightMean(values){const a=values.filter(v=>Number.isFinite(Number(v))).map(Number);return a.length?a.reduce((s,v)=>s+v,0)/a.length:1}
 function renderWeightProfile(species){const wrap=document.getElementById('detailWeightProfile');if(!wrap)return;const w=getSpeciesWeights(species),groups=[['Wirtsbaum / Substrat',weightMean([w.tree]),'tree'],['Wetter',weightMean([w.weatherPrecip,w.weatherTemp]),'weather'],['Boden',weightMean([w.ph,w.soilTexture,w.soilNutrient,w.soilMoisture,w.soilDrainage]),'soil'],['Mikroklima / Relief',weightMean([w.microSlope,w.microAspect,w.microRelief,w.microSun,w.microMoisture]),'micro'],['Waldstruktur / Licht',weightMean([w.canopy,w.light]),'forest'],['Waldtyp / Höhe',weightMean([w.forestType,w.elevation]),'terrain']];wrap.innerHTML=groups.map(([label,val,key])=>{const n=Number(val),level=weightLevel(n),pct=Math.max(20,Math.min(100,50+n*35));return`<div class="weight-profile-item"><span class="weight-profile-label">${escapeHtml(label)}</span><span class="weight-profile-track" title="Relatives Gewicht ${n.toFixed(2)}"><span style="width:${pct}%;background:${n>1.05?'var(--chanterelle)':'var(--moss)'}"></span></span><strong class="weight-profile-value ${level==='hoch'?'weight-profile-high':level==='gering'?'weight-profile-low':''}">${n.toFixed(2)} · ${level}</strong></div>`}).join('')+'<div class="weight-profile-note">Die Gewichtung beschreibt die Sensitivität des Modells für diese Pilzart: hohe Werte reagieren stärker auf Abweichungen von der artspezifischen Präferenz, niedrige Werte toleranter. Die maximalen Punkte der Score-Bereiche bleiben unverändert. Die Gewichte sind fachlich begründete Kalibrierungswerte und keine veröffentlichten statistischen Koeffizienten.</div>'}
 
-async function openForestDetail(r,options={}){activeForest=r;rankView.style.display='none';detailView.style.display='block';selectedLayer.clearLayers();L.polygon(r.forest.coords,{pane:'selectedForestPane',color:'#2b2b2b',weight:3,fillColor:scoreColor(r.score.total),fillOpacity:.2}).addTo(selectedLayer);const f=r.forest,d=r.data,s=speciesConfig[currentSpecies];document.getElementById('detailTitle').textContent=`${s.label} · ${f.tags?.parentForestName||'Analysebereich'}`;document.getElementById('detailScoreNum').textContent=r.score.total;document.getElementById('detailScoreNum').style.color=scoreColor(r.score.total);document.getElementById('detailScoreBar').style.width=r.score.total+'%';document.getElementById('detailScoreBar').style.background=scoreColor(r.score.total);document.getElementById('detailScoreLabel').textContent=`Trefferwahrscheinlichkeit für ${s.label}`;document.getElementById('detailWaldtyp').textContent=leafTypeLabel(d.leafType);document.getElementById('detailTreeType').textContent=r.score.treeLabel;document.getElementById('detailArea').textContent=areaHectares(f.area,f.centroid[0])+' ha · '+(f.tags?.cellSizeM||250)+' m Raster';document.getElementById('detailElevation').textContent=d.elevation!=null?Math.round(d.elevation)+' m':'nicht verfügbar';document.getElementById('detailCoords').textContent=`${f.centroid[0].toFixed(4)}, ${f.centroid[1].toFixed(4)}`;renderWeatherDashboard(d,s);document.getElementById('detailPh').innerHTML=d.ph!=null?`<div class="ph-value-wrap"><strong class="ph-value">${Number(d.ph).toFixed(1)}</strong><span class="ph-label">${phStatusLabel(d.ph)}</span>${statusTagHtml(rangeStatus(d.ph,s.ph))}</div>`:'nicht verfügbar';document.getElementById('detailPtsPrecip').textContent=`${r.score.precipPts} / 12`;document.getElementById('detailPtsTemp').textContent=`${r.score.tempPts} / 8`;document.getElementById('detailPtsWeatherPattern').textContent=`${r.score.weatherPatternPts} Einfluss`;document.getElementById('detailPtsPh').textContent=`${r.score.phPts} / 12`;document.getElementById('detailPtsMonth').textContent=`${r.score.monthPts} / 8`;document.getElementById('detailPtsForest').textContent=`${r.score.forestPts} / 12`;document.getElementById('detailPtsTrees').textContent=`${r.score.treePts} / 18`;document.getElementById('detailPtsMicro').textContent=`${r.score.microPts} / 10`;document.getElementById('detailPtsStructure').textContent=`${r.score.structurePts} / 12`;document.getElementById('detailPtsSoil').textContent=`${Number(r.score.soilPts||0).toFixed(1)} / 8`;document.getElementById('detailPtsForestStructure').textContent=`${Number(r.score.forestStructurePts||0).toFixed(1)} / 6`;document.getElementById('detailPtsForestType').textContent=`${Number(r.score.forestTypePts||0).toFixed(1)} / 2`;document.getElementById('detailPtsElevation').textContent=`${Number(r.score.elevationPts||0).toFixed(1)} / 3`;document.getElementById('detailPtsSynergy').textContent=`+${r.score.synergyPts} / 10`;document.getElementById('detailDataConfidence').textContent=r.score.dataConfidence+'%';renderWeightProfile(currentSpecies);document.getElementById('detailMicroclimate').innerHTML=renderMicro(r.micro,d,r.score,currentSpecies);document.getElementById('detailSoilProfile').innerHTML=renderSoilProfile(d.soilProfile,s,r.score,d);document.getElementById('detailForestStructure').innerHTML=renderForestStructure(d,s,r.score);document.getElementById('detailTreeEvidence').innerHTML=renderTreeEvidence(r.treeEvidence.entries);document.getElementById('detailMushroomEvidence').innerHTML=renderMushroomEvidence(r.mushroomEvidence);document.getElementById('detailHabitatInfo').innerHTML=renderHabitatInfo(r.structure);document.getElementById('detailActions').innerHTML='<button id="addTourBtn">🥾 Zur Tour hinzufügen</button><button id="backRankBtn">← Bestenliste</button>';document.getElementById('addTourBtn').onclick=()=>addTourForest(f,d,r.score.total);document.getElementById('backRankBtn').onclick=showForestRanking;const dwd=document.getElementById('detailDwd');if(options.skipDwd)return;dwd.style.display='block';dwd.innerHTML='<span class="dwd-confirm">DWD wird geladen…</span>';fetchDwdForOpen(r)}function showForestRanking(){activeForest=null;rankView.style.display='block';detailView.style.display='none';selectedLayer.clearLayers()}
+async function openForestDetail(r,options={}){activeForest=r;rankView.style.display='none';detailView.style.display='block';selectedLayer.clearLayers();L.polygon(r.forest.coords,{pane:'selectedForestPane',color:'#2b2b2b',weight:3,fillColor:scoreColor(r.score.total),fillOpacity:.2}).addTo(selectedLayer);const f=r.forest,d=r.data,s=speciesConfig[currentSpecies];document.getElementById('detailTitle').textContent=`${s.label} · ${f.tags?.parentForestName||'Analysebereich'}`;document.getElementById('detailScoreNum').textContent=r.score.total;document.getElementById('detailScoreNum').style.color=scoreColor(r.score.total);document.getElementById('detailScoreBar').style.width=r.score.total+'%';document.getElementById('detailScoreBar').style.background=scoreColor(r.score.total);document.getElementById('detailScoreLabel').textContent=`Trefferwahrscheinlichkeit für ${s.label}`;document.getElementById('detailWaldtyp').textContent=leafTypeLabel(d.leafType);document.getElementById('detailTreeType').textContent=r.score.treeLabel;document.getElementById('detailArea').textContent=areaHectares(f.area,f.centroid[0])+' ha · '+(f.tags?.cellSizeM||250)+' m Raster';document.getElementById('detailElevation').textContent=d.elevation!=null?Math.round(d.elevation)+' m':'nicht verfügbar';document.getElementById('detailCoords').textContent=`${f.centroid[0].toFixed(4)}, ${f.centroid[1].toFixed(4)}`;renderWeatherDashboard(d,s);document.getElementById('detailPh').innerHTML=d.ph!=null?`<div class="ph-value-wrap"><strong class="ph-value">${Number(d.ph).toFixed(1)}</strong><span class="ph-label">${phStatusLabel(d.ph)}</span>${statusTagHtml(rangeStatus(d.ph,s.ph))}</div>`:'nicht verfügbar';document.getElementById('detailPtsPrecip').textContent=`${r.score.precipPts} / 12`;document.getElementById('detailPtsTemp').textContent=`${r.score.tempPts} / 8`;document.getElementById('detailPtsWeatherPattern').textContent=`${r.score.weatherPatternPts} Einfluss`;document.getElementById('detailPtsPh').textContent=`${r.score.phPts} / 12`;document.getElementById('detailPtsMonth').textContent=`${r.score.monthPts} / 8`;document.getElementById('detailPtsForest').textContent=`${r.score.forestPts} / 12`;document.getElementById('detailPtsTrees').textContent=`${r.score.treePts} / 18`;document.getElementById('detailPtsMicro').textContent=`${r.score.microPts} / 10`;document.getElementById('detailPtsStructure').textContent=`${r.score.structurePts} / 12`;document.getElementById('detailPtsSoil').textContent=`${Number(r.score.soilPts||0).toFixed(1)} / 8`;document.getElementById('detailPtsForestStructure').textContent=`${Number(r.score.forestStructurePts||0).toFixed(1)} / 6`;document.getElementById('detailPtsForestType').textContent=`${Number(r.score.forestTypePts||0).toFixed(1)} / 2`;document.getElementById('detailPtsElevation').textContent=`${Number(r.score.elevationPts||0).toFixed(1)} / 3`;document.getElementById('detailPtsSynergy').textContent=`+${r.score.synergyPts} / 10`;document.getElementById('detailDataConfidence').textContent=r.score.dataConfidence+'%';renderWeightProfile(currentSpecies);document.getElementById('detailMicroclimate').innerHTML=renderMicro(r.micro,d,r.score,currentSpecies);document.getElementById('detailSoilProfile').innerHTML=renderSoilProfile(d.soilProfile,s,r.score,d);document.getElementById('detailForestStructure').innerHTML=renderForestStructure(d,s,r.score);document.getElementById('detailTreeEvidence').innerHTML=renderTreeEvidence(r.treeEvidence.entries);document.getElementById('detailMushroomEvidence').innerHTML=renderMushroomEvidence(r.mushroomEvidence);document.getElementById('detailHabitatInfo').innerHTML=renderHabitatInfo(r.structure);document.getElementById('detailActions').innerHTML='<button id="addTourBtn">🥾 Zur Tour hinzufügen</button><button id="backRankBtn">← Bestenliste</button>';document.getElementById('addTourBtn').onclick=()=>addTourForest(f,d,r.score.total);document.getElementById('backRankBtn').onclick=showForestRanking;const dwd=document.getElementById('detailDwd');if(options.skipDwd)return;dwd.style.display='block';dwd.innerHTML='<span class="dwd-confirm">DWD wird geladen…</span>';fetchDwdForOpen(r)}function showForestRanking(){activeForest=null;rankView.style.display='block';detailView.style.display='none';selectedLayer.clearLayers();updateMobileDetailHeader('Beste Waldgebiete',detailPanelCollapsed)}
 /* DWD */
 let dwdStations=null;const dwdCache={},DWD_BASE='https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/kl/recent/';async function fetchDwdStations(){if(dwdStations)return dwdStations;const r=await fetch(DWD_BASE+'KL_Tageswerte_Beschreibung_Stationen.txt');if(!r.ok)throw new Error();dwdStations=(await r.text()).split(/\r?\n/).map(x=>x.trim()).filter(x=>/^\d{5}\s/.test(x)).map(x=>{const p=x.split(/\s+/);return{id:p[0].replace(/^0+/,'')||'0',lat:Number(p[4]),lon:Number(p[5]),name:p.slice(6).join(' ')}}).filter(x=>Number.isFinite(x.lat)&&Number.isFinite(x.lon));return dwdStations}function nearestStation(stations,lat,lon){let best=null,bd=Infinity;for(const s of stations){const a=(s.lat-lat)*111.32,b=(s.lon-lon)*111.32*Math.cos(lat*Math.PI/180),d=a*a+b*b;if(d<bd){bd=d;best=s}}return best?{...best,distanceKm:Math.sqrt(bd)}:null}async function dwdPoint(f){try{const st=nearestStation(await fetchDwdStations(),f.centroid[0],f.centroid[1]);if(!st)return null;if(dwdCache[st.id])return dwdCache[st.id];const id=String(st.id).padStart(5,'0'),r=await fetch(DWD_BASE+`tageswerte_KL_${id}_akt.zip`);if(!r.ok)throw new Error();const zip=await JSZip.loadAsync(await r.arrayBuffer()),fn=Object.keys(zip.files).find(n=>/produkt_klima_tag_.*\.txt$/i.test(n));if(!fn)throw new Error();const lines=(await zip.files[fn].async('string')).split(/\r?\n/).filter(Boolean),h=lines[0].split(';').map(x=>x.trim()),rows=lines.slice(1).map(l=>l.split(';')).map(c=>Object.fromEntries(h.map((x,i)=>[x,c[i]]))),clean=v=>{const n=Number(String(v??'').replace(',','.'));return Number.isFinite(n)&&n>-999?n:null},recent=rows.slice(-20),ps=recent.slice(-15,-1).map(x=>clean(x.RSK)).filter(v=>v!=null),ts=recent.slice(-11,-1).map(x=>clean(x.TMK)).filter(v=>v!=null);return dwdCache[st.id]={precip14:ps.length?Math.round(ps.reduce((a,b)=>a+b,0)*10)/10:null,tempAvg10:ts.length?Math.round(ts.reduce((a,b)=>a+b,0)/ts.length*10)/10:null,station:st}}catch(_){return null}}async function fetchDwdForOpen(r){const x=await dwdPoint(r.forest),box=document.getElementById('detailDwd');if(!x){box.style.display='none';return}box.style.display='block';box.innerHTML=`<span class="dwd-confirm">DWD-Abgleich verfügbar</span><br>DWD: ${x.precip14??'–'} mm / ${x.tempAvg10??'–'} °C · ${escapeHtml(x.station.name)} · ${x.station.distanceKm.toFixed(1)} km entfernt`}
 /* Suche */
 const progressState={},progressWeights=[5,15,10,12,14,9,11,8,6,10];let progressValue=0;function initProgress(steps){progressValue=0;document.getElementById('searchProgress').style.display='block';document.getElementById('progressSteps').innerHTML=steps.map((x,i)=>`<div class="progress-step" id="progress-step-${i}"><span>${escapeHtml(x)}</span><span class="step-state">wartet</span></div>`).join('');steps.forEach((_,i)=>progressState[i]={state:'waiting',fraction:0});setProgress(1,steps[0])}function setProgress(p,t){progressValue=Math.round(Math.max(0,Math.min(100,p)));document.getElementById('progressTitle').textContent=t;document.getElementById('progressPercent').textContent=progressValue+'%';document.getElementById('progressFill').style.width=progressValue+'%'}function updateProgress(){const total=progressWeights.reduce((a,b)=>a+b,0),v=progressWeights.reduce((s,w,i)=>s+w*(progressState[i]?.fraction||0),0)/total*100;setProgress(Math.max(progressValue,v),document.getElementById('progressTitle').textContent)}function setProgressStep(i,state='running',detail='läuft…',fraction=null){const el=document.getElementById(`progress-step-${i}`);if(!el)return;progressState[i]={state,fraction:fraction==null?(state==='done'||state==='error'?1:(progressState[i]?.fraction||0)):Math.max(0,Math.min(1,fraction))};el.className=`progress-step ${state==='done'?'done':''} ${state==='error'?'error':''}`;el.querySelector('.step-state').textContent=detail;updateProgress()}function finishProgress(){const count=document.querySelectorAll('.progress-step').length;for(let i=0;i<count;i++){const e=document.getElementById(`progress-step-${i}`);if(progressState[i]?.state!=='error'&&e){e.classList.add('done');e.querySelector('.step-state').textContent='fertig'}}setProgress(100,'Analyse abgeschlossen')}
 function rebuildResults(cells,shared){forestResults=cells.map((f,i)=>buildResult(f,i,shared));renderAnalysisLayer()}
-let forestResults=[],activeForest=null,detailPanelCollapsed=false,selectedPolygons=[];const rankView=document.getElementById('rankingView'),detailView=document.getElementById('detailView');document.getElementById('panelCollapseBtn').onclick=()=>{detailPanelCollapsed=!detailPanelCollapsed;document.getElementById('detailPanel').classList.toggle('panel-collapsed',detailPanelCollapsed);document.getElementById('panelCollapseBtn').textContent=detailPanelCollapsed?'＋':'−'};document.getElementById('closeDetail').onclick=showForestRanking;const btn=document.getElementById('searchBtn');btn.onclick=async()=>{const runId=++searchRunId;resultLayer.clearLayers();selectedLayer.clearLayers();forestResults=[];showForestRanking();btn.disabled=true;initProgress(['Wälder erkennen','Analyse-Raster','Wetterdaten','Bodenprofil','Relief · Höhe / Hang / Exposition','Baumarten','Waldstruktur & Licht','Habitatstruktur','Pilznachweise','Wachstumsindex & Scores']);try{if(map.getZoom()<MIN_FOREST_ZOOM){document.getElementById('status').textContent=`Bitte mindestens auf Zoom ${MIN_FOREST_ZOOM} hineinzoomen.`;document.getElementById('searchProgress').style.display='none';return}setProgressStep(0,'running','wird erkannt…',.25);let forests=getVisibleForests();if(!forests.length){await new Promise(r=>setTimeout(r,250));forests=getVisibleForests()}if(!forests.length){document.getElementById('status').textContent='Keine Waldflächen im aktuellen Kartenausschnitt erkannt.';document.getElementById('searchProgress').style.display='none';return}forests=mergeTouchingForests(forests).sort((a,b)=>b.area-a.area).slice(0,MAX_FORESTS);setProgressStep(0,'done',`${forests.length} Wälder`,1);const grid=generateAnalysisCells(forests),cells=grid.cells;window.__analysisCellSize=grid.size;setProgressStep(1,'done',`${cells.length} Zellen · ${grid.size} m`,1);const shared={elev:new Array(cells.length),weather:new Array(cells.length),soil:new Array(cells.length),soilProfiles:new Array(cells.length),treeSources:[],mushroomOccurrences:[],osm:null,treeLoaded:false,structureLoaded:false,microByIndex:new Map(),dlrByIndex:new Array(cells.length),forestStructureByIndex:new Array(forests.length)};
+let forestResults=[],activeForest=null,detailPanelCollapsed=false,selectedPolygons=[];const rankView=document.getElementById('rankingView'),detailView=document.getElementById('detailView'),mobileDetailSheetTitle=document.getElementById('mobileDetailSheetTitle'),mobileDetailToggle=document.getElementById('mobileDetailToggle');function updateMobileDetailHeader(title,collapsed=false){if(mobileDetailSheetTitle)mobileDetailSheetTitle.textContent=title||'Waldgebiete';if(mobileDetailToggle){mobileDetailToggle.textContent=collapsed?'＋':'⌃';mobileDetailToggle.title=collapsed?'Waldgebiete öffnen':'Waldgebiete einklappen';mobileDetailToggle.setAttribute('aria-label',collapsed?'Waldgebiete öffnen':'Waldgebiete einklappen')}}function toggleDetailPanel(){detailPanelCollapsed=!detailPanelCollapsed;document.getElementById('detailPanel').classList.toggle('panel-collapsed',detailPanelCollapsed);document.getElementById('panelCollapseBtn').textContent=detailPanelCollapsed?'＋':'−';updateMobileDetailHeader(detailView.style.display==='block'?'Waldgebiet':'Beste Waldgebiete',detailPanelCollapsed)}document.getElementById('panelCollapseBtn').onclick=toggleDetailPanel;if(mobileDetailToggle)mobileDetailToggle.onclick=toggleDetailPanel;document.getElementById('closeDetail').onclick=showForestRanking;updateMobileDetailHeader('Beste Waldgebiete',false);const btn=document.getElementById('searchBtn');btn.onclick=async()=>{const runId=++searchRunId;resultLayer.clearLayers();selectedLayer.clearLayers();forestResults=[];showForestRanking();btn.disabled=true;initProgress(['Wälder erkennen','Analyse-Raster','Wetterdaten','Bodenprofil','Relief · Höhe / Hang / Exposition','Baumarten','Waldstruktur & Licht','Habitatstruktur','Pilznachweise','Wachstumsindex & Scores']);try{if(map.getZoom()<MIN_FOREST_ZOOM){document.getElementById('status').textContent=`Bitte mindestens auf Zoom ${MIN_FOREST_ZOOM} hineinzoomen.`;document.getElementById('searchProgress').style.display='none';return}setProgressStep(0,'running','wird erkannt…',.25);let forests=getVisibleForests();if(!forests.length){await new Promise(r=>setTimeout(r,250));forests=getVisibleForests()}if(!forests.length){document.getElementById('status').textContent='Keine Waldflächen im aktuellen Kartenausschnitt erkannt.';document.getElementById('searchProgress').style.display='none';return}forests=mergeTouchingForests(forests).sort((a,b)=>b.area-a.area).slice(0,MAX_FORESTS);setProgressStep(0,'done',`${forests.length} Wälder`,1);const grid=generateAnalysisCells(forests),cells=grid.cells;window.__analysisCellSize=grid.size;setProgressStep(1,'done',`${cells.length} Zellen · ${grid.size} m`,1);const shared={elev:new Array(cells.length),weather:new Array(cells.length),soil:new Array(cells.length),soilProfiles:new Array(cells.length),treeSources:[],mushroomOccurrences:[],osm:null,treeLoaded:false,structureLoaded:false,microByIndex:new Map(),dlrByIndex:new Array(cells.length),forestStructureByIndex:new Array(forests.length)};
 const weatherP=fetchWeather(forests,(d,t)=>setProgressStep(2,'running',`${d}/${t}`,t?d/t:1)).catch(e=>{console.warn('Wetterdaten nicht verfügbar:',e);setProgressStep(2,'error','nicht verfügbar',1);return new Array(forests.length).fill(null)});
 const soilP=fetchSoilProfile(cells,(d,t)=>setProgressStep(3,'running',`${Math.round(d)}%`,Math.min(1,Number(d)/100))).catch(e=>{console.warn('Erweitertes Bodenprofil nicht verfügbar:',e);setProgressStep(3,'error','nicht verfügbar · pH separat versucht',1);return{profiles:new Array(cells.length).fill(null),ph:new Array(cells.length).fill(null),available:0}});
 const reliefP=fetchReliefData(cells,(d,t)=>setProgressStep(4,'running',`${d}/${t}`,t?d/t:1)).catch(e=>{console.warn('Open-Meteo-Reliefdaten nicht verfügbar:',e);setProgressStep(4,'error','nicht verfügbar',1);return{microByIndex:new Map(),elev:new Array(cells.length).fill(null)}});
@@ -1287,8 +1341,8 @@ function updateControlPanelState(){
     if(!controlPanel||!controlPanelToggle)return;
     controlPanel.classList.toggle('mobile-collapsed',controlPanelCollapsed);
     controlPanelToggle.setAttribute('aria-expanded',String(!controlPanelCollapsed));
-    controlPanelToggle.title=controlPanelCollapsed?'Pilzauswahl öffnen':'Pilzauswahl einklappen';
-    controlPanelToggle.innerHTML=controlPanelCollapsed?'＋ <span>Pilzart</span>':'⌃ <span>Pilzart &amp; Analyse</span>';
+    controlPanelToggle.title=controlPanelCollapsed?'Pilzart &amp; Analyse öffnen':'Pilzart &amp; Analyse einklappen';
+    controlPanelToggle.innerHTML=controlPanelCollapsed?'<span class="panel-toggle-icon">＋</span><span class="panel-toggle-title">Pilzart &amp; Analyse</span><span class="panel-toggle-state">Öffnen</span>':'<span class="panel-toggle-icon">⌃</span><span class="panel-toggle-title">Pilzart &amp; Analyse</span><span class="panel-toggle-state">Einklappen</span>';
 }
 if(controlPanelToggle){
     controlPanelToggle.addEventListener('click',()=>{
@@ -1300,6 +1354,3 @@ if(controlPanelToggle){
 
 renderScoreLegend();document.getElementById('detailDwd').style.display='none';document.getElementById('status').textContent='Karte auf ein Waldgebiet ausrichten und suchen.';
 </script></div></body></html>
-
-
-
