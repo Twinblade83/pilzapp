@@ -634,6 +634,10 @@ button{min-height:36px;}
 .gps-permission-btn{flex:0 0 auto;padding:7px 9px;border:1px solid var(--moss);border-radius:9px;background:rgba(91,112,82,.12);color:var(--bark);font:700 10px var(--font-body);cursor:pointer;box-shadow:0 2px 5px rgba(30,20,10,.08)}
 .gps-permission-btn:hover{background:rgba(91,112,82,.18)}
 .gps-permission-btn:active{transform:translateY(1px)}
+.gps-compass-btn{flex:0 0 auto;padding:6px 8px;border:1px solid var(--chanterelle);border-radius:999px;background:rgba(217,138,31,.10);color:var(--bark);font:700 9.5px var(--font-body);cursor:pointer;box-shadow:0 2px 5px rgba(30,20,10,.06);white-space:nowrap}
+.gps-compass-btn:hover{background:rgba(217,138,31,.16)}
+.gps-compass-btn:active{transform:translateY(1px)}
+.gps-status.active .gps-compass-btn{border-color:rgba(91,112,82,.35);background:rgba(91,112,82,.08)}
 .gps-status.active .gps-status-dot{background:#5b7052;box-shadow:0 0 0 3px rgba(91,112,82,.14)}
 .gps-status.error .gps-status-dot{background:#b5691a;box-shadow:0 0 0 3px rgba(181,105,26,.13)}
 .gps-status.loading .gps-status-dot{background:#d98a1f;box-shadow:0 0 0 3px rgba(217,138,31,.14);animation:gpsPulse 1.2s ease-in-out infinite}
@@ -689,7 +693,7 @@ button{min-height:36px;}
 <button class="tool-btn" id="photoIdentifyBtn">📸 Pilzfoto analysieren</button>
 <button class="tool-btn gps-save-btn" id="gpsSaveBtn">📍 GPS-Lokation speichern</button>
 <button class="tool-btn gps-list-btn" id="gpsListBtn">🗺️ Gespeicherte GPS-Lokationen</button>
-<div class="gps-status loading" id="gpsStatus"><span class="gps-status-dot"></span><span class="gps-status-copy" id="gpsStatusText">GPS wird vorbereitet…</span><button class="gps-permission-btn" id="gpsPermissionBtn" type="button" hidden>📍 Standort aktivieren</button></div>
+<div class="gps-status loading" id="gpsStatus"><span class="gps-status-dot"></span><span class="gps-status-copy" id="gpsStatusText">GPS wird vorbereitet…</span><button class="gps-permission-btn" id="gpsPermissionBtn" type="button" hidden>📍 Standort aktivieren</button><button class="gps-compass-btn" id="gpsCompassBtn" type="button" hidden aria-label="Kompass aktivieren">🧭 Kompass</button></div>
 <input accept="image/*" capture="environment" id="photoInput" style="display:none" type="file"/>
 <div class="status" id="status">Karte auf ein Waldgebiet ausrichten und suchen.</div>
 <div class="legend"><h3>Trefferwahrscheinlichkeit</h3><div class="score-legend" id="scoreLegend"></div><div class="legend-note"><span>0–10 sehr niedrig</span><span>91–100 sehr hoch</span></div><div class="note" style="margin-top:8px">⚪ Weiße Punkte = bestätigte GBIF-Fundmeldungen dieser Pilzart im Bereich.</div></div>
@@ -1441,7 +1445,18 @@ function setGpsStatus(text,state='loading',showPermission=false,permissionLabel=
     const box=document.getElementById('gpsStatus'),label=document.getElementById('gpsStatusText'),btn=document.getElementById('gpsPermissionBtn');if(!box||!label)return;
     box.classList.remove('active','error','loading');box.classList.add(state);label.textContent=text;
     if(btn){btn.hidden=!showPermission;btn.textContent=permissionLabel;}
+    updateCompassButton();
 }
+function compassPermissionRequired(){return typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function';}
+function updateCompassButton(){
+    const btn=document.getElementById('gpsCompassBtn');
+    if(!btn)return;
+    const supported=typeof DeviceOrientationEvent!=='undefined';
+    const waiting=supported&&gpsState.heading==null&&!gpsState.orientationStarted;
+    btn.hidden=!waiting;
+    btn.textContent=compassPermissionRequired()?'🧭 Kompass':'🧭 Richtung';
+}
+
 function normalizeHeading(v){const n=Number(v);return Number.isFinite(n)?((n%360)+360)%360:null}
 function screenAngle(){try{return Number(window.screen?.orientation?.angle)||0}catch(_){return 0}}
 function headingFromEvent(e){
@@ -1473,8 +1488,9 @@ function gpsPositionSuccess(pos){
     gpsState.position=pos.coords;gpsState.accuracy=Number(pos.coords.accuracy);updateGpsMap();
     const p=L.latLng(pos.coords.latitude,pos.coords.longitude);
     if(!gpsState.hasCentered){gpsState.hasCentered=true;map.setView(p,Math.max(map.getZoom(),15),{animate:true});}
-    const acc=Number.isFinite(gpsState.accuracy)?` · ±${Math.round(gpsState.accuracy)} m`:'';const compass=gpsState.heading!=null?` · Richtung ${Math.round(gpsState.heading)}°`:' · Kompass wartet';
+    const acc=Number.isFinite(gpsState.accuracy)?` · ±${Math.round(gpsState.accuracy)} m`:'';const compass=gpsState.heading!=null?` · Richtung ${Math.round(gpsState.heading)}°`:'';
     setGpsStatus(`Standort verfügbar${acc}${compass}`,gpsState.heading!=null?'active':'loading');
+    updateCompassButton();
 }
 function gpsPositionError(err){
     let msg='GPS konnte nicht bestimmt werden.',needsPermission=false,permissionLabel='📍 Standort aktivieren';
@@ -1514,8 +1530,8 @@ async function requestGpsPermission(){
         setGpsStatus('Standort ist für diese Website blockiert. Erlaube ihn in den Browser-/Website-Einstellungen und versuche es danach erneut.','error',true,'↻ Erneut prüfen');
         return;
     }
-    await startCompass();
     startGpsTracking();
+    updateCompassButton();
 }
 async function initGpsLocation(){
     const state=await getGpsPermissionState();
@@ -1535,19 +1551,27 @@ async function initGpsLocation(){
     }catch(_){ }
 }
 
-async function startCompass(){
-    if(gpsState.orientationStarted)return;
+async function startCompass(userInitiated=false){
+    if(gpsState.orientationStarted)return true;
     try{
-        if(typeof DeviceOrientationEvent==='undefined')return;
-        if(typeof DeviceOrientationEvent.requestPermission==='function'){const permission=await DeviceOrientationEvent.requestPermission();if(permission!=='granted')return;}
-        const handler=e=>{const h=headingFromEvent(e);if(h==null)return;gpsState.heading=h;gpsState.headingSource=Number.isFinite(Number(e.webkitCompassHeading))?'compassHeading':(e.absolute?'absoluteOrientation':'deviceOrientation');updateGpsMap();const acc=Number.isFinite(gpsState.accuracy)?` · ±${Math.round(gpsState.accuracy)} m`:'';setGpsStatus(`Standort verfügbar${acc} · Richtung ${Math.round(h)}°`,'active')};
-        window.addEventListener('deviceorientationabsolute',handler,true);window.addEventListener('deviceorientation',handler,true);gpsState.orientationStarted=true;
-    }catch(e){console.warn('Kompass konnte nicht aktiviert werden:',e)}
+        if(typeof DeviceOrientationEvent==='undefined'){updateCompassButton();return false;}
+        if(typeof DeviceOrientationEvent.requestPermission==='function'){
+            if(!userInitiated){updateCompassButton();return false;}
+            const permission=await DeviceOrientationEvent.requestPermission(true);
+            if(permission!=='granted'){
+                setGpsStatus(gpsState.position?'Standort verfügbar · Kompass nicht freigegeben':'Kompasszugriff nicht freigegeben','loading',false);
+                updateCompassButton();
+                return false;
+            }
+        }
+        const handler=e=>{const h=headingFromEvent(e);if(h==null)return;gpsState.heading=h;gpsState.headingSource=Number.isFinite(Number(e.webkitCompassHeading))?'compassHeading':(e.absolute?'absoluteOrientation':'deviceOrientation');updateGpsMap();const acc=Number.isFinite(gpsState.accuracy)?` · ±${Math.round(gpsState.accuracy)} m`:'';setGpsStatus(`Standort verfügbar${acc} · Richtung ${Math.round(h)}°`,'active');updateCompassButton()};
+        window.addEventListener('deviceorientationabsolute',handler,true);window.addEventListener('deviceorientation',handler,true);gpsState.orientationStarted=true;updateCompassButton();return true;
+    }catch(e){console.warn('Kompass konnte nicht aktiviert werden:',e);setGpsStatus(gpsState.position?'Standort verfügbar · Kompass nicht verfügbar':'Kompass konnte nicht aktiviert werden','loading',false);updateCompassButton();return false;}
 }
 function readSavedGps(){try{const x=JSON.parse(localStorage.getItem(GPS_STORAGE_KEY)||'[]');return Array.isArray(x)?x.filter(v=>Number.isFinite(Number(v?.lat))&&Number.isFinite(Number(v?.lon))):[];}catch(_){return[]}}
 function writeSavedGps(items){try{localStorage.setItem(GPS_STORAGE_KEY,JSON.stringify(items));return true}catch(_){return false}}
 function openGpsSaveModal(){
-    startCompass();
+    updateCompassButton();
     if(!gpsState.position){setGpsStatus('Bitte kurz auf einen GPS-Fix warten.','error');startGpsTracking();return;}
     const p=gpsState.position;document.getElementById('gpsCurrentCoords').textContent=`${Number(p.latitude).toFixed(6)}, ${Number(p.longitude).toFixed(6)}`;document.getElementById('gpsCurrentAccuracy').textContent=`Genauigkeit: ±${Number(gpsState.accuracy||0).toFixed(0)} m${gpsState.heading!=null?` · Richtung ${Math.round(gpsState.heading)}°`:''}`;document.getElementById('gpsLocationTitle').value='';const speciesEl=document.getElementById('gpsSpeciesSelect');if(speciesEl){speciesEl.value=currentSpecies;}document.getElementById('gpsSaveModal').classList.add('open');setTimeout(()=>document.getElementById('gpsLocationTitle')?.focus(),50);
 }
@@ -1570,6 +1594,7 @@ function renderSavedGps(){
     el.querySelectorAll('[data-gps-delete]').forEach(b=>b.onclick=()=>{const items=readSavedGps();items.splice(Number(b.dataset.gpsDelete),1);writeSavedGps(items);renderSavedGps()});
 }
 document.getElementById('gpsPermissionBtn')?.addEventListener('click',requestGpsPermission);
+document.getElementById('gpsCompassBtn')?.addEventListener('click',()=>startCompass(true));
 document.getElementById('gpsSaveBtn').onclick=openGpsSaveModal;
 document.getElementById('gpsListBtn').onclick=()=>{renderSavedGps();document.getElementById('gpsListModal').classList.add('open')};
 document.getElementById('closeGpsSaveModal').onclick=()=>document.getElementById('gpsSaveModal').classList.remove('open');
@@ -1578,7 +1603,6 @@ document.getElementById('gpsConfirmSaveBtn').onclick=saveCurrentGps;
 document.getElementById('gpsLocationTitle').addEventListener('keydown',e=>{if(e.key==='Enter')saveCurrentGps()});
 document.getElementById('gpsSaveModal').onclick=e=>{if(e.target.id==='gpsSaveModal')e.currentTarget.classList.remove('open')};
 document.getElementById('gpsListModal').onclick=e=>{if(e.target.id==='gpsListModal')e.currentTarget.classList.remove('open')};
-window.addEventListener('pointerdown',()=>startCompass(),{once:true,passive:true});
 initGpsLocation();
 updateMobileDetailHeader('Beste Waldgebiete',false);
 
